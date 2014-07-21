@@ -3,6 +3,10 @@ cloud-jukebox
 
 Cloud jukebox in python
 
+License
+-------
+BSD
+
 Overview
 --------
 This repo is python code that implements a music player where the songs are stored
