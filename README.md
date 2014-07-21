@@ -13,6 +13,15 @@ is why compression and encryption functionality is included (compression is not
 needed for audio files such as MP3 files as they're already compressed, and most
 people wouldn't be interested in encrypting their song files).
 
+Song Metadata
+-------------
+Song metadata is stored in **SQLite**. This SQLite metadata database is stored in cloud
+storage and is created automatically when importing songs. After the import is
+complete, the cloud jukebox will also store this metadata database in cloud storage.
+
+When starting the cloud jukebox for audio playback, the song metadata database will
+automatically be downloaded from cloud storage.
+
 Importing Songs
 ---------------
 1. Create a subdirectory named 'import'
@@ -70,11 +79,11 @@ AES-256 is used. If you import files using encryption, you must also specify enc
 playing. To use encryption, you must have the **pycrypto** module installed.
 
 Examples:
-`python jukebox.py --encrypt --key SK34slk3032u91 import`
-`python jukebox.py --encrypt --keyfile keyfile.txt import`
+    python jukebox.py --encrypt --key SK34slk3032u91 import
+    python jukebox.py --encrypt --keyfile keyfile.txt import
 
-`python jukebox.py --encrypt --key SK34slk3032u91 play`
-`python jukebox.py --encrypt --keyfile keyfile.txt play`
+    python jukebox.py --encrypt --key SK34slk3032u91 play
+    python jukebox.py --encrypt --keyfile keyfile.txt play
 
 
 Displaying Available Songs
