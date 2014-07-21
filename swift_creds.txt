@@ -1,0 +1,4 @@
+swift_auth_host = your_swift_auth_host
+swift_account = your_swift_account
+swift_user = your_swift_user
+swift_password = your_swift_password
