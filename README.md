@@ -13,6 +13,22 @@ is why compression and encryption functionality is included (compression is not
 needed for audio files such as MP3 files as they're already compressed, and most
 people wouldn't be interested in encrypting their song files).
 
+Dependencies/Prerequisites
+--------------------------
+###Storage###
+The cloud jukebox must have a storage system for data storage. Either Swift or
+Amazon S3 can be used.
+
+Swift
+* swiftclient `pip install python-swiftclient`
+
+Amazon S3
+* boto `pip install boto`
+
+###Optional###
+Encryption
+* pycrypto (tested with version 2.6.1)
+
 Song Metadata
 -------------
 Song metadata is stored in **SQLite**. This SQLite metadata database is stored in cloud
@@ -27,6 +43,22 @@ Importing Songs
 1. Create a subdirectory named **'import'**
 2. Copy your MP3 files into the import directory
 3. Run the command `python jukeboxy.py import`
+
+###Song File Naming Convention###
+
+    The-Artist-Name--The-Song-Name.ext
+          |         |       |       |
+          |         |       |       |----  file extension (e.g., 'mp3')
+          |         |       |
+          |         |       |---- name of the song with ' ' replaced with '-'
+          |         |
+          |         |---- double dashes to separate the artist name and song name
+          |
+          |---- artist name with ' ' replaced with '-'
+
+For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones' should be named:
+
+`The-Rolling-Stones--Under-My-Thumb.mp3`
 
 Playing Songs
 -------------
@@ -72,13 +104,13 @@ Examples:
 
 Compression
 -----------
-Compression is supported through the use of the zlib module. To enable it, you must specify
+Compression is supported through the use of the **zlib** module. To enable it, you must specify
 the **--compress** command-line argument. If you import files using compression, you must also
 specify compression for playing.
 
 Encryption
 ----------
-AES encryption is supported. To enable it, you must specify the **--encrypt** command-line argument
+**AES** encryption is supported. To enable it, you must specify the **--encrypt** command-line argument
 along with either the encryption key or the name of the file that contains the encryption key.
 AES-256 is used. If you import files using encryption, you must also specify encryption for
 playing. To use encryption, you must have the **pycrypto** module installed.
