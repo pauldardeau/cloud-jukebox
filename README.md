@@ -117,12 +117,17 @@ Compression is supported through the use of the **zlib** module. To enable it, y
 the **--compress** command-line argument. If you import files using compression, you must also
 specify compression for playing.
 
+Compression is not needed for audio files, as they're already compressed. This functionality
+may be useful for other types of files.
+
 Encryption
 ----------
 **AES** encryption is supported. To enable it, you must specify the **--encrypt** command-line argument
 along with either the encryption key or the name of the file that contains the encryption key.
 AES-256 is used. If you import files using encryption, you must also specify encryption for
 playing. To use encryption, you must have the **pycrypto** module installed.
+
+Encryption is probably not desired for song files, but may be desired for other types of files.
 
 Examples:
 
