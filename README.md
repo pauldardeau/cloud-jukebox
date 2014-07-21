@@ -33,6 +33,11 @@ The cloud jukebox must have a storage system for data storage. Either **Swift** 
 ####Encryption Dependencies####
 * pycrypto  `pip install pycrypto`
 
+Configuration
+-------------
+You must enter your credentials for Swift or Amazon S3. If you're using Swift, update
+the values in **swift_creds.txt.  If you're using S3, update the values in **s3_creds.txt**.
+
 Song Metadata
 -------------
 Song metadata is stored in **SQLite**. This SQLite metadata database is stored in cloud
