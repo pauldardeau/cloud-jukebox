@@ -37,6 +37,10 @@ the playing of the song.
 
 Run the command: `python jukebox.py play`
 
+For playback, the downloaded songs will be stored locally in the **playlist** subdirectory. This
+directory will be automatically created. Once playback of a song is complete, the song file is
+deleted from this directory.
+
 File Cache Count
 ----------------
 When playback is started, the first song file is download and then playback begins.  Subsequent
