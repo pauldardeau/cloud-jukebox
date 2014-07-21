@@ -66,6 +66,7 @@ jukebox is set to use Swift storage.  To explicitly specify the storage type, pa
 command-line option along with **'swift'** or **'s3'**.
 
 Examples:
+
     python jukebox.py --storage s3 play
     python jukebox.py --storage swift play
 
