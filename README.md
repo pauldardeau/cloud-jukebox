@@ -6,8 +6,8 @@ Cloud jukebox in python
 Overview
 --------
 This repo is python code that implements a music player where the songs are stored
-in the cloud. Currently, the songs may be stored in either Swift (https://wiki.openstack.org/wiki/Swift)
-or in Amazon's S3. Although the implementation is centered around audio files, most
+in the cloud. Currently, the songs may be stored in either **Swift** (https://wiki.openstack.org/wiki/Swift)
+or in **Amazon S3**. Although the implementation is centered around audio files, most
 of the code and functionality could easily be used for storing any kind of file. This
 is why compression and encryption functionality is included (compression is not
 needed for audio files such as MP3 files as they're already compressed, and most
@@ -24,7 +24,7 @@ automatically be downloaded from cloud storage.
 
 Importing Songs
 ---------------
-1. Create a subdirectory named 'import'
+1. Create a subdirectory named **'import'**
 2. Copy your MP3 files into the import directory
 3. Run the command `python jukeboxy.py import`
 
@@ -66,8 +66,8 @@ jukebox is set to use Swift storage.  To explicitly specify the storage type, pa
 command-line option along with **'swift'** or **'s3'**.
 
 Examples:
-`python jukebox.py --storage s3 play`
-`python jukebox.py --storage swift play`
+    python jukebox.py --storage s3 play
+    python jukebox.py --storage swift play
 
 Compression
 -----------
@@ -83,6 +83,7 @@ AES-256 is used. If you import files using encryption, you must also specify enc
 playing. To use encryption, you must have the **pycrypto** module installed.
 
 Examples:
+
     python jukebox.py --encrypt --key SK34slk3032u91 import
     python jukebox.py --encrypt --keyfile keyfile.txt import
 
