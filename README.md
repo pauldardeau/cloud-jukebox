@@ -33,13 +33,13 @@ File Cache Count
 When playback is started, the first song file is download and then playback begins.  Subsequent
 song files are downloaded as a batch in the background. The number of files that are downloaded
 at once is configurable. By default, 3 files are downloaded together. To change this value, use
-the --file-cache-count command-line argument with the desired value.
+the **--file-cache-count** command-line argument with the desired value.
 
 Example: `python jukebox.py --file-cache-count 10 play`
 
 Integrity Checks
 ----------------
-Integrity checking is an option that can be enabled with the --integrity-checks command-line
+Integrity checking is an option that can be enabled with the **--integrity-checks** command-line
 argument. When integrity checking is enabled, an MD5 hash of the file will be captured during
 import of songs and will be stored with the song's metadata. If the option is also turned on
 for playing, the MD5 hash of the downloaded file will be checked against the one that was
@@ -48,9 +48,9 @@ calculated on import to verify file integrity.
 Storage Type
 ------------
 The cloud jukebox supports **Swift** and **Amazon S3** for storage of audio files.  Put your Swift
-credentials in swift_creds.txt.  Put your S3 credentials in s3_creds.txt.  By default, the cloud
-jukebox is set to use Swift storage.  To explicitly specify the storage type, pass the --storage
-command-line option along with 'swift' or 's3'.
+credentials in **swift_creds.txt**.  Put your S3 credentials in **s3_creds.txt**.  By default, the cloud
+jukebox is set to use Swift storage.  To explicitly specify the storage type, pass the **--storage**
+command-line option along with **'swift'** or **'s3'**.
 
 Examples:
 `python jukebox.py --storage s3 play`
@@ -59,12 +59,12 @@ Examples:
 Compression
 -----------
 Compression is supported through the use of the zlib module. To enable it, you must specify
-the --compress command-line argument. If you import files using compression, you must also
+the **--compress** command-line argument. If you import files using compression, you must also
 specify compression for playing.
 
 Encryption
 ----------
-AES encryption is supported. To enable it, you must specify the --encrypt command-line argument
+AES encryption is supported. To enable it, you must specify the **--encrypt** command-line argument
 along with either the encryption key or the name of the file that contains the encryption key.
 AES-256 is used. If you import files using encryption, you must also specify encryption for
 playing. To use encryption, you must have the **pycrypto** module installed.
@@ -87,5 +87,5 @@ Run `python jukebox.py list-containers`
 
 Debugging
 ---------
-Pass the --debug command-line argument to enable debugging mode where detailed information
+Pass the **--debug** command-line argument to enable debugging mode where detailed information
 will be printed.
