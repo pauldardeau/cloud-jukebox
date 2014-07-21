@@ -16,18 +16,18 @@ people wouldn't be interested in encrypting their song files).
 Dependencies/Prerequisites
 --------------------------
 ###Storage###
-The cloud jukebox must have a storage system for data storage. Either Swift or
-Amazon S3 can be used.
+The cloud jukebox must have a storage system for data storage. Either **Swift** or
+**Amazon S3** can be used.
 
 ####Swift Dependencies####
-* swiftclient `pip install python-swiftclient`
+* swiftclient  `pip install python-swiftclient`
 
 ####Amazon S3 Dependencies####
-* boto `pip install boto`
+* boto  `pip install boto`
 
 ###Optional###
 ####Encryption Dependencies####
-* pycrypto (tested with version 2.6.1)
+* pycrypto  `pip install pycrypto`
 
 Song Metadata
 -------------
