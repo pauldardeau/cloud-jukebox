@@ -323,11 +323,10 @@ class Jukebox:
 
     @staticmethod
     def md5_for_file(path_to_file):
-        f = open(path_to_file, mode='rb')
-        d = hashlib.md5()
-        for buf in f.read(4096):
-            d.update(buf)
-        f.close()
+        with open(path_to_file, mode='rb') as f:
+            d = hashlib.md5()
+            for buf in f.read(4096):
+                d.update(buf)
         return d.hexdigest()
 
     def store_song_metadata(self, fs_song_info):
