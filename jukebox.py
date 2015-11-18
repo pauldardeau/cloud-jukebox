@@ -804,6 +804,9 @@ class Jukebox:
             elif os.name == "posix":
                 self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
                 self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
+            elif sys.platform == 'win32':
+                 wmplayer_cmd = "c:\Program Files\Windows Media Player\wmplayer.exe" 
+                 self.audio_player_command_args = [wmplayer_cmd]
             else:
                 self.audio_player_command_args = []
 
