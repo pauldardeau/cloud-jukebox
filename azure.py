@@ -11,8 +11,6 @@ try:
 except ImportError:
     _storage_system_azure_supported = False
 
-from storage_system import StorageSystem
-
 
 def is_available():
     return _storage_system_azure_supported
