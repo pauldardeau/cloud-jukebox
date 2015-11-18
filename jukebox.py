@@ -88,7 +88,7 @@ class Jukebox:
 
     def __enter__(self):
         # look for stored metadata in the storage system
-        if self.storage_system.has_container(self.metadata_container):
+        if self.storage_system is not None and self.storage_system.has_container(self.metadata_container):
             # metadata container exists, retrieve container listing
             container_contents = self.storage_system.list_container_contents(self.metadata_container)
 
