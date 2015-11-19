@@ -1,12 +1,11 @@
 import os.path
 from StorageSystem import StorageSystem
 
-
 _storage_system_azure_supported = False
-
 
 try:
     from azure.storage import *
+
     _storage_system_azure_supported = True
 except ImportError:
     _storage_system_azure_supported = False
@@ -17,7 +16,6 @@ def is_available():
 
 
 class AzureStorageSystem(StorageSystem):
-   
     def __init__(self, account_name, account_key, container_prefix, debug_mode=False):
         StorageSystem.__init__(self, "Azure", debug_mode)
         self.account_name = account_name
@@ -34,7 +32,7 @@ class AzureStorageSystem(StorageSystem):
         self.set_list_containers(self.list_account_containers())
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exception_type, exception_value, traceback):
         if self.blob_service is not None:
             if self.is_debug_mode():
                 print "closing Azure connection object"
@@ -48,11 +46,11 @@ class AzureStorageSystem(StorageSystem):
             list_container_names = []
             if list_containers is not None:
                 for container in list_containers:
-                    list_container_names.append(self.unprefixed_container(container.name))
+                    list_container_names.append(self.un_prefixed_container(container.name))
 
             return list_container_names
         return None
-      
+
     def create_container(self, container_name):
         container_created = False
         if self.blob_service is not None:
@@ -73,7 +71,7 @@ class AzureStorageSystem(StorageSystem):
         if self.blob_service is not None:
             list_contents = []
             blobs = self.blob_service.list_blobs(self.get_prefixed_container(container_name))
-            
+
             if blobs is not None:
                 for blob in blobs:
                     list_contents.append(blob.name)
@@ -87,8 +85,9 @@ class AzureStorageSystem(StorageSystem):
 
     def add_file(self, container_name, object_name, file_contents, headers=None):
         file_added = False
-        if self.blob_service is not None and container_name is not None and object_name is not None and \
-                file_contents is not None:
+        if self.blob_service is not None and container_name is not None and \
+                object_name is not None and file_contents is not None:
+
             if not self.has_container(container_name):
                 if not self.create_container(container_name):
                     if self.is_debug_mode():
@@ -102,9 +101,9 @@ class AzureStorageSystem(StorageSystem):
             else:
                 if self.is_debug_mode():
                     print "error: unable to store file '%s'" % object_name
-            
+
         return file_added
-      
+
     def delete_file(self, container_name, object_name):
         file_deleted = False
         if self.blob_service is not None and container_name is not None and object_name is not None:
@@ -113,23 +112,24 @@ class AzureStorageSystem(StorageSystem):
                 file_deleted = True
             else:
                 if self.is_debug_mode():
-                    print "error: unable to delete file '%s'" % (object_name)
-            
+                    print "error: unable to delete file '%s'" % object_name
+
         return file_deleted
 
     def retrieve_file(self, container_name, object_name, local_file_path):
         file_bytes_retrieved = 0
-      
-        if self.blob_service is not None and container_name is not None and object_name is not None and local_file_path \
-                is not None:
-            resp = self.blob_service.get_blob_to_path(self.get_prefixed_container(container_name), object_name,
+
+        if self.blob_service is not None and container_name is not None and \
+                object_name is not None and local_file_path is not None:
+
+            resp = self.blob_service.get_blob_to_path(self.get_prefixed_container(container_name),
+                                                      object_name,
                                                       local_file_path)
             if resp is None:
                 if os.path.exists(local_file_path):
                     file_bytes_retrieved = os.path.getsize(local_file_path)
             else:
                 if self.is_debug_mode():
-                    print "error: unable to retrieve file '%s'" % (object_name)
-            
-        return file_bytes_retrieved
+                    print "error: unable to retrieve file '%s'" % object_name
 
+        return file_bytes_retrieved
