@@ -2,25 +2,40 @@ import sqlite3
 import song_file
 
 
-class Jukebox_DB:
-    def __init__(self, metadata_db_file=None, debug_print=False):
+class JukeboxDB:
+    def __init__(self, metadata_db_file_path=None, debug_print=False):
         self.debug_print = debug_print
         self.db_connection = None
-        if metadata_db_file is not None and len(metadata_db_file) > 0:
-            self.metadata_db_file = metadata_db_file
+        if metadata_db_file_path is not None and len(metadata_db_file_path) > 0:
+            self.metadata_db_file_path = metadata_db_file_path
         else:
-            self.metadata_db_file = 'jukebox_db.sqlite3'
+            self.metadata_db_file_path = 'jukebox_db.sqlite3'
+
+    def is_open(self):
+        return self.db_connection is not None
+
+    def open(self):
+        self.close()
+        open_success = False
+        self.db_connection = sqlite3.connect(self.metadata_db_file_path)
+        if self.db_connection is not None:
+            if not self.have_tables():
+                open_success = self.create_tables()
+            else:
+                open_success = True
+        return open_success
+
+    def close(self):
+        if self.db_connection is not None:
+            self.db_connection.close()
+            self.db_connection = None
 
     def __enter__(self):
         # look for stored metadata in the storage system
-        self.db_connection = sqlite3.connect(self.get_metadata_db_file_path())
+        self.db_connection = sqlite3.connect(self.metadata_db_file_path)
         if self.db_connection is not None:
             if self.debug_print:
                 print "have db connection"
-            if not self.have_tables():
-                if not self.create_tables():
-                    print "unable to create tables"
-                    sys.exit(1)
         else:
             print "unable to connect to database"
         return self
@@ -184,7 +199,8 @@ class Jukebox_DB:
             # song is not in the database, insert it
             return self.insert_song_info(fs_song_info)
 
-    def get_sql_where_clause(self, using_encryption=False, using_compression=False):
+    @staticmethod
+    def get_sql_where_clause(using_encryption=False, using_compression=False):
         if using_encryption:
             encryption = 1
         else:
