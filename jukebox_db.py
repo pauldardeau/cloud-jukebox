@@ -1,8 +1,9 @@
 import sqlite3
+import sys
 import song_file
 
 
-class Jukebox_DB:
+class JukeboxDB:
     def __init__(self, metadata_db_file=None, debug_print=False):
         self.debug_print = debug_print
         self.db_connection = None
@@ -184,7 +185,8 @@ class Jukebox_DB:
             # song is not in the database, insert it
             return self.insert_song_info(fs_song_info)
 
-    def get_sql_where_clause(self, using_encryption=False, using_compression=False):
+    @staticmethod
+    def get_sql_where_clause(using_encryption=False, using_compression=False):
         if using_encryption:
             encryption = 1
         else:
