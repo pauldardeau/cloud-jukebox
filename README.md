@@ -49,9 +49,9 @@ automatically be downloaded from cloud storage.
 
 Importing Songs
 ---------------
-1. Create a subdirectory named **'import'**
-2. Copy your MP3 files into the import directory
-3. Run the command `python jukeboxy.py import`
+1. Create a subdirectory named **'song-import'**
+2. Copy your MP3 files into the song-import directory
+3. Run the command `python jukeboxy.py import-songs`
 
 ###Song File Naming Convention###
 
@@ -131,8 +131,8 @@ Encryption is probably not desired for song files, but may be desired for other 
 
 Examples:
 
-    python jukebox.py --encrypt --key SK34slk3032u91 import
-    python jukebox.py --encrypt --keyfile keyfile.txt import
+    python jukebox.py --encrypt --key SK34slk3032u91 import-songs
+    python jukebox.py --encrypt --keyfile keyfile.txt import-songs
 
     python jukebox.py --encrypt --key SK34slk3032u91 play
     python jukebox.py --encrypt --keyfile keyfile.txt play

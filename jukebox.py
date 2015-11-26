@@ -7,7 +7,7 @@
 #
 # This cloud jukebox uses an abstract object storage system.
 # (2) copy this source file to $JUKEBOX
-# (3) create subdirectory for song imports (e.g., mkdir $JUKEBOX/import)
+# (3) create subdirectory for song imports (e.g., mkdir $JUKEBOX/song-import)
 # (4) create subdirectory for playlist (e.g., mkdir $JUKEBOX/playlist)
 #
 # Song file naming convention:
@@ -28,8 +28,8 @@
 #   The-Rolling-Stones--Under-My-Thumb.mp3
 #
 # first time use (or when new songs are added):
-# (1) copy one or more song files to $JUKEBOX/import
-# (2) import songs with command: 'python jukebox.py import'
+# (1) copy one or more song files to $JUKEBOX/song-import
+# (2) import songs with command: 'python jukebox.py import-songs'
 #
 # show song listings:
 # python jukebox.py list-songs
@@ -65,7 +65,7 @@ class Jukebox:
         self.debug_print = debug_print
         self.jukebox_db = None
         self.current_dir = os.getcwd()
-        self.import_dir = os.path.join(self.current_dir, 'import')
+        self.import_dir = os.path.join(self.current_dir, 'song-import')
         self.playlist_dir = os.path.join(self.current_dir, 'playlist')
         self.download_extension = ".download"
         self.metadata_db_file = 'jukebox_db.sqlite3'
@@ -641,7 +641,7 @@ def show_usage():
     print('')
     print('Commands:')
     print('\thelp            - show this help message')
-    print('\timport          - import all new songs in import subdirectory')
+    print('\timport-songs    - import all new songs from song-import subdirectory')
     print('\tlist-songs      - show listing of all available songs')
     print('\tlist-containers - show listing of all available storage containers')
     print('\tplay            - start playing songs')
@@ -841,7 +841,7 @@ if __name__ == '__main__':
         command = args[0]
         if command == 'help' or command == 'usage':
             show_usage()
-        elif command == 'import':
+        elif command == 'import-songs':
             if not options.validate_options():
                 sys.exit(1)
             with connect_storage_system(storage_type,
