@@ -83,7 +83,7 @@ class JukeboxDB:
 
         return have_tables_in_db
 
-    def get_song_info(self, file_name):
+    def get_song(self, file_name):
         if self.db_connection is not None:
             sql = """SELECT filetime,
                   origin_filesize,
@@ -101,41 +101,41 @@ class JukeboxDB:
             cursor.execute(sql, [file_name])
             song_fields = cursor.fetchone()
             if song_fields is not None:
-                song_info = song_file.SongFile()
-                song_info.uid = file_name
-                song_info.file_time = song_fields[0]
-                song_info.origin_file_size = song_fields[1]
-                song_info.stored_file_size = song_fields[2]
-                song_info.pad_char_count = song_fields[3]
-                song_info.artist_name = song_fields[4]
-                song_info.song_name = song_fields[5]
-                song_info.md5 = song_fields[6]
-                song_info.compressed = song_fields[7]
-                song_info.encrypted = song_fields[8]
-                song_info.container = song_fields[9]
-                song_info.object_name = song_fields[10]
-                return song_info
+                song = song_file.SongFile()
+                song.uid = file_name
+                song.file_time = song_fields[0]
+                song.origin_file_size = song_fields[1]
+                song.stored_file_size = song_fields[2]
+                song.pad_char_count = song_fields[3]
+                song.artist_name = song_fields[4]
+                song.song_name = song_fields[5]
+                song.md5 = song_fields[6]
+                song.compressed = song_fields[7]
+                song.encrypted = song_fields[8]
+                song.container = song_fields[9]
+                song.object_name = song_fields[10]
+                return song
         return None
 
-    def insert_song_info(self, song_file_info):
+    def insert_song(self, song_file):
         insert_success = False
 
-        if (self.db_connection is not None) and (song_file_info is not None):
+        if (self.db_connection is not None) and (song_file is not None):
             sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             cursor = self.db_connection.cursor()
-            sfi = song_file_info  # alias to save typing
-            uid = sfi.uid
-            file_time = sfi.file_time
-            origin_file_size = sfi.origin_file_size
-            stored_file_size = sfi.stored_file_size
-            pad_char_count = sfi.pad_char_count
-            artist = sfi.artist_name
-            song = sfi.song_name
-            md5 = sfi.md5
-            compressed = sfi.compressed
-            encrypted = sfi.encrypted
-            container = sfi.container
-            object_name = sfi.object_name
+            sf = song_file  # alias to save typing
+            uid = sf.uid
+            file_time = sf.file_time
+            origin_file_size = sf.origin_file_size
+            stored_file_size = sf.stored_file_size
+            pad_char_count = sf.pad_char_count
+            artist = sf.artist_name
+            song = sf.song_name
+            md5 = sf.md5
+            compressed = sf.compressed
+            encrypted = sf.encrypted
+            container = sf.container
+            object_name = sf.object_name
 
             try:
                 cursor.execute(sql,
@@ -148,10 +148,10 @@ class JukeboxDB:
 
         return insert_success
 
-    def update_song_info(self, song_file_info):
+    def update_song(self, song_file):
         update_success = False
 
-        if (self.db_connection is not None) and (song_file_info is not None) and (len(song_file_info.get_uid()) > 0):
+        if (self.db_connection is not None) and (song_file is not None) and (len(song_file.uid) > 0):
             sql = """UPDATE song SET filetime=?,
                   origin_filesize=?,
                   stored_filesize=?,
@@ -164,19 +164,19 @@ class JukeboxDB:
                   container=?,
                   objectname=? WHERE uid = ?"""
             cursor = self.db_connection.cursor()
-            sfi = song_file_info  # alias to save typing
-            uid = sfi.uid
-            file_time = sfi.file_time
-            origin_file_size = sfi.origin_file_size
-            stored_file_size = sfi.stored_file_size
-            pad_char_count = sfi.pad_char_count
-            artist = sfi.artist_name
-            song = sfi.song_name
-            md5 = sfi.md5
-            compressed = sfi.compressed
-            encrypted = sfi.encrypted
-            container = sfi.container
-            object_name = sfi.object_name
+            sf = song_file  # alias to save typing
+            uid = sf.uid
+            file_time = sf.file_time
+            origin_file_size = sf.origin_file_size
+            stored_file_size = sf.stored_file_size
+            pad_char_count = sf.pad_char_count
+            artist = sf.artist_name
+            song = sf.song_name
+            md5 = sf.md5
+            compressed = sf.compressed
+            encrypted = sf.encrypted
+            container = sf.container
+            object_name = sf.object_name
 
             try:
                 cursor.execute(sql, [file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
@@ -188,16 +188,16 @@ class JukeboxDB:
 
         return update_success
 
-    def store_song_metadata(self, fs_song_info):
-        db_song_info = self.get_song_info(fs_song_info.uid)
-        if db_song_info is not None:
-            if fs_song_info != db_song_info:
-                return self.update_song_info(fs_song_info)
+    def store_song_metadata(self, fs_song):
+        db_song = self.get_song(fs_song.uid)
+        if db_song is not None:
+            if fs_song != db_song:
+                return self.update_song(fs_song)
             else:
                 return True  # no insert or update needed (already up-to-date)
         else:
             # song is not in the database, insert it
-            return self.insert_song_info(fs_song_info)
+            return self.insert_song(fs_song)
 
     @staticmethod
     def get_sql_where_clause(using_encryption=False, using_compression=False):
@@ -239,20 +239,20 @@ class JukeboxDB:
 
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
-                song_info = song_file.SongFile()
-                song_info.uid = row[0]
-                song_info.file_time = row[1]
-                song_info.origin_file_size = row[2]
-                song_info.stored_file_size = row[3]
-                song_info.pad_char_count = row[4]
-                song_info.artist_name = row[5]
-                song_info.song_name = row[6]
-                song_info.md5 = row[7]
-                song_info.compressed = row[8]
-                song_info.encrypted = row[9]
-                song_info.container = row[10]
-                song_info.object_name = row[11]
-                songs.append(song_info)
+                song = song_file.SongFile()
+                song.uid = row[0]
+                song.file_time = row[1]
+                song.origin_file_size = row[2]
+                song.stored_file_size = row[3]
+                song.pad_char_count = row[4]
+                song.artist_name = row[5]
+                song.song_name = row[6]
+                song.md5 = row[7]
+                song.compressed = row[8]
+                song.encrypted = row[9]
+                song.container = row[10]
+                song.object_name = row[11]
+                songs.append(song)
         return songs
 
     def show_listings(self):

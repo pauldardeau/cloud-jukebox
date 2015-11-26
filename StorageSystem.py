@@ -49,26 +49,26 @@ class StorageSystem:
         else:
             self.list_containers = []
 
-    def delete_song_file(self, song_file_info):
-        if song_file_info is not None:
-            sfi = song_file_info
-            return self.delete_file(sfi.container, sfi.object_name)
+    def delete_song_file(self, song_file):
+        if song_file is not None:
+            sf = song_file
+            return self.delete_file(sf.container, sf.object_name)
 
         return False
 
-    def retrieve_song_file(self, song_file_info, local_directory):
-        if song_file_info is not None and local_directory is not None:
-            sfi = song_file_info
-            file_path = os.path.join(local_directory, sfi.uid)
-            return self.retrieve_file(sfi.container, sfi.object_name, file_path)
+    def retrieve_song_file(self, song_file, local_directory):
+        if song_file is not None and local_directory is not None:
+            sf = song_file
+            file_path = os.path.join(local_directory, sf.uid)
+            return self.retrieve_file(sf.container, sf.object_name, file_path)
 
         return False
 
-    def store_song_file(self, song_file_info, file_contents):
-        if song_file_info is not None and file_contents is not None:
-            sfi = song_file_info
-            return self.add_file(sfi.container, sfi.object_name, file_contents,
-                                 sfi.to_dictionary(self.get_metadata_prefix()))
+    def store_song_file(self, song_file, file_contents):
+        if song_file is not None and file_contents is not None:
+            sf = song_file
+            return self.add_file(sf.container, sf.object_name, file_contents,
+                                 sf.to_dictionary(self.get_metadata_prefix()))
 
         return False
 

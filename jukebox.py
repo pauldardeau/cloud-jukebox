@@ -178,16 +178,16 @@ class Jukebox:
                 d.update(buf)
         return d.hexdigest()
 
-    def store_song_metadata(self, fs_song_info):
-        db_song_info = self.jukebox_db. get_song_info(fs_song_info.uid)
-        if db_song_info is not None:
-            if fs_song_info != db_song_info:
-                return self.jukebox_db.update_song_info(fs_song_info)
+    def store_song_metadata(self, fs_song):
+        db_song = self.jukebox_db.get_song(fs_song.uid)
+        if db_song is not None:
+            if fs_song != db_song:
+                return self.jukebox_db.update_song(fs_song)
             else:
                 return 1  # no insert or update needed (already up-to-date)
         else:
             # song is not in the database, insert it
-            return self.jukebox_db.insert_song_info(fs_song_info)
+            return self.jukebox_db.insert_song(fs_song)
 
     def get_encryptor(self):
         # key_block_size = 16  # AES-128
@@ -251,17 +251,17 @@ class Jukebox:
                         artist = self.artist_from_file_name(file_name)
                         if file_size > 0 and artist is not None:
                             object_name = file_name + appended_file_ext
-                            fs_song_info = song_file.SongFile()
-                            fs_song_info.uid = object_name
-                            fs_song_info.origin_file_size = file_size
-                            fs_song_info.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
-                            fs_song_info.artist_name = artist
-                            fs_song_info.song_name = self.song_from_file_name(file_name)
-                            fs_song_info.md5 = self.md5_for_file(full_path)
-                            fs_song_info.compressed = self.jukebox_options.use_compression
-                            fs_song_info.encrypted = self.jukebox_options.use_encryption
-                            fs_song_info.object_name = object_name
-                            fs_song_info.pad_char_count = 0
+                            fs_song = song_file.SongFile()
+                            fs_song.uid = object_name
+                            fs_song.origin_file_size = file_size
+                            fs_song.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+                            fs_song.artist_name = artist
+                            fs_song.song_name = self.song_from_file_name(file_name)
+                            fs_song.md5 = self.md5_for_file(full_path)
+                            fs_song.compressed = self.jukebox_options.use_compression
+                            fs_song.encrypted = self.jukebox_options.use_encryption
+                            fs_song.object_name = object_name
+                            fs_song.pad_char_count = 0
 
                             # get first letter of artist name, ignoring 'A ' and 'The '
                             if artist.startswith('A '):
@@ -272,7 +272,7 @@ class Jukebox:
                                 artist_letter = artist[0:1]
 
                             container = artist_letter.lower() + container_suffix
-                            fs_song_info.container = container
+                            fs_song.container = container
 
                             # read file contents
                             file_read = False
@@ -307,19 +307,19 @@ class Jukebox:
                                                 print "padding file for encryption"
                                             num_pad_chars = 16 - num_extra_chars
                                             file_contents += "".ljust(num_pad_chars, ' ')
-                                            fs_song_info.pad_char_count = num_pad_chars
+                                            fs_song.pad_char_count = num_pad_chars
 
                                         cipher_text = encryption.encrypt(file_contents)
                                         file_contents = cipher_text
 
                                 # now that we have the data that will be stored, set the file size for
                                 # what's being stored
-                                fs_song_info.stored_file_size = len(file_contents)
+                                fs_song.stored_file_size = len(file_contents)
 
                                 start_upload_time = time.time()
 
                                 # store song file to storage system
-                                if self.storage_system.store_song_file(fs_song_info, file_contents):
+                                if self.storage_system.store_song_file(fs_song, file_contents):
 
                                     end_upload_time = time.time()
                                     upload_elapsed_time = end_upload_time - start_upload_time
@@ -327,12 +327,12 @@ class Jukebox:
                                     cumulative_upload_bytes += len(file_contents)
 
                                     # store song metadata in local database
-                                    if not self.store_song_metadata(fs_song_info):
+                                    if not self.store_song_metadata(fs_song):
                                         # we stored the song to the storage system, but were unable to store
                                         # the metadata in the local database. we need to delete the song
                                         # from the storage system since we won't have any way to access it
                                         # since we can't store the song metadata locally.
-                                        self.storage_system.delete_song_file(fs_song_info)
+                                        self.storage_system.delete_song_file(fs_song)
                                     else:
                                         file_import_count += 1
 
@@ -387,26 +387,26 @@ class Jukebox:
                 cumulative_upload_kb = cumulative_upload_bytes / 1000.0
                 print "average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time))
 
-    def song_path_in_playlist(self, song_info):
-        return os.path.join(self.playlist_dir, song_info.uid)
+    def song_path_in_playlist(self, song):
+        return os.path.join(self.playlist_dir, song.uid)
 
-    def check_file_integrity(self, song_info):
+    def check_file_integrity(self, song):
         file_integrity_passed = True
 
         if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
-            file_path = self.song_path_in_playlist(song_info)
+            file_path = self.song_path_in_playlist(song)
             if os.path.exists(file_path):
                 if self.debug_print:
-                    print "checking integrity for %s" % song_info.uid
+                    print "checking integrity for %s" % song.uid
 
                 playlist_md5 = self.md5_for_file(file_path)
-                if playlist_md5 == song_info.md5:
+                if playlist_md5 == song.md5:
                     if self.debug_print:
                         print "integrity check SUCCESS"
 
                     file_integrity_passed = True
                 else:
-                    print "file integrity check failed: %s" % song_info.uid
+                    print "file integrity check failed: %s" % song.uid
                     file_integrity_passed = False
             else:
                 # file doesn't exist
@@ -430,11 +430,11 @@ class Jukebox:
         self.cumulative_download_bytes = 0
         self.cumulative_download_time = 0
 
-    def download_song(self, song_info):
-        if song_info is not None:
-            file_path = self.song_path_in_playlist(song_info)
+    def download_song(self, song):
+        if song is not None:
+            file_path = self.song_path_in_playlist(song)
             download_start_time = time.time()
-            song_bytes_retrieved = self.storage_system.retrieve_song_file(song_info, self.playlist_dir)
+            song_bytes_retrieved = self.storage_system.retrieve_song_file(song, self.playlist_dir)
 
             if self.debug_print:
                 print "bytes retrieved: %s" % song_bytes_retrieved
@@ -451,13 +451,13 @@ class Jukebox:
                     if self.debug_print:
                         print "verifying data integrity"
 
-                    if song_bytes_retrieved != song_info.stored_file_size:
+                    if song_bytes_retrieved != song.stored_file_size:
                         print "error: data integrity check failed for '%s'" % file_path
                         return False
 
                 # is it encrypted? if so, unencrypt it
-                encrypted = song_info.encrypted
-                compressed = song_info.compressed
+                encrypted = song.encrypted
+                compressed = song.compressed
 
                 if encrypted or compressed:
                     try:
@@ -484,7 +484,7 @@ class Jukebox:
                         print "error: unable to write unencrypted/uncompressed file '%s'" % file_path
                         return False
 
-                if self.check_file_integrity(song_info):
+                if self.check_file_integrity(song):
                     return True
                 else:
                     # we retrieved the file, but it failed our integrity check
