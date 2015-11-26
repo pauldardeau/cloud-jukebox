@@ -78,7 +78,7 @@ class Jukebox:
         self.cumulative_download_bytes = 0
         self.cumulative_download_time = 0
 
-        if jb_options is not None and jb_options.get_debug_mode():
+        if jb_options is not None and jb_options.debug_mode:
             self.debug_print = True
 
         if self.debug_print:
@@ -179,7 +179,7 @@ class Jukebox:
         return d.hexdigest()
 
     def store_song_metadata(self, fs_song_info):
-        db_song_info = self.jukebox_db. get_song_info(fs_song_info.get_uid())
+        db_song_info = self.jukebox_db. get_song_info(fs_song_info.uid)
         if db_song_info is not None:
             if fs_song_info != db_song_info:
                 return self.jukebox_db.update_song_info(fs_song_info)
@@ -193,8 +193,8 @@ class Jukebox:
         # key_block_size = 16  # AES-128
         # key_block_size = 24  # AES-192
         key_block_size = 32  # AES-256
-        return aes.AESBlockEncryption(key_block_size, self.jukebox_options.get_encryption_key(),
-                                      self.jukebox_options.get_encryption_iv())
+        return aes.AESBlockEncryption(key_block_size, self.jukebox_options.encryption_key,
+                                      self.jukebox_options.encryption_iv)
 
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
@@ -217,8 +217,8 @@ class Jukebox:
             encryption = None
 
             if self.jukebox_options is not None:
-                encrypting = self.jukebox_options.get_use_encryption()
-                compressing = self.jukebox_options.get_use_compression()
+                encrypting = self.jukebox_options.use_encryption
+                compressing = self.jukebox_options.use_compression
                 if encrypting:
                     encryption = self.get_encryptor()
 
@@ -252,16 +252,16 @@ class Jukebox:
                         if file_size > 0 and artist is not None:
                             object_name = file_name + appended_file_ext
                             fs_song_info = song_file.SongFile()
-                            fs_song_info.set_uid(object_name)
-                            fs_song_info.set_origin_file_size(file_size)
-                            fs_song_info.set_file_time(datetime.datetime.fromtimestamp(os.path.getmtime(full_path)))
-                            fs_song_info.set_artist_name(artist)
-                            fs_song_info.set_song_name(self.song_from_file_name(file_name))
-                            fs_song_info.set_md5(self.md5_for_file(full_path))
-                            fs_song_info.set_compressed(self.jukebox_options.get_use_compression())
-                            fs_song_info.set_encrypted(self.jukebox_options.get_use_encryption())
-                            fs_song_info.set_object_name(object_name)
-                            fs_song_info.set_pad_char_count(0)
+                            fs_song_info.uid = object_name
+                            fs_song_info.origin_file_size = file_size
+                            fs_song_info.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
+                            fs_song_info.artist_name = artist
+                            fs_song_info.song_name = self.song_from_file_name(file_name)
+                            fs_song_info.md5 = self.md5_for_file(full_path)
+                            fs_song_info.compressed = self.jukebox_options.use_compression
+                            fs_song_info.encrypted = self.jukebox_options.use_encryption
+                            fs_song_info.object_name = object_name
+                            fs_song_info.pad_char_count = 0
 
                             # get first letter of artist name, ignoring 'A ' and 'The '
                             if artist.startswith('A '):
@@ -272,7 +272,7 @@ class Jukebox:
                                 artist_letter = artist[0:1]
 
                             container = artist_letter.lower() + container_suffix
-                            fs_song_info.set_container(container)
+                            fs_song_info.container = container
 
                             # read file contents
                             file_read = False
@@ -307,14 +307,14 @@ class Jukebox:
                                                 print "padding file for encryption"
                                             num_pad_chars = 16 - num_extra_chars
                                             file_contents += "".ljust(num_pad_chars, ' ')
-                                            fs_song_info.set_pad_char_count(num_pad_chars)
+                                            fs_song_info.pad_char_count = num_pad_chars
 
                                         cipher_text = encryption.encrypt(file_contents)
                                         file_contents = cipher_text
 
                                 # now that we have the data that will be stored, set the file size for
                                 # what's being stored
-                                fs_song_info.set_stored_file_size(len(file_contents))
+                                fs_song_info.stored_file_size = len(file_contents)
 
                                 start_upload_time = time.time()
 
@@ -388,25 +388,25 @@ class Jukebox:
                 print "average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time))
 
     def song_path_in_playlist(self, song_info):
-        return os.path.join(self.playlist_dir, song_info.get_uid())
+        return os.path.join(self.playlist_dir, song_info.uid)
 
     def check_file_integrity(self, song_info):
         file_integrity_passed = True
 
-        if self.jukebox_options is not None and self.jukebox_options.get_check_data_integrity():
+        if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
             file_path = self.song_path_in_playlist(song_info)
             if os.path.exists(file_path):
                 if self.debug_print:
-                    print "checking integrity for %s" % (song_info.get_uid())
+                    print "checking integrity for %s" % (song_info.uid)
 
                 playlist_md5 = self.md5_for_file(file_path)
-                if playlist_md5 == song_info.get_md5():
+                if playlist_md5 == song_info.md5:
                     if self.debug_print:
                         print "integrity check SUCCESS"
 
                     file_integrity_passed = True
                 else:
-                    print "file integrity check failed: %s" % (song_info.get_uid())
+                    print "file integrity check failed: %s" % (song_info.uid)
                     file_integrity_passed = False
             else:
                 # file doesn't exist
@@ -447,17 +447,17 @@ class Jukebox:
 
                 # are we checking data integrity?
                 # if so, verify that the storage system retrieved the same length that has been stored
-                if self.jukebox_options is not None and self.jukebox_options.get_check_data_integrity():
+                if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
                     if self.debug_print:
                         print "verifying data integrity"
 
-                    if song_bytes_retrieved != song_info.get_stored_file_size():
+                    if song_bytes_retrieved != song_info.stored_file_size:
                         print "error: data integrity check failed for '%s'" % file_path
                         return False
 
                 # is it encrypted? if so, unencrypt it
-                encrypted = song_info.get_encrypted()
-                compressed = song_info.get_compressed()
+                encrypted = song_info.encrypted
+                compressed = song_info.compressed
 
                 if encrypted or compressed:
                     try:
@@ -537,7 +537,7 @@ class Jukebox:
                 if len(extension) > 0 and extension != self.download_extension:
                     song_file_count += 1
 
-        file_cache_count = self.jukebox_options.get_file_cache_count()
+        file_cache_count = self.jukebox_options.file_cache_count
 
         if song_file_count < file_cache_count:
             dl_songs = []
@@ -837,7 +837,7 @@ if __name__ == '__main__':
 
         enc_iv = "sw4mpb1ts.juk3b0x"
 
-        jukeboxOptions.set_encryption_iv(enc_iv)
+        jukeboxOptions.encryption_iv = enc_iv
 
         command = args[0]
 

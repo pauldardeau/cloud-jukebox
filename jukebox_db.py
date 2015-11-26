@@ -102,18 +102,18 @@ class JukeboxDB:
             song_fields = cursor.fetchone()
             if song_fields is not None:
                 song_info = song_file.SongFile()
-                song_info.set_uid(file_name)
-                song_info.set_file_time(song_fields[0])
-                song_info.set_origin_file_size(song_fields[1])
-                song_info.set_stored_file_size(song_fields[2])
-                song_info.set_pad_char_count(song_fields[3])
-                song_info.set_artist_name(song_fields[4])
-                song_info.set_song_name(song_fields[5])
-                song_info.set_md5(song_fields[6])
-                song_info.set_compressed(song_fields[7])
-                song_info.set_encrypted(song_fields[8])
-                song_info.set_container(song_fields[9])
-                song_info.set_object_name(song_fields[10])
+                song_info.uid = file_name
+                song_info.file_time = song_fields[0]
+                song_info.origin_file_size = song_fields[1]
+                song_info.stored_file_size = song_fields[2]
+                song_info.pad_char_count = song_fields[3]
+                song_info.artist_name = song_fields[4]
+                song_info.song_name = song_fields[5]
+                song_info.md5 = song_fields[6]
+                song_info.compressed = song_fields[7]
+                song_info.encrypted = song_fields[8]
+                song_info.container = song_fields[9]
+                song_info.object_name = song_fields[10]
                 return song_info
         return None
 
@@ -124,18 +124,18 @@ class JukeboxDB:
             sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             cursor = self.db_connection.cursor()
             sfi = song_file_info  # alias to save typing
-            uid = sfi.get_uid()
-            file_time = sfi.get_file_time()
-            origin_file_size = sfi.get_origin_file_size()
-            stored_file_size = sfi.get_stored_file_size()
-            pad_char_count = sfi.get_pad_char_count()
-            artist = sfi.get_artist_name()
-            song = sfi.get_song_name()
-            md5 = sfi.get_md5()
-            compressed = sfi.get_compressed()
-            encrypted = sfi.get_encrypted()
-            container = sfi.get_container()
-            object_name = sfi.get_object_name()
+            uid = sfi.uid
+            file_time = sfi.file_time
+            origin_file_size = sfi.origin_file_size
+            stored_file_size = sfi.stored_file_size
+            pad_char_count = sfi.pad_char_count
+            artist = sfi.artist_name
+            song = sfi.song_name
+            md5 = sfi.md5
+            compressed = sfi.compressed
+            encrypted = sfi.encrypted
+            container = sfi.container
+            object_name = sfi.object_name
 
             try:
                 cursor.execute(sql,
@@ -165,18 +165,18 @@ class JukeboxDB:
                   objectname=? WHERE uid = ?"""
             cursor = self.db_connection.cursor()
             sfi = song_file_info  # alias to save typing
-            uid = sfi.get_uid()
-            file_time = sfi.get_file_time()
-            origin_file_size = sfi.get_origin_file_size()
-            stored_file_size = sfi.get_stored_file_size()
-            pad_char_count = sfi.get_pad_char_count()
-            artist = sfi.get_artist_name()
-            song = sfi.get_song_name()
-            md5 = sfi.get_md5()
-            compressed = sfi.get_compressed()
-            encrypted = sfi.get_encrypted()
-            container = sfi.get_container()
-            object_name = sfi.get_object_name()
+            uid = sfi.uid
+            file_time = sfi.file_time
+            origin_file_size = sfi.origin_file_size
+            stored_file_size = sfi.stored_file_size
+            pad_char_count = sfi.pad_char_count
+            artist = sfi.artist_name
+            song = sfi.song_name
+            md5 = sfi.md5
+            compressed = sfi.compressed
+            encrypted = sfi.encrypted
+            container = sfi.container
+            object_name = sfi.object_name
 
             try:
                 cursor.execute(sql, [file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
@@ -189,7 +189,7 @@ class JukeboxDB:
         return update_success
 
     def store_song_metadata(self, fs_song_info):
-        db_song_info = self.get_song_info(fs_song_info.get_uid())
+        db_song_info = self.get_song_info(fs_song_info.uid)
         if db_song_info is not None:
             if fs_song_info != db_song_info:
                 return self.update_song_info(fs_song_info)
@@ -240,18 +240,18 @@ class JukeboxDB:
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 song_info = song_file.SongFile()
-                song_info.set_uid(row[0])
-                song_info.set_file_time(row[1])
-                song_info.set_origin_file_size(row[2])
-                song_info.set_stored_file_size(row[3])
-                song_info.set_pad_char_count(row[4])
-                song_info.set_artist_name(row[5])
-                song_info.set_song_name(row[6])
-                song_info.set_md5(row[7])
-                song_info.set_compressed(row[8])
-                song_info.set_encrypted(row[9])
-                song_info.set_container(row[10])
-                song_info.set_object_name(row[11])
+                song_info.uid = row[0]
+                song_info.file_time = row[1]
+                song_info.origin_file_size = row[2]
+                song_info.stored_file_size = row[3]
+                song_info.pad_char_count = row[4]
+                song_info.artist_name = row[5]
+                song_info.song_name = row[6]
+                song_info.md5 = row[7]
+                song_info.compressed = row[8]
+                song_info.encrypted = row[9]
+                song_info.container = row[10]
+                song_info.object_name = row[11]
                 songs.append(song_info)
         return songs
 
