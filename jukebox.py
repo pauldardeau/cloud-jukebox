@@ -82,9 +82,9 @@ class Jukebox:
             self.debug_print = True
 
         if self.debug_print:
-            print "self.currentDir = '%s'" % self.current_dir
-            print "self.importDir = '%s'" % self.import_dir
-            print "self.playlistDir = '%s'" % self.playlist_dir
+            print "self.current_dir = '%s'" % self.current_dir
+            print "self.import_dir = '%s'" % self.import_dir
+            print "self.playlist_dir = '%s'" % self.playlist_dir
 
     def __enter__(self):
         # look for stored metadata in the storage system
@@ -397,7 +397,7 @@ class Jukebox:
             file_path = self.song_path_in_playlist(song_info)
             if os.path.exists(file_path):
                 if self.debug_print:
-                    print "checking integrity for %s" % (song_info.uid)
+                    print "checking integrity for %s" % song_info.uid
 
                 playlist_md5 = self.md5_for_file(file_path)
                 if playlist_md5 == song_info.md5:
@@ -406,7 +406,7 @@ class Jukebox:
 
                     file_integrity_passed = True
                 else:
-                    print "file integrity check failed: %s" % (song_info.uid)
+                    print "file integrity check failed: %s" % song_info.uid
                     file_integrity_passed = False
             else:
                 # file doesn't exist
@@ -619,7 +619,7 @@ class Jukebox:
 
     def show_list_containers(self):
         if self.storage_system is not None:
-            for container_name in self.storage_system.get_list_containers():
+            for container_name in self.storage_system.list_containers:
                 print container_name
 
     def show_listings(self):
@@ -650,14 +650,78 @@ def show_usage():
     print ''
 
 
+def connect_storage_system(system_name, creds, container_prefix, debug_mode=False):
+    if system_name == "swift":
+        if not swift.is_available():
+            print "error: swift is not supported on this system. please install swiftclient first."
+            sys.exit(1)
+
+        swift_auth_host = ""
+        swift_account = ""
+        swift_user = ""
+        swift_password = ""
+        if "swift_auth_host" in creds:
+            swift_auth_host = creds["swift_auth_host"]
+        if "swift_account" in creds:
+            swift_account = creds["swift_account"]
+        if "swift_user" in creds:
+            swift_user = creds["swift_user"]
+        if "swift_password" in creds:
+            swift_password = creds["swift_password"]
+
+        if debug_mode:
+            print "swift_auth_host='%s'" % swift_auth_host
+            print "swift_account='%s'" % swift_account
+            print "swift_user='%s'" % swift_user
+            print "swift_password='%s'" % swift_password
+
+        if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
+            print """error: no swift credentials given. please specify swift_account,
+                  swift_user, and swift_password in """ + creds_file
+            sys.exit(1)
+
+        return swift.SwiftStorageSystem(swift_auth_host,
+                                        swift_account,
+                                        swift_user,
+                                        swift_password,
+                                        debug_mode)
+    elif system_name == "s3":
+        if not s3.is_available():
+            print "error: s3 is not supported on this system. please install boto (s3 client) first."
+            sys.exit(1)
+
+        aws_access_key = ""
+        aws_secret_key = ""
+        if "aws_access_key" in creds:
+            aws_access_key = creds["aws_access_key"]
+        if "aws_secret_key" in creds:
+            aws_secret_key = creds["aws_secret_key"]
+
+        if debug_mode:
+            print "aws_access_key='%s'" % aws_access_key
+            print "aws_secret_key='%s'" % aws_secret_key
+
+        if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
+            print """error: no s3 credentials given. please specify aws_access_key
+                  and aws_secret_key in credentials file"""
+            sys.exit(1)
+        else:
+            return s3.S3StorageSystem(aws_access_key,
+                                      aws_secret_key,
+                                      container_prefix,
+                                      debug_mode)
+    else:
+        return None
+
+
 if __name__ == '__main__':
 
-    isDebugMode = 0
+    debug_mode = False
     swift_system = "swift"
     s3_system = "s3"
-    storageSystem = swift_system
+    storage_type = swift_system
 
-    optParser = optparse.OptionParser()
+    opt_parser = optparse.OptionParser()
 
     optKeyDebug = "debug"
     optKeyFileCacheCount = "fileCacheCount"
@@ -668,16 +732,16 @@ if __name__ == '__main__':
     optKeyEncryptionKeyFile = "encryptionKeyFile"
     optKeyStorageType = "storageType"
 
-    optParser.add_option("--debug", action="store_true", dest=optKeyDebug)
-    optParser.add_option("--file-cache-count", action="store", type="int", dest=optKeyFileCacheCount)
-    optParser.add_option("--integrity-checks", action="store_true", dest=optKeyIntegrityChecks)
-    optParser.add_option("--compress", action="store_true", dest=optKeyCompression)
-    optParser.add_option("--encrypt", action="store_true", dest=optKeyEncryption)
-    optParser.add_option("--key", action="store", type="string", dest=optKeyEncryptionKey)
-    optParser.add_option("--keyfile", action="store", type="string", dest=optKeyEncryptionKeyFile)
-    optParser.add_option("--storage", action="store", type="string", dest=optKeyStorageType)
+    opt_parser.add_option("--debug", action="store_true", dest=optKeyDebug)
+    opt_parser.add_option("--file-cache-count", action="store", type="int", dest=optKeyFileCacheCount)
+    opt_parser.add_option("--integrity-checks", action="store_true", dest=optKeyIntegrityChecks)
+    opt_parser.add_option("--compress", action="store_true", dest=optKeyCompression)
+    opt_parser.add_option("--encrypt", action="store_true", dest=optKeyEncryption)
+    opt_parser.add_option("--key", action="store", type="string", dest=optKeyEncryptionKey)
+    opt_parser.add_option("--keyfile", action="store", type="string", dest=optKeyEncryptionKeyFile)
+    opt_parser.add_option("--storage", action="store", type="string", dest=optKeyStorageType)
 
-    opt, args = optParser.parse_args()
+    opt, args = opt_parser.parse_args()
     stemVar = "opt."
     optValDebug = eval(stemVar + optKeyDebug)
     optValFileCacheCount = eval(stemVar + optKeyFileCacheCount)
@@ -688,44 +752,44 @@ if __name__ == '__main__':
     optValEncryptionKeyFile = eval(stemVar + optKeyEncryptionKeyFile)
     optValStorageType = eval(stemVar + optKeyStorageType)
 
-    jukeboxOptions = jukebox_options.JukeboxOptions()
+    jukebox_options = jukebox_options.JukeboxOptions()
 
     if optValDebug is not None:
-        isDebugMode = 1
-        jukeboxOptions.set_debug_mode(optValDebug)
+        debug_mode = True
+        jukebox_options.debug_mode = optValDebug
 
     if optValFileCacheCount is not None:
-        if isDebugMode:
+        if debug_mode:
             print "setting file cache count=" + repr(optValFileCacheCount)
 
-        jukeboxOptions.set_file_cache_count(optValFileCacheCount)
+        jukebox_options.set_file_cache_count(optValFileCacheCount)
 
     if optValIntegrityChecks is not None:
-        if isDebugMode:
+        if debug_mode:
             print "setting integrity checks on"
 
-        jukeboxOptions.set_check_data_integrity(optValIntegrityChecks)
+        jukebox_options.set_check_data_integrity(optValIntegrityChecks)
 
     if optValCompression is not None:
-        if isDebugMode:
+        if debug_mode:
             print "setting compression on"
 
-        jukeboxOptions.set_use_compression(optValCompression)
+        jukebox_options.set_use_compression(optValCompression)
 
     if optValEncryption is not None:
-        if isDebugMode:
+        if debug_mode:
             print "setting encryption on"
 
-        jukeboxOptions.set_use_encryption(optValEncryption)
+        jukebox_options.set_use_encryption(optValEncryption)
 
     if optValEncryptionKey is not None:
-        if isDebugMode:
+        if debug_mode:
             print "setting encryption key='%s'" % optValEncryptionKey
 
-        jukeboxOptions.set_encryption_key(optValEncryptionKey)
+        jukebox_options.set_encryption_key(optValEncryptionKey)
 
     if optValEncryptionKeyFile is not None:
-        if isDebugMode:
+        if debug_mode:
             print "reading encryption key file='%s'" % optValEncryptionKeyFile
 
         encryptionKey = ''
@@ -738,7 +802,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         if encryptionKey is not None and len(encryptionKey) > 0:
-            jukeboxOptions.set_encryption_key(encryptionKey)
+            jukebox_options.encryption_key = encryptionKey
         else:
             print "error: no key found in file '%s'" % optValEncryptionKeyFile
             sys.exit(1)
@@ -749,40 +813,22 @@ if __name__ == '__main__':
             print "valid values are '%s' and '%s'" % (swift_system, s3_system)
             sys.exit(1)
         else:
-            if isDebugMode:
+            if debug_mode:
                 print "setting storage system to '%s'" % optValStorageType
-            storageSystem = optValStorageType
+            storage_type = optValStorageType
 
     if len(args) > 0:
-        swift_auth_host = "127.0.0.1"
-        swift_account = ""
-        swift_user = ""
-        swift_password = ""
-
-        aws_access_key = ""
-        aws_secret_key = ""
-
         container_prefix = "com.swampbits.jukebox."
 
-        if storageSystem == swift_system:
-            if not swift.is_available():
-                print "error: swift is not supported on this system. please install swiftclient first."
-                sys.exit(1)
-        elif storageSystem == s3_system:
-            if not s3.is_available():
-                print "error: s3 is not supported on this system. please install boto (s3 client) first."
-                sys.exit(1)
+        if debug_mode:
+            print "using storage system type '%s'" % storage_type
 
-        if isDebugMode:
-            print "using storage system type '%s'" % storageSystem
-
-        creds_file = storageSystem + "_creds.txt"
-        dictCreds = {}
-
+        creds_file = storage_type + "_creds.txt"
+        creds = {}
         creds_file_path = os.path.join(os.getcwd(), creds_file)
 
         if os.path.exists(creds_file_path):
-            if isDebugMode:
+            if debug_mode:
                 print "reading creds file '%s'" % creds_file_path
             try:
                 with open(creds_file, 'r') as input_file:
@@ -792,102 +838,55 @@ if __name__ == '__main__':
                             key, value = line.split("=")
                             key = key.strip()
                             value = value.strip()
-                            dictCreds[key] = value
+                            creds[key] = value
             except IOError:
-                if isDebugMode:
+                if debug_mode:
                     print "error: unable to read file %s" % creds_file_path
         else:
             print "no creds file (%s)" % creds_file_path
 
-        if storageSystem == swift_system:
-            if "swift_auth_host" in dictCreds:
-                swift_auth_host = dictCreds["swift_auth_host"]
-            if "swift_account" in dictCreds:
-                swift_account = dictCreds["swift_account"]
-            if "swift_user" in dictCreds:
-                swift_user = dictCreds["swift_user"]
-            if "swift_password" in dictCreds:
-                swift_password = dictCreds["swift_password"]
-
-            if isDebugMode:
-                print "swift_auth_host='%s'" % swift_auth_host
-                print "swift_account='%s'" % swift_account
-                print "swift_user='%s'" % swift_user
-                print "swift_password='%s'" % swift_password
-
-            if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
-                print """error: no swift credentials given. please specify swift_account,
-                      swift_user, and swift_password in """ + creds_file
-                sys.exit(1)
-
-        elif storageSystem == s3_system:
-            if "aws_access_key" in dictCreds:
-                aws_access_key = dictCreds["aws_access_key"]
-            if "aws_secret_key" in dictCreds:
-                aws_secret_key = dictCreds["aws_secret_key"]
-
-            if isDebugMode:
-                print "aws_access_key='%s'" % aws_access_key
-                print "aws_secret_key='%s'" % aws_secret_key
-
-            if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
-                print """error: no s3 credentials given. please specify aws_access_key
-                      and aws_secret_key in """ + creds_file
-                sys.exit(1)
-
         enc_iv = "sw4mpb1ts.juk3b0x"
-
-        jukeboxOptions.encryption_iv = enc_iv
+        jukebox_options.encryption_iv = enc_iv
 
         command = args[0]
-
         if command == 'help' or command == 'usage':
             show_usage()
         elif command == 'import':
-            if not jukeboxOptions.validate_options():
+            if not jukebox_options.validate_options():
                 sys.exit(1)
 
-            if storageSystem == swift_system:
-                with swift.SwiftStorageSystem(swift_auth_host, swift_account, swift_user, swift_password,
-                                              isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.import_songs()
-            elif storageSystem == s3_system:
-                with s3.S3StorageSystem(aws_access_key, aws_secret_key, container_prefix, isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.import_songs()
+            with connect_storage_system(storage_type,
+                                        creds,
+                                        container_prefix,
+                                        debug_mode) as storage_system:
+                with Jukebox(jukebox_options, storage_system) as jukebox:
+                    jukebox.import_songs()
         elif command == 'play':
-            if not jukeboxOptions.validate_options():
+            if not jukebox_options.validate_options():
                 sys.exit(1)
 
-            if storageSystem == swift_system:
-                with swift.SwiftStorageSystem(swift_auth_host, swift_account, swift_user, swift_password,
-                                              isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.play_songs()
-            elif storageSystem == s3_system:
-                with s3.S3StorageSystem(aws_access_key, aws_secret_key, container_prefix, isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.play_songs()
+            with connect_storage_system(storage_type,
+                                        creds,
+                                        container_prefix,
+                                        debug_mode) as storage_system:
+                with Jukebox(jukebox_options, storage_system) as jukebox:
+                    jukebox.play_songs()
         elif command == 'list-songs':
-            if not jukeboxOptions.validate_options():
+            if not jukebox_options.validate_options():
                 sys.exit(1)
 
-            with Jukebox(jukeboxOptions, None) as jukebox:
+            with Jukebox(jukebox_options, None) as jukebox:
                 jukebox.show_listings()
         elif command == 'list-containers':
-            if not jukeboxOptions.validate_options():
+            if not jukebox_options.validate_options():
                 sys.exit(1)
 
-            if storageSystem == swift_system:
-                with swift.SwiftStorageSystem(swift_auth_host, swift_account, swift_user, swift_password,
-                                              isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.show_list_containers()
-            elif storageSystem == s3_system:
-                with s3.S3StorageSystem(aws_access_key, aws_secret_key, container_prefix, isDebugMode) as storageSystem:
-                    with Jukebox(jukeboxOptions, storageSystem) as jukebox:
-                        jukebox.show_list_containers()
+            with connect_storage_system(storage_type,
+                                        creds,
+                                        container_prefix,
+                                        debug_mode) as storage_system:
+                with Jukebox(jukebox_options, storage_system) as jukebox:
+                    jukebox.show_list_containers()
         else:
             print "Unrecognized command '%s'" % command
             print ''

@@ -27,21 +27,21 @@ class S3StorageSystem(StorageSystem):
             self.set_container_prefix(container_prefix)
 
     def __enter__(self):
-        if self.is_debug_mode():
+        if self.debug_mode:
             print "attempting to connect to S3"
 
         self.conn = S3Connection(self.aws_access_key, self.aws_secret_key)
-        self.set_authenticated(1)
+        self.authenticated = True
         self.set_list_containers(self.list_account_containers())
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
-            if self.is_debug_mode():
+            if self.debug_mode:
                 print "closing S3 connection object"
 
-            self.set_authenticated(0)
+            self.authenticated = False
             self.set_list_containers([])
             self.conn.close()
             self.conn = None
@@ -66,7 +66,7 @@ class S3StorageSystem(StorageSystem):
         container_created = False
         if self.conn is not None:
             try:
-                self.conn.create_bucket(self.get_prefixed_container(container_name))
+                self.conn.create_bucket(self.prefixed_container(container_name))
                 self.add_container(container_name)
                 container_created = True
             except (boto.exception.S3CreateError, boto.exception.S3ResponseError):
@@ -78,7 +78,7 @@ class S3StorageSystem(StorageSystem):
         container_deleted = False
         if self.conn is not None:
             try:
-                self.conn.delete_bucket(self.get_prefixed_container(container_name))
+                self.conn.delete_bucket(self.prefixed_container(container_name))
                 self.remove_container(container_name)
                 container_deleted = True
             except boto.exception.S3ResponseError:
@@ -89,7 +89,7 @@ class S3StorageSystem(StorageSystem):
     def list_container_contents(self, container_name):
         if self.conn is not None:
             try:
-                container = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                container = self.conn.get_bucket(self.prefixed_container(container_name))
                 rs = container.list()
                 list_contents = []
 
@@ -105,7 +105,7 @@ class S3StorageSystem(StorageSystem):
     def get_file_metadata(self, container_name, object_name):
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 if object_key is not None:
                     pass
@@ -127,7 +127,7 @@ class S3StorageSystem(StorageSystem):
                 self.create_container(container_name)
 
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = Key(bucket)
                 object_key.key = object_name
                 object_key.set_contents_from_string(file_contents)
@@ -142,7 +142,7 @@ class S3StorageSystem(StorageSystem):
 
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 object_key.delete()
                 file_deleted = True
@@ -158,7 +158,7 @@ class S3StorageSystem(StorageSystem):
                 object_name is not None and local_file_path is not None:
 
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 object_key.get_contents_to_filename(local_file_path)
                 if os.path.exists(local_file_path):

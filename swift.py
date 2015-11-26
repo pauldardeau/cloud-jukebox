@@ -26,7 +26,7 @@ class SwiftStorageSystem(StorageSystem):
         self.account = account
         self.username = username
         self.password = password
-        self.set_metadata_prefix("x-meta-")
+        self.metadata_prefix = "x-meta-"
         self.auth_url = ""
 
         if self.auth_ssl:
@@ -42,7 +42,7 @@ class SwiftStorageSystem(StorageSystem):
         self.account_username = "%s:%s" % (self.account, self.username)
 
     def __enter__(self):
-        if self.is_debug_mode():
+        if self.debug_mode:
             print "attempting to connect to swift server at %s" % self.auth_url
 
         self.conn = swiftclient.Connection(
@@ -50,17 +50,17 @@ class SwiftStorageSystem(StorageSystem):
             auth_version=self.auth_version, retries=1)
         dict_headers = self.conn.head_account()
         if dict_headers is not None:
-            self.set_authenticated(True)
+            self.authenticated = True
             self.set_list_containers(self.list_account_containers())
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
-            if self.is_debug_mode():
+            if self.debug_mode:
                 print "closing swift connection object"
 
-            self.set_authenticated(0)
+            self.authenticated = False
             self.set_list_containers([])
             self.conn.close()
             self.conn = None
