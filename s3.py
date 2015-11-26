@@ -28,7 +28,7 @@ class S3StorageSystem(StorageSystem):
 
     def __enter__(self):
         if self.debug_mode:
-            print "attempting to connect to S3"
+            print("attempting to connect to S3")
 
         self.conn = S3Connection(self.aws_access_key, self.aws_secret_key)
         self.authenticated = True
@@ -39,7 +39,7 @@ class S3StorageSystem(StorageSystem):
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
             if self.debug_mode:
-                print "closing S3 connection object"
+                print("closing S3 connection object")
 
             self.authenticated = False
             self.list_containers = None

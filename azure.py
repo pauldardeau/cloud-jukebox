@@ -25,7 +25,7 @@ class AzureStorageSystem(StorageSystem):
 
     def __enter__(self):
         if self.debug_mode:
-            print "attempting to connect to Azure"
+            print("attempting to connect to Azure")
 
         self.blob_service = BlobService(account_name=self.account_name, account_key=self.account_key)
         self.authenticated = True
@@ -35,7 +35,7 @@ class AzureStorageSystem(StorageSystem):
     def __exit__(self, exception_type, exception_value, traceback):
         if self.blob_service is not None:
             if self.debug_mode:
-                print "closing Azure connection object"
+                print("closing Azure connection object")
             self.authenticated = False
             self.list_containers = None
             self.blob_service = None
@@ -91,7 +91,7 @@ class AzureStorageSystem(StorageSystem):
             if not self.has_container(container_name):
                 if not self.create_container(container_name):
                     if self.debug_mode:
-                        print "error: unable to create container '%s'" % container_name
+                        print("error: unable to create container '%s'" % container_name)
                     return False
 
             resp = self.blob_service.put_block_blob_from_bytes(self.prefixed_container(container_name), object_name,
@@ -100,7 +100,7 @@ class AzureStorageSystem(StorageSystem):
                 file_added = True
             else:
                 if self.debug_mode:
-                    print "error: unable to store file '%s'" % object_name
+                    print("error: unable to store file '%s'" % object_name)
 
         return file_added
 
@@ -112,7 +112,7 @@ class AzureStorageSystem(StorageSystem):
                 file_deleted = True
             else:
                 if self.debug_mode:
-                    print "error: unable to delete file '%s'" % object_name
+                    print("error: unable to delete file '%s'" % object_name)
 
         return file_deleted
 
@@ -130,6 +130,6 @@ class AzureStorageSystem(StorageSystem):
                     file_bytes_retrieved = os.path.getsize(local_file_path)
             else:
                 if self.debug_mode:
-                    print "error: unable to retrieve file '%s'" % object_name
+                    print("error: unable to retrieve file '%s'" % object_name)
 
         return file_bytes_retrieved

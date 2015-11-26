@@ -16,21 +16,21 @@ class JukeboxOptions:
 
     def validate_options(self):
         if self.file_cache_count < 0:
-            print "error: file cache count must be non-negative integer value"
+            print("error: file cache count must be non-negative integer value")
             return False
 
         if len(self.encryption_key_file) > 0 and not os.path.isfile(self.encryption_key_file):
-            print "error: encryption key file doesn't exist '%s'" % self.encryption_key_file
+            print("error: encryption key file doesn't exist '%s'" % self.encryption_key_file)
             return False
 
         if self.use_encryption:
             if not aes.is_available():
-                print """encryption support not available. please install Crypto.Cipher for
-                      encryption support (pycrypto-2.6.1)"""
+                print("""encryption support not available. please install Crypto.Cipher for
+                      encryption support (pycrypto-2.6.1)""")
                 return False
 
             if len(self.encryption_key) == 0 and len(self.encryption_key_file) == 0:
-                print "error: encryption key or encryption key file is required for encryption"
+                print("error: encryption key or encryption key file is required for encryption")
                 return False
 
         return True

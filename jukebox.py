@@ -82,9 +82,9 @@ class Jukebox:
             self.debug_print = True
 
         if self.debug_print:
-            print "self.current_dir = '%s'" % self.current_dir
-            print "self.import_dir = '%s'" % self.import_dir
-            print "self.playlist_dir = '%s'" % self.playlist_dir
+            print("self.current_dir = '%s'" % self.current_dir)
+            print("self.import_dir = '%s'" % self.import_dir)
+            print("self.playlist_dir = '%s'" % self.playlist_dir)
 
     def __enter__(self):
         # look for stored metadata in the storage system
@@ -105,7 +105,7 @@ class Jukebox:
                         os.remove(metadata_db_file_path)
                     # rename downloaded file
                     if self.debug_print:
-                        print "renaming '%s' to '%s'" % (download_file, metadata_db_file_path)
+                        print("renaming '%s' to '%s'" % (download_file, metadata_db_file_path))
                     os.rename(download_file, metadata_db_file_path)
                 else:
                     if self.debug_print:
@@ -277,7 +277,7 @@ class Jukebox:
                                     file_contents = content_file.read()
                                 file_read = True
                             except IOError:
-                                print "error: unable to read file %s" % full_path
+                                print("error: unable to read file %s" % full_path)
 
                             if file_read and file_contents is not None:
                                 if len(file_contents) > 0:
@@ -375,11 +375,11 @@ class Jukebox:
                         else:
                             print("unable to upload metadata db file")
 
-            print "%s song files imported" % file_import_count
+            print("%s song files imported" % file_import_count)
 
             if cumulative_upload_time > 0:
                 cumulative_upload_kb = cumulative_upload_bytes / 1000.0
-                print "average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time))
+                print("average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time)))
 
     def song_path_in_playlist(self, song):
         return os.path.join(self.playlist_dir, song.uid)
@@ -391,7 +391,7 @@ class Jukebox:
             file_path = self.song_path_in_playlist(song)
             if os.path.exists(file_path):
                 if self.debug_print:
-                    print "checking integrity for %s" % song.uid
+                    print("checking integrity for %s" % song.uid)
 
                 playlist_md5 = self.md5_for_file(file_path)
                 if playlist_md5 == song.md5:
@@ -400,7 +400,7 @@ class Jukebox:
 
                     file_integrity_passed = True
                 else:
-                    print "file integrity check failed: %s" % song.uid
+                    print("file integrity check failed: %s" % song.uid)
                     file_integrity_passed = False
             else:
                 # file doesn't exist
@@ -419,8 +419,8 @@ class Jukebox:
     def batch_download_complete(self):
         if self.cumulative_download_time > 0:
             cumulative_download_kb = self.cumulative_download_bytes / 1000.0
-            print "average download throughput = %s KB/sec" % (
-                int(cumulative_download_kb / self.cumulative_download_time))
+            print("average download throughput = %s KB/sec" % (
+                int(cumulative_download_kb / self.cumulative_download_time)))
         self.cumulative_download_bytes = 0
         self.cumulative_download_time = 0
 
@@ -431,7 +431,7 @@ class Jukebox:
             song_bytes_retrieved = self.storage_system.retrieve_song_file(song, self.playlist_dir)
 
             if self.debug_print:
-                print "bytes retrieved: %s" % song_bytes_retrieved
+                print("bytes retrieved: %s" % song_bytes_retrieved)
 
             if song_bytes_retrieved > 0:
                 download_end_time = time.time()
@@ -446,7 +446,7 @@ class Jukebox:
                         print("verifying data integrity")
 
                     if song_bytes_retrieved != song.stored_file_size:
-                        print "error: data integrity check failed for '%s'" % file_path
+                        print("error: data integrity check failed for '%s'" % file_path)
                         return False
 
                 # is it encrypted? if so, unencrypt it
@@ -458,7 +458,7 @@ class Jukebox:
                         with open(file_path, 'rb') as content_file:
                             storage_file_contents = content_file.read()
                     except IOError:
-                        print "error: unable to read file %s" % file_path
+                        print("error: unable to read file %s" % file_path)
                         return False
 
                     file_contents = storage_file_contents
@@ -475,7 +475,7 @@ class Jukebox:
                         with open(file_path, 'wb') as content_file:
                             content_file.write(file_contents)
                     except IOError:
-                        print "error: unable to write unencrypted/uncompressed file '%s'" % file_path
+                        print("error: unable to write unencrypted/uncompressed file '%s'" % file_path)
                         return False
 
                 if self.check_file_integrity(song):
@@ -490,7 +490,7 @@ class Jukebox:
 
     def play_song(self, song_file_path):
         if os.path.exists(song_file_path):
-            print "playing %s" % song_file_path
+            print("playing %s" % song_file_path)
 
             if len(self.audio_player_command_args) > 0:
                 cmd_args = self.audio_player_command_args[:]
@@ -517,7 +517,7 @@ class Jukebox:
             # delete the song file from the play list directory
             os.remove(song_file_path)
         else:
-            print "song file doesn't exist: '%s'" % song_file_path
+            print("song file doesn't exist: '%s'" % song_file_path)
 
     def download_songs(self):
         # scan the play list directory to see if we need to download more songs
@@ -593,7 +593,8 @@ class Jukebox:
                 # we really need command-line support for /play and /close arguments. unfortunately,
                 # this support used to be available in the built-in windows media player, but is
                 # no longer present. maybe a 3rd-party mp3 player would work better here.
-                self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
+                #self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
+                self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close"]
             else:
                 self.audio_player_command_args = []
 
@@ -618,7 +619,7 @@ class Jukebox:
         if self.storage_system is not None:
             if self.storage_system.list_containers is not None:
                 for container_name in self.storage_system.list_containers:
-                    print container_name
+                    print(container_name)
 
     def show_listings(self):
         if self.jukebox_db is not None:
@@ -628,24 +629,24 @@ class Jukebox:
 def show_usage():
     print('Usage: python jukebox.py [options] <command>')
     print('')
-    print 'Options:'
-    print '\t--debug                                - run in debug mode'
-    print '\t--file-cache-count <positive integer>  - specify number of songs to buffer in cache'
-    print '\t--integrity-checks                     - check file integrity after download'
-    print '\t--compress                             - use gzip compression'
-    print '\t--encrypt                              - encrypt file contents'
-    print '\t--key <encryption_key>                 - specify encryption key'
-    print '\t--keyfile <keyfile_path>               - specify path to file containing encryption key'
-    print '\t--storage <storage type>               - specifies storage system type (s3 or swift)'
-    print ''
-    print 'Commands:'
-    print '\thelp            - show this help message'
-    print '\timport          - import all new songs in import subdirectory'
-    print '\tlist-songs      - show listing of all available songs'
-    print '\tlist-containers - show listing of all available storage containers'
-    print '\tplay            - start playing songs'
-    print '\tusage           - show this help message'
-    print ''
+    print('Options:')
+    print('\t--debug                                - run in debug mode')
+    print('\t--file-cache-count <positive integer>  - specify number of songs to buffer in cache')
+    print('\t--integrity-checks                     - check file integrity after download')
+    print('\t--compress                             - use gzip compression')
+    print('\t--encrypt                              - encrypt file contents')
+    print('\t--key <encryption_key>                 - specify encryption key')
+    print('\t--keyfile <keyfile_path>               - specify path to file containing encryption key')
+    print('\t--storage <storage type>               - specifies storage system type (s3 or swift)')
+    print('')
+    print('Commands:')
+    print('\thelp            - show this help message')
+    print('\timport          - import all new songs in import subdirectory')
+    print('\tlist-songs      - show listing of all available songs')
+    print('\tlist-containers - show listing of all available storage containers')
+    print('\tplay            - start playing songs')
+    print('\tusage           - show this help message')
+    print('')
 
 
 def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
@@ -668,14 +669,14 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
             swift_password = credentials["swift_password"]
 
         if in_debug_mode:
-            print "swift_auth_host='%s'" % swift_auth_host
-            print "swift_account='%s'" % swift_account
-            print "swift_user='%s'" % swift_user
-            print "swift_password='%s'" % swift_password
+            print("swift_auth_host='%s'" % swift_auth_host)
+            print("swift_account='%s'" % swift_account)
+            print("swift_user='%s'" % swift_user)
+            print("swift_password='%s'" % swift_password)
 
         if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
-            print """error: no swift credentials given. please specify swift_account,
-                  swift_user, and swift_password in """ + creds_file
+            print("""error: no swift credentials given. please specify swift_account,
+                  swift_user, and swift_password in """ + creds_file)
             sys.exit(1)
 
         return swift.SwiftStorageSystem(swift_auth_host,
@@ -696,12 +697,12 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
             aws_secret_key = credentials["aws_secret_key"]
 
         if in_debug_mode:
-            print "aws_access_key='%s'" % aws_access_key
-            print "aws_secret_key='%s'" % aws_secret_key
+            print("aws_access_key='%s'" % aws_access_key)
+            print("aws_secret_key='%s'" % aws_secret_key)
 
         if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
-            print """error: no s3 credentials given. please specify aws_access_key
-                  and aws_secret_key in credentials file"""
+            print("""error: no s3 credentials given. please specify aws_access_key
+                  and aws_secret_key in credentials file""")
             sys.exit(1)
         else:
             return s3.S3StorageSystem(aws_access_key,
@@ -776,40 +777,40 @@ if __name__ == '__main__':
 
     if optValEncryptionKey is not None:
         if debug_mode:
-            print "setting encryption key='%s'" % optValEncryptionKey
+            print("setting encryption key='%s'" % optValEncryptionKey)
         options.encryption_key = optValEncryptionKey
 
     if optValEncryptionKeyFile is not None:
         if debug_mode:
-            print "reading encryption key file='%s'" % optValEncryptionKeyFile
+            print("reading encryption key file='%s'" % optValEncryptionKeyFile)
         encryption_key = ''
 
         try:
             with open(optValEncryptionKeyFile, 'rt') as key_file:
                 encryption_key = key_file.read().strip()
         except IOError:
-            print "error: unable to read key file '%s'" % optValEncryptionKeyFile
+            print("error: unable to read key file '%s'" % optValEncryptionKeyFile)
             sys.exit(1)
 
         if encryption_key is not None and len(encryption_key) > 0:
             options.encryption_key = encryption_key
         else:
-            print "error: no key found in file '%s'" % optValEncryptionKeyFile
+            print("error: no key found in file '%s'" % optValEncryptionKeyFile)
             sys.exit(1)
 
     if optValStorageType is not None:
         if optValStorageType != swift_system and optValStorageType != s3_system:
-            print "error: invalid storage type '%s'" % optValStorageType
-            print "valid values are '%s' and '%s'" % (swift_system, s3_system)
+            print("error: invalid storage type '%s'" % optValStorageType)
+            print("valid values are '%s' and '%s'" % (swift_system, s3_system))
             sys.exit(1)
         else:
             if debug_mode:
-                print "setting storage system to '%s'" % optValStorageType
+                print("setting storage system to '%s'" % optValStorageType)
             storage_type = optValStorageType
 
     if len(args) > 0:
         if debug_mode:
-            print "using storage system type '%s'" % storage_type
+            print("using storage system type '%s'" % storage_type)
 
         container_prefix = "com.swampbits.jukebox."
         creds_file = storage_type + "_creds.txt"
@@ -818,7 +819,7 @@ if __name__ == '__main__':
 
         if os.path.exists(creds_file_path):
             if debug_mode:
-                print "reading creds file '%s'" % creds_file_path
+                print("reading creds file '%s'" % creds_file_path)
             try:
                 with open(creds_file, 'r') as input_file:
                     for line in input_file.readlines():
@@ -830,9 +831,9 @@ if __name__ == '__main__':
                             creds[key] = value
             except IOError:
                 if debug_mode:
-                    print "error: unable to read file %s" % creds_file_path
+                    print("error: unable to read file %s" % creds_file_path)
         else:
-            print "no creds file (%s)" % creds_file_path
+            print("no creds file (%s)" % creds_file_path)
 
         enc_iv = "sw4mpb1ts.juk3b0x"
         options.encryption_iv = enc_iv
@@ -873,9 +874,9 @@ if __name__ == '__main__':
                 with Jukebox(options, storage_system) as jukebox:
                     jukebox.show_list_containers()
         else:
-            print "Unrecognized command '%s'" % command
-            print ''
+            print("Unrecognized command '%s'" % command)
+            print('')
             show_usage()
     else:
-        print "Error: no command given"
+        print("Error: no command given")
         show_usage()

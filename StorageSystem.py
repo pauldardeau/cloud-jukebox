@@ -69,7 +69,7 @@ class StorageSystem:
                 file_contents = input_file.read()
             return self.add_file(container_name, object_name, file_contents)
         except IOError:
-            print "error: unable to read file %s" % file_path
+            print("error: unable to read file %s" % file_path)
             return False
 
     # @abstractmethod

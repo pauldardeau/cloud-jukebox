@@ -35,9 +35,9 @@ class JukeboxDB:
         self.db_connection = sqlite3.connect(self.metadata_db_file_path)
         if self.db_connection is not None:
             if self.debug_print:
-                print "have db connection"
+                print("have db connection")
         else:
-            print "unable to connect to database"
+            print("unable to connect to database")
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -48,7 +48,7 @@ class JukeboxDB:
     def create_tables(self):
         if self.db_connection is not None:
             if self.debug_print:
-                print "creating tables"
+                print("creating tables")
 
             sql = """CREATE TABLE song (
                   uid text,
@@ -67,7 +67,7 @@ class JukeboxDB:
                 self.db_connection.execute(sql)
                 return True
             except sqlite3.Error as e:
-                print 'error creating table: ' + e.args[0]
+                print('error creating table: ' + e.args[0])
 
         return False 
 
@@ -131,7 +131,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
-                print "error inserting song: " + e.args[0]
+                print("error inserting song: " + e.args[0])
 
         return insert_success
 
@@ -159,7 +159,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
-                print "error updating song: " + e.args[0]
+                print("error updating song: " + e.args[0])
 
         return update_success
 
@@ -239,4 +239,4 @@ class JukeboxDB:
             for row in cursor.execute(sql):
                 artist = row[0]
                 song = row[1]
-                print "%s, %s" % (artist, song)
+                print("%s, %s" % (artist, song))
