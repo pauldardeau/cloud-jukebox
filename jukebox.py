@@ -184,7 +184,7 @@ class Jukebox:
             if fs_song != db_song:
                 return self.jukebox_db.update_song(fs_song)
             else:
-                return 1  # no insert or update needed (already up-to-date)
+                return True  # no insert or update needed (already up-to-date)
         else:
             # song is not in the database, insert it
             return self.jukebox_db.insert_song(fs_song)
