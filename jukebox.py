@@ -155,20 +155,14 @@ class Jukebox:
             components = self.artist_and_song_from_file_name(file_name)
             if components is not None and len(components) == 2:
                 return components[0]
-            else:
-                return None
-        else:
-            return None
+        return None
 
     def song_from_file_name(self, file_name):
         if (file_name is not None) and (len(file_name) > 0):
             components = self.artist_and_song_from_file_name(file_name)
             if len(components) == 2:
                 return components[1]
-            else:
-                return None
-        else:
-            return None
+        return None
 
     @staticmethod
     def md5_for_file(path_to_file):
