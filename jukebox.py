@@ -592,7 +592,7 @@ class Jukebox:
             elif sys.platform == "win32":
                 # we really need command-line support for /play and /close arguments. unfortunately,
                 # this support used to be available in the built-in windows media player, but is
-                # no longer present. maybe a 3rd-party mp3 player would work better here.
+                # no longer present.
                 #self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
                 self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close"]
             else:
