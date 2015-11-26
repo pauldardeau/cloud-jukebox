@@ -24,7 +24,7 @@ class S3StorageSystem(StorageSystem):
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         if container_prefix is not None and len(container_prefix) > 0:
-            self.set_container_prefix(container_prefix)
+            self.container_prefix = container_prefix
 
     def __enter__(self):
         if self.debug_mode:

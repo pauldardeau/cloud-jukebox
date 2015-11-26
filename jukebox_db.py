@@ -117,30 +117,17 @@ class JukeboxDB:
                 return song
         return None
 
-    def insert_song(self, song_file):
+    def insert_song(self, song):
         insert_success = False
 
-        if (self.db_connection is not None) and (song_file is not None):
+        if (self.db_connection is not None) and (song is not None):
             sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             cursor = self.db_connection.cursor()
-            sf = song_file  # alias to save typing
-            uid = sf.uid
-            file_time = sf.file_time
-            origin_file_size = sf.origin_file_size
-            stored_file_size = sf.stored_file_size
-            pad_char_count = sf.pad_char_count
-            artist = sf.artist_name
-            song = sf.song_name
-            md5 = sf.md5
-            compressed = sf.compressed
-            encrypted = sf.encrypted
-            container = sf.container
-            object_name = sf.object_name
-
             try:
                 cursor.execute(sql,
-                               [uid, file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
-                                compressed, encrypted, container, object_name])
+                               [song.uid, song.file_time, song.origin_file_size, song.stored_file_size,
+                                song.pad_char_count, song.artist, song.song, song.md5, song.compressed,
+                                song.encrypted, song.container, song.bject_name])
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
@@ -148,10 +135,10 @@ class JukeboxDB:
 
         return insert_success
 
-    def update_song(self, song_file):
+    def update_song(self, song):
         update_success = False
 
-        if (self.db_connection is not None) and (song_file is not None) and (len(song_file.uid) > 0):
+        if (self.db_connection is not None) and (song is not None) and (len(song.uid) > 0):
             sql = """UPDATE song SET filetime=?,
                   origin_filesize=?,
                   stored_filesize=?,
@@ -164,23 +151,11 @@ class JukeboxDB:
                   container=?,
                   objectname=? WHERE uid = ?"""
             cursor = self.db_connection.cursor()
-            sf = song_file  # alias to save typing
-            uid = sf.uid
-            file_time = sf.file_time
-            origin_file_size = sf.origin_file_size
-            stored_file_size = sf.stored_file_size
-            pad_char_count = sf.pad_char_count
-            artist = sf.artist_name
-            song = sf.song_name
-            md5 = sf.md5
-            compressed = sf.compressed
-            encrypted = sf.encrypted
-            container = sf.container
-            object_name = sf.object_name
 
             try:
-                cursor.execute(sql, [file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
-                                     compressed, encrypted, container, object_name, uid])
+                cursor.execute(sql, [song.file_time, song.origin_file_size, song.stored_file_size, song.pad_char_count,
+                                     song.artist, song.song, song.md5, song.compressed, song.encrypted, song.container,
+                                     song.object_name, song.uid])
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
@@ -188,16 +163,16 @@ class JukeboxDB:
 
         return update_success
 
-    def store_song_metadata(self, fs_song):
-        db_song = self.retrieve_song(fs_song.uid)
+    def store_song_metadata(self, song):
+        db_song = self.retrieve_song(song.uid)
         if db_song is not None:
-            if fs_song != db_song:
-                return self.update_song(fs_song)
+            if song != db_song:
+                return self.update_song(song)
             else:
                 return True  # no insert or update needed (already up-to-date)
         else:
             # song is not in the database, insert it
-            return self.insert_song(fs_song)
+            return self.insert_song(song)
 
     @staticmethod
     def sql_where_clause(using_encryption=False, using_compression=False):

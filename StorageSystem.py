@@ -48,25 +48,19 @@ class StorageSystem:
 
     def delete_song_file(self, song_file):
         if song_file is not None:
-            sf = song_file
-            return self.delete_file(sf.container, sf.object_name)
-
+            return self.delete_file(song_file.container, song_file.object_name)
         return False
 
     def retrieve_song_file(self, song_file, local_directory):
         if song_file is not None and local_directory is not None:
-            sf = song_file
-            file_path = os.path.join(local_directory, sf.uid)
-            return self.retrieve_file(sf.container, sf.object_name, file_path)
-
+            file_path = os.path.join(local_directory, song_file.uid)
+            return self.retrieve_file(song_file.container, song_file.object_name, file_path)
         return False
 
     def store_song_file(self, song_file, file_contents):
         if song_file is not None and file_contents is not None:
-            sf = song_file
-            return self.add_file(sf.container, sf.object_name, file_contents,
-                                 sf.to_dictionary(self.get_metadata_prefix()))
-
+            return self.add_file(song_file.container, song_file.object_name, file_contents,
+                                 song_file.to_dictionary(self.metadata_prefix))
         return False
 
     def add_file_from_path(self, container_name, object_name, file_path):
@@ -109,5 +103,3 @@ class StorageSystem:
     # @abstractmethod
     def retrieve_file(self, container_name, object_name, local_file_path):
         return False
-
-

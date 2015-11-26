@@ -58,10 +58,10 @@ import song_downloader
 
 
 class Jukebox:
-    def __init__(self, jb_options, storage_system, debug_print=False):
+    def __init__(self, jb_options, storage_sys, debug_print=False):
 
         self.jukebox_options = jb_options
-        self.storage_system = storage_system
+        self.storage_system = storage_sys
         self.debug_print = debug_print
         self.jukebox_db = None
         self.current_dir = os.getcwd()
@@ -589,6 +589,11 @@ class Jukebox:
             elif os.name == "posix":
                 self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
                 self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
+            elif sys.platform == "win32":
+                # we really need command-line support for /play and /close arguments. unfortunately,
+                # this support used to be available in the built-in windows media player, but is
+                # no longer present. maybe a 3rd-party mp3 player would work better here.
+                self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
             else:
                 self.audio_player_command_args = []
 
@@ -643,7 +648,7 @@ def show_usage():
     print ''
 
 
-def connect_storage_system(system_name, creds, container_prefix, debug_mode=False):
+def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
     if system_name == "swift":
         if not swift.is_available():
             print("error: swift is not supported on this system. please install swiftclient first.")
@@ -653,16 +658,16 @@ def connect_storage_system(system_name, creds, container_prefix, debug_mode=Fals
         swift_account = ""
         swift_user = ""
         swift_password = ""
-        if "swift_auth_host" in creds:
-            swift_auth_host = creds["swift_auth_host"]
-        if "swift_account" in creds:
-            swift_account = creds["swift_account"]
-        if "swift_user" in creds:
-            swift_user = creds["swift_user"]
-        if "swift_password" in creds:
-            swift_password = creds["swift_password"]
+        if "swift_auth_host" in credentials:
+            swift_auth_host = credentials["swift_auth_host"]
+        if "swift_account" in credentials:
+            swift_account = credentials["swift_account"]
+        if "swift_user" in credentials:
+            swift_user = credentials["swift_user"]
+        if "swift_password" in credentials:
+            swift_password = credentials["swift_password"]
 
-        if debug_mode:
+        if in_debug_mode:
             print "swift_auth_host='%s'" % swift_auth_host
             print "swift_account='%s'" % swift_account
             print "swift_user='%s'" % swift_user
@@ -685,12 +690,12 @@ def connect_storage_system(system_name, creds, container_prefix, debug_mode=Fals
 
         aws_access_key = ""
         aws_secret_key = ""
-        if "aws_access_key" in creds:
-            aws_access_key = creds["aws_access_key"]
-        if "aws_secret_key" in creds:
-            aws_secret_key = creds["aws_secret_key"]
+        if "aws_access_key" in credentials:
+            aws_access_key = credentials["aws_access_key"]
+        if "aws_secret_key" in credentials:
+            aws_secret_key = credentials["aws_secret_key"]
 
-        if debug_mode:
+        if in_debug_mode:
             print "aws_access_key='%s'" % aws_access_key
             print "aws_secret_key='%s'" % aws_secret_key
 
@@ -701,7 +706,7 @@ def connect_storage_system(system_name, creds, container_prefix, debug_mode=Fals
         else:
             return s3.S3StorageSystem(aws_access_key,
                                       aws_secret_key,
-                                      container_prefix,
+                                      prefix,
                                       debug_mode)
     else:
         return None
@@ -743,36 +748,36 @@ if __name__ == '__main__':
     optValEncryptionKeyFile = eval(stem_var + optKeyEncryptionKeyFile)
     optValStorageType = eval(stem_var + optKeyStorageType)
 
-    jukebox_options = jukebox_options.JukeboxOptions()
+    options = jukebox_options.JukeboxOptions()
 
     if optValDebug is not None:
         debug_mode = True
-        jukebox_options.debug_mode = optValDebug
+        options.debug_mode = optValDebug
 
     if optValFileCacheCount is not None:
         if debug_mode:
             print("setting file cache count=" + repr(optValFileCacheCount))
-        jukebox_options.file_cache_count = optValFileCacheCount
+        options.file_cache_count = optValFileCacheCount
 
     if optValIntegrityChecks is not None:
         if debug_mode:
             print("setting integrity checks on")
-        jukebox_options.check_data_integrity = optValIntegrityChecks
+        options.check_data_integrity = optValIntegrityChecks
 
     if optValCompression is not None:
         if debug_mode:
             print("setting compression on")
-        jukebox_options.use_compression = optValCompression
+        options.use_compression = optValCompression
 
     if optValEncryption is not None:
         if debug_mode:
             print("setting encryption on")
-        jukebox_options.use_encryption = optValEncryption
+        options.use_encryption = optValEncryption
 
     if optValEncryptionKey is not None:
         if debug_mode:
             print "setting encryption key='%s'" % optValEncryptionKey
-        jukebox_options.encryption_key = optValEncryptionKey
+        options.encryption_key = optValEncryptionKey
 
     if optValEncryptionKeyFile is not None:
         if debug_mode:
@@ -787,7 +792,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         if encryption_key is not None and len(encryption_key) > 0:
-            jukebox_options.encryption_key = encryption_key
+            options.encryption_key = encryption_key
         else:
             print "error: no key found in file '%s'" % optValEncryptionKeyFile
             sys.exit(1)
@@ -830,42 +835,42 @@ if __name__ == '__main__':
             print "no creds file (%s)" % creds_file_path
 
         enc_iv = "sw4mpb1ts.juk3b0x"
-        jukebox_options.encryption_iv = enc_iv
+        options.encryption_iv = enc_iv
 
         command = args[0]
         if command == 'help' or command == 'usage':
             show_usage()
         elif command == 'import':
-            if not jukebox_options.validate_options():
+            if not options.validate_options():
                 sys.exit(1)
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,
                                         debug_mode) as storage_system:
-                with Jukebox(jukebox_options, storage_system) as jukebox:
+                with Jukebox(options, storage_system) as jukebox:
                     jukebox.import_songs()
         elif command == 'play':
-            if not jukebox_options.validate_options():
+            if not options.validate_options():
                 sys.exit(1)
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,
                                         debug_mode) as storage_system:
-                with Jukebox(jukebox_options, storage_system) as jukebox:
+                with Jukebox(options, storage_system) as jukebox:
                     jukebox.play_songs()
         elif command == 'list-songs':
-            if not jukebox_options.validate_options():
+            if not options.validate_options():
                 sys.exit(1)
-            with Jukebox(jukebox_options, None) as jukebox:
+            with Jukebox(options, None) as jukebox:
                 jukebox.show_listings()
         elif command == 'list-containers':
-            if not jukebox_options.validate_options():
+            if not options.validate_options():
                 sys.exit(1)
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,
                                         debug_mode) as storage_system:
-                with Jukebox(jukebox_options, storage_system) as jukebox:
+                with Jukebox(options, storage_system) as jukebox:
                     jukebox.show_list_containers()
         else:
             print "Unrecognized command '%s'" % command
