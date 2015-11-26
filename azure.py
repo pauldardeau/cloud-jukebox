@@ -29,7 +29,7 @@ class AzureStorageSystem(StorageSystem):
 
         self.blob_service = BlobService(account_name=self.account_name, account_key=self.account_key)
         self.authenticated = True
-        self.set_list_containers(self.list_account_containers())
+        self.list_containers = self.list_account_containers()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -37,7 +37,7 @@ class AzureStorageSystem(StorageSystem):
             if self.debug_mode:
                 print "closing Azure connection object"
             self.authenticated = False
-            self.set_list_containers([])
+            self.list_containers = None
             self.blob_service = None
 
     def list_account_containers(self):

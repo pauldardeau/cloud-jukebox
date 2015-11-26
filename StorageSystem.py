@@ -20,7 +20,7 @@ class StorageSystem:
         self.authenticated = False
         self.compress_files = False
         self.encrypt_files = False
-        self.list_containers = []
+        self.list_containers = None
         self.container_prefix = ""
         self.metadata_prefix = ""
         self.storage_system_type = storage_system_type
@@ -35,19 +35,16 @@ class StorageSystem:
         return self.container_prefix + container_name
 
     def has_container(self, container_name):
-        return container_name in self.list_containers
+        return self.list_containers is not None and container_name in self.list_containers
 
     def add_container(self, container_name):
+        if self.list_containers is None:
+            self.list_containers = []
         self.list_containers.append(container_name)
 
     def remove_container(self, container_name):
-        self.list_containers.remove(container_name)
-
-    def set_list_containers(self, list_containers):
-        if list_containers is not None:
-            self.list_containers = list_containers
-        else:
-            self.list_containers = []
+        if self.list_containers is not None:
+            self.list_containers.remove(container_name)
 
     def delete_song_file(self, song_file):
         if song_file is not None:

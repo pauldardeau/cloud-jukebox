@@ -101,7 +101,7 @@ class Jukebox:
                     # have an existing metadata DB file?
                     if os.path.exists(metadata_db_file_path):
                         if self.debug_print:
-                            print "deleting existing metadata DB file"
+                            print("deleting existing metadata DB file")
                         os.remove(metadata_db_file_path)
                     # rename downloaded file
                     if self.debug_print:
@@ -109,17 +109,17 @@ class Jukebox:
                     os.rename(download_file, metadata_db_file_path)
                 else:
                     if self.debug_print:
-                        print "error: unable to retrieve metadata DB file"
+                        print("error: unable to retrieve metadata DB file")
             else:
                 if self.debug_print:
-                    print "no metadata DB file in metadata container"
+                    print("no metadata DB file in metadata container")
         else:
             if self.debug_print:
-                print "no metadata container in storage system"
+                print("no metadata container in storage system")
 
         self.jukebox_db = jukebox_db.JukeboxDB(self.get_metadata_db_file_path())
         if not self.jukebox_db.open():
-            print "unable to connect to database"
+            print("unable to connect to database")
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -179,7 +179,7 @@ class Jukebox:
         return d.hexdigest()
 
     def store_song_metadata(self, fs_song):
-        db_song = self.jukebox_db.get_song(fs_song.uid)
+        db_song = self.jukebox_db.retrieve_song(fs_song.uid)
         if db_song is not None:
             if fs_song != db_song:
                 return self.jukebox_db.update_song(fs_song)
@@ -291,20 +291,20 @@ class Jukebox:
                                     # a minimum size for compressing
                                     if compressing:
                                         if self.debug_print:
-                                            print "compressing file"
+                                            print("compressing file")
 
                                         compressed_contents = zlib.compress(file_contents, 9)
                                         file_contents = compressed_contents
 
                                     if encrypting:
                                         if self.debug_print:
-                                            print "encrypting file"
+                                            print("encrypting file")
 
                                         # the length of the data to encrypt must be a multiple of 16
                                         num_extra_chars = len(file_contents) % 16
                                         if num_extra_chars > 0:
                                             if self.debug_print:
-                                                print "padding file for encryption"
+                                                print("padding file for encryption")
                                             num_pad_chars = 16 - num_extra_chars
                                             file_contents += "".ljust(num_pad_chars, ' ')
                                             fs_song.pad_char_count = num_pad_chars
@@ -366,7 +366,7 @@ class Jukebox:
 
                 if have_metadata_container:
                     if self.debug_print:
-                        print "uploading metadata db file to storage system"
+                        print("uploading metadata db file to storage system")
 
                     self.jukebox_db.close()
                     self.jukebox_db = None
@@ -377,9 +377,9 @@ class Jukebox:
 
                     if self.debug_print:
                         if metadata_db_upload:
-                            print "metadata db file uploaded"
+                            print("metadata db file uploaded")
                         else:
-                            print "unable to upload metadata db file"
+                            print("unable to upload metadata db file")
 
             print "%s song files imported" % file_import_count
 
@@ -402,7 +402,7 @@ class Jukebox:
                 playlist_md5 = self.md5_for_file(file_path)
                 if playlist_md5 == song.md5:
                     if self.debug_print:
-                        print "integrity check SUCCESS"
+                        print("integrity check SUCCESS")
 
                     file_integrity_passed = True
                 else:
@@ -410,11 +410,11 @@ class Jukebox:
                     file_integrity_passed = False
             else:
                 # file doesn't exist
-                print "file doesn't exist"
+                print("file doesn't exist")
                 file_integrity_passed = False
         else:
             if self.debug_print:
-                print "file integrity bypassed, no jukebox options or check integrity not turned on"
+                print("file integrity bypassed, no jukebox options or check integrity not turned on")
 
         return file_integrity_passed
 
@@ -449,7 +449,7 @@ class Jukebox:
                 # if so, verify that the storage system retrieved the same length that has been stored
                 if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
                     if self.debug_print:
-                        print "verifying data integrity"
+                        print("verifying data integrity")
 
                     if song_bytes_retrieved != song.stored_file_size:
                         print "error: data integrity check failed for '%s'" % file_path
@@ -522,7 +522,6 @@ class Jukebox:
 
             # delete the song file from the play list directory
             os.remove(song_file_path)
-
         else:
             print "song file doesn't exist: '%s'" % song_file_path
 
@@ -562,23 +561,23 @@ class Jukebox:
                 download_thread.start()
 
     def play_songs(self):
-        self.song_list = self.jukebox_db.get_songs()
+        self.song_list = self.jukebox_db.retrieve_songs()
         if self.song_list is not None:
             self.number_songs = len(self.song_list)
 
             if self.number_songs == 0:
-                print "no songs in jukebox"
+                print("no songs in jukebox")
                 sys.exit(0)
 
             # does play list directory exist?
             if not os.path.exists(self.playlist_dir):
                 if self.debug_print:
-                    print "playlist directory does not exist, creating it"
+                    print("playlist directory does not exist, creating it")
                 os.makedirs(self.playlist_dir)
             else:
                 # play list directory exists, delete any files in it
                 if self.debug_print:
-                    print "deleting existing files in playlist directory"
+                    print("deleting existing files in playlist directory")
 
                 for theFile in os.listdir(self.playlist_dir):
                     file_path = os.path.join(self.playlist_dir, theFile)
@@ -599,14 +598,13 @@ class Jukebox:
             else:
                 self.audio_player_command_args = []
 
-            print "downloading first song..."
+            print("downloading first song...")
 
             if self.download_song(self.song_list[0]):
-                print "first song downloaded. starting playing now."
+                print("first song downloaded. starting playing now.")
 
                 while True:
                     self.download_songs()
-
                     self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
 
                     self.song_index += 1
@@ -614,13 +612,14 @@ class Jukebox:
                         self.song_index = 0
 
             else:
-                print "error: unable to download songs"
+                print("error: unable to download songs")
                 sys.exit(1)
 
     def show_list_containers(self):
         if self.storage_system is not None:
-            for container_name in self.storage_system.list_containers:
-                print container_name
+            if self.storage_system.list_containers is not None:
+                for container_name in self.storage_system.list_containers:
+                    print container_name
 
     def show_listings(self):
         if self.jukebox_db is not None:
@@ -628,8 +627,8 @@ class Jukebox:
 
 
 def show_usage():
-    print 'Usage: python jukebox.py [options] <command>'
-    print ''
+    print('Usage: python jukebox.py [options] <command>')
+    print('')
     print 'Options:'
     print '\t--debug                                - run in debug mode'
     print '\t--file-cache-count <positive integer>  - specify number of songs to buffer in cache'
@@ -653,7 +652,7 @@ def show_usage():
 def connect_storage_system(system_name, creds, container_prefix, debug_mode=False):
     if system_name == "swift":
         if not swift.is_available():
-            print "error: swift is not supported on this system. please install swiftclient first."
+            print("error: swift is not supported on this system. please install swiftclient first.")
             sys.exit(1)
 
         swift_auth_host = ""
@@ -687,7 +686,7 @@ def connect_storage_system(system_name, creds, container_prefix, debug_mode=Fals
                                         debug_mode)
     elif system_name == "s3":
         if not s3.is_available():
-            print "error: s3 is not supported on this system. please install boto (s3 client) first."
+            print("error: s3 is not supported on this system. please install boto (s3 client) first.")
             sys.exit(1)
 
         aws_access_key = ""
@@ -715,23 +714,21 @@ def connect_storage_system(system_name, creds, container_prefix, debug_mode=Fals
 
 
 if __name__ == '__main__':
-
     debug_mode = False
     swift_system = "swift"
     s3_system = "s3"
     storage_type = swift_system
-
-    opt_parser = optparse.OptionParser()
 
     optKeyDebug = "debug"
     optKeyFileCacheCount = "fileCacheCount"
     optKeyIntegrityChecks = "integrityChecks"
     optKeyCompression = "compression"
     optKeyEncryption = "encrypt"
-    optKeyEncryptionKey = "encryptionKey"
+    optKeyEncryptionKey = "encryption_key"
     optKeyEncryptionKeyFile = "encryptionKeyFile"
     optKeyStorageType = "storageType"
 
+    opt_parser = optparse.OptionParser()
     opt_parser.add_option("--debug", action="store_true", dest=optKeyDebug)
     opt_parser.add_option("--file-cache-count", action="store", type="int", dest=optKeyFileCacheCount)
     opt_parser.add_option("--integrity-checks", action="store_true", dest=optKeyIntegrityChecks)
@@ -742,15 +739,15 @@ if __name__ == '__main__':
     opt_parser.add_option("--storage", action="store", type="string", dest=optKeyStorageType)
 
     opt, args = opt_parser.parse_args()
-    stemVar = "opt."
-    optValDebug = eval(stemVar + optKeyDebug)
-    optValFileCacheCount = eval(stemVar + optKeyFileCacheCount)
-    optValIntegrityChecks = eval(stemVar + optKeyIntegrityChecks)
-    optValCompression = eval(stemVar + optKeyCompression)
-    optValEncryption = eval(stemVar + optKeyEncryption)
-    optValEncryptionKey = eval(stemVar + optKeyEncryptionKey)
-    optValEncryptionKeyFile = eval(stemVar + optKeyEncryptionKeyFile)
-    optValStorageType = eval(stemVar + optKeyStorageType)
+    stem_var = "opt."
+    optValDebug = eval(stem_var + optKeyDebug)
+    optValFileCacheCount = eval(stem_var + optKeyFileCacheCount)
+    optValIntegrityChecks = eval(stem_var + optKeyIntegrityChecks)
+    optValCompression = eval(stem_var + optKeyCompression)
+    optValEncryption = eval(stem_var + optKeyEncryption)
+    optValEncryptionKey = eval(stem_var + optKeyEncryptionKey)
+    optValEncryptionKeyFile = eval(stem_var + optKeyEncryptionKeyFile)
+    optValStorageType = eval(stem_var + optKeyStorageType)
 
     jukebox_options = jukebox_options.JukeboxOptions()
 
@@ -760,49 +757,43 @@ if __name__ == '__main__':
 
     if optValFileCacheCount is not None:
         if debug_mode:
-            print "setting file cache count=" + repr(optValFileCacheCount)
-
-        jukebox_options.set_file_cache_count(optValFileCacheCount)
+            print("setting file cache count=" + repr(optValFileCacheCount))
+        jukebox_options.file_cache_count = optValFileCacheCount
 
     if optValIntegrityChecks is not None:
         if debug_mode:
-            print "setting integrity checks on"
-
-        jukebox_options.set_check_data_integrity(optValIntegrityChecks)
+            print("setting integrity checks on")
+        jukebox_options.check_data_integrity = optValIntegrityChecks
 
     if optValCompression is not None:
         if debug_mode:
-            print "setting compression on"
-
-        jukebox_options.set_use_compression(optValCompression)
+            print("setting compression on")
+        jukebox_options.use_compression = optValCompression
 
     if optValEncryption is not None:
         if debug_mode:
-            print "setting encryption on"
-
-        jukebox_options.set_use_encryption(optValEncryption)
+            print("setting encryption on")
+        jukebox_options.use_encryption = optValEncryption
 
     if optValEncryptionKey is not None:
         if debug_mode:
             print "setting encryption key='%s'" % optValEncryptionKey
-
-        jukebox_options.set_encryption_key(optValEncryptionKey)
+        jukebox_options.encryption_key = optValEncryptionKey
 
     if optValEncryptionKeyFile is not None:
         if debug_mode:
             print "reading encryption key file='%s'" % optValEncryptionKeyFile
-
-        encryptionKey = ''
+        encryption_key = ''
 
         try:
             with open(optValEncryptionKeyFile, 'rt') as key_file:
-                encryptionKey = key_file.read().strip()
+                encryption_key = key_file.read().strip()
         except IOError:
             print "error: unable to read key file '%s'" % optValEncryptionKeyFile
             sys.exit(1)
 
-        if encryptionKey is not None and len(encryptionKey) > 0:
-            jukebox_options.encryption_key = encryptionKey
+        if encryption_key is not None and len(encryption_key) > 0:
+            jukebox_options.encryption_key = encryption_key
         else:
             print "error: no key found in file '%s'" % optValEncryptionKeyFile
             sys.exit(1)
@@ -818,11 +809,10 @@ if __name__ == '__main__':
             storage_type = optValStorageType
 
     if len(args) > 0:
-        container_prefix = "com.swampbits.jukebox."
-
         if debug_mode:
             print "using storage system type '%s'" % storage_type
 
+        container_prefix = "com.swampbits.jukebox."
         creds_file = storage_type + "_creds.txt"
         creds = {}
         creds_file_path = os.path.join(os.getcwd(), creds_file)
@@ -854,7 +844,6 @@ if __name__ == '__main__':
         elif command == 'import':
             if not jukebox_options.validate_options():
                 sys.exit(1)
-
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,
@@ -864,7 +853,6 @@ if __name__ == '__main__':
         elif command == 'play':
             if not jukebox_options.validate_options():
                 sys.exit(1)
-
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,
@@ -874,13 +862,11 @@ if __name__ == '__main__':
         elif command == 'list-songs':
             if not jukebox_options.validate_options():
                 sys.exit(1)
-
             with Jukebox(jukebox_options, None) as jukebox:
                 jukebox.show_listings()
         elif command == 'list-containers':
             if not jukebox_options.validate_options():
                 sys.exit(1)
-
             with connect_storage_system(storage_type,
                                         creds,
                                         container_prefix,

@@ -65,11 +65,11 @@ class JukeboxDB:
                   objectname text)"""
             try:
                 self.db_connection.execute(sql)
-                return 1
+                return True
             except sqlite3.Error as e:
                 print 'error creating table: ' + e.args[0]
 
-        return 0
+        return False 
 
     def have_tables(self):
         have_tables_in_db = False
@@ -83,7 +83,7 @@ class JukeboxDB:
 
         return have_tables_in_db
 
-    def get_song(self, file_name):
+    def retrieve_song(self, file_name):
         if self.db_connection is not None:
             sql = """SELECT filetime,
                   origin_filesize,
@@ -189,7 +189,7 @@ class JukeboxDB:
         return update_success
 
     def store_song_metadata(self, fs_song):
-        db_song = self.get_song(fs_song.uid)
+        db_song = self.retrieve_song(fs_song.uid)
         if db_song is not None:
             if fs_song != db_song:
                 return self.update_song(fs_song)
@@ -200,7 +200,7 @@ class JukeboxDB:
             return self.insert_song(fs_song)
 
     @staticmethod
-    def get_sql_where_clause(using_encryption=False, using_compression=False):
+    def sql_where_clause(using_encryption=False, using_compression=False):
         if using_encryption:
             encryption = 1
         else:
@@ -220,7 +220,7 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def get_songs(self):
+    def retrieve_songs(self):
         songs = []
         if self.db_connection is not None:
             sql = """SELECT uid,
@@ -235,7 +235,7 @@ class JukeboxDB:
                   encrypted,
                   container,
                   objectname FROM song"""
-            sql += self.get_sql_where_clause()
+            sql += self.sql_where_clause()
 
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
@@ -258,7 +258,7 @@ class JukeboxDB:
     def show_listings(self):
         if self.db_connection is not None:
             sql = "SELECT artist, songname FROM song "
-            sql += self.get_sql_where_clause()
+            sql += self.sql_where_clause()
             sql += " ORDER BY artist, songname"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):

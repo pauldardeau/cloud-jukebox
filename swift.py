@@ -51,7 +51,7 @@ class SwiftStorageSystem(StorageSystem):
         dict_headers = self.conn.head_account()
         if dict_headers is not None:
             self.authenticated = True
-            self.set_list_containers(self.list_account_containers())
+            self.list_containers = self.list_account_containers()
 
         return self
 
@@ -61,7 +61,7 @@ class SwiftStorageSystem(StorageSystem):
                 print "closing swift connection object"
 
             self.authenticated = False
-            self.set_list_containers([])
+            self.list_containers = None
             self.conn.close()
             self.conn = None
 

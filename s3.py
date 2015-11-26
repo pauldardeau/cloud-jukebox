@@ -32,7 +32,7 @@ class S3StorageSystem(StorageSystem):
 
         self.conn = S3Connection(self.aws_access_key, self.aws_secret_key)
         self.authenticated = True
-        self.set_list_containers(self.list_account_containers())
+        self.list_containers = self.list_account_containers()
 
         return self
 
@@ -42,7 +42,7 @@ class S3StorageSystem(StorageSystem):
                 print "closing S3 connection object"
 
             self.authenticated = False
-            self.set_list_containers([])
+            self.list_containers = None
             self.conn.close()
             self.conn = None
 
