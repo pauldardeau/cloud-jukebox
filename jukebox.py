@@ -763,9 +763,7 @@ if __name__ == '__main__':
                         line = line.strip()
                         if line:
                             key, value = line.split("=")
-                            key = key.strip()
-                            value = value.strip()
-                            creds[key] = value
+                            creds[key.strip()] = value.strip()
             except IOError:
                 if debug_mode:
                     print("error: unable to read file %s" % creds_file_path)
