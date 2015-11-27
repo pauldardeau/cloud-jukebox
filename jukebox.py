@@ -8,7 +8,7 @@
 # This cloud jukebox uses an abstract object storage system.
 # (2) copy this source file to $JUKEBOX
 # (3) create subdirectory for song imports (e.g., mkdir $JUKEBOX/song-import)
-# (4) create subdirectory for playlist (e.g., mkdir $JUKEBOX/playlist)
+# (4) create subdirectory for song-play (e.g., mkdir $JUKEBOX/song-play)
 #
 # Song file naming convention:
 #
@@ -65,8 +65,8 @@ class Jukebox:
         self.debug_print = debug_print
         self.jukebox_db = None
         self.current_dir = os.getcwd()
-        self.import_dir = os.path.join(self.current_dir, 'song-import')
-        self.playlist_dir = os.path.join(self.current_dir, 'playlist')
+        self.song_import_dir = os.path.join(self.current_dir, 'song-import')
+        self.song_play_dir = os.path.join(self.current_dir, 'song-play')
         self.download_extension = ".download"
         self.metadata_db_file = 'jukebox_db.sqlite3'
         self.metadata_container = 'music-metadata'
@@ -83,8 +83,8 @@ class Jukebox:
 
         if self.debug_print:
             print("self.current_dir = '%s'" % self.current_dir)
-            print("self.import_dir = '%s'" % self.import_dir)
-            print("self.playlist_dir = '%s'" % self.playlist_dir)
+            print("self.song_import_dir = '%s'" % self.song_import_dir)
+            print("self.song_play_dir = '%s'" % self.song_play_dir)
 
     def __enter__(self):
         # look for stored metadata in the storage system
@@ -192,7 +192,7 @@ class Jukebox:
 
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
-            dir_listing = os.listdir(self.import_dir)
+            dir_listing = os.listdir(self.song_import_dir)
             num_entries = float(len(dir_listing))
             progressbar_chars = 0.0
             progressbar_width = 40
@@ -234,7 +234,7 @@ class Jukebox:
             file_import_count = 0
 
             for listing_entry in dir_listing:
-                full_path = os.path.join(self.import_dir, listing_entry)
+                full_path = os.path.join(self.song_import_dir, listing_entry)
 
                 # ignore it if it's not a file
                 if os.path.isfile(full_path):
@@ -382,7 +382,7 @@ class Jukebox:
                 print("average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time)))
 
     def song_path_in_playlist(self, song):
-        return os.path.join(self.playlist_dir, song.uid)
+        return os.path.join(self.song_play_dir, song.uid)
 
     def check_file_integrity(self, song):
         file_integrity_passed = True
@@ -428,7 +428,7 @@ class Jukebox:
         if song is not None:
             file_path = self.song_path_in_playlist(song)
             download_start_time = time.time()
-            song_bytes_retrieved = self.storage_system.retrieve_song_file(song, self.playlist_dir)
+            song_bytes_retrieved = self.storage_system.retrieve_song_file(song, self.song_play_dir)
 
             if self.debug_print:
                 print("bytes retrieved: %s" % song_bytes_retrieved)
@@ -521,10 +521,10 @@ class Jukebox:
 
     def download_songs(self):
         # scan the play list directory to see if we need to download more songs
-        dir_listing = os.listdir(self.playlist_dir)
+        dir_listing = os.listdir(self.song_play_dir)
         song_file_count = 0
         for listing_entry in dir_listing:
-            full_path = os.path.join(self.playlist_dir, listing_entry)
+            full_path = os.path.join(self.song_play_dir, listing_entry)
             if os.path.isfile(full_path):
                 extension = os.path.splitext(full_path)[1]
                 if len(extension) > 0 and extension != self.download_extension:
@@ -564,17 +564,17 @@ class Jukebox:
                 sys.exit(0)
 
             # does play list directory exist?
-            if not os.path.exists(self.playlist_dir):
+            if not os.path.exists(self.song_play_dir):
                 if self.debug_print:
-                    print("playlist directory does not exist, creating it")
-                os.makedirs(self.playlist_dir)
+                    print("song-play directory does not exist, creating it")
+                os.makedirs(self.song_play_dir)
             else:
                 # play list directory exists, delete any files in it
                 if self.debug_print:
-                    print("deleting existing files in playlist directory")
+                    print("deleting existing files in song-play directory")
 
-                for theFile in os.listdir(self.playlist_dir):
-                    file_path = os.path.join(self.playlist_dir, theFile)
+                for theFile in os.listdir(self.song_play_dir):
+                    file_path = os.path.join(self.song_play_dir, theFile)
                     try:
                         if os.path.isfile(file_path):
                             os.unlink(file_path)
@@ -593,7 +593,7 @@ class Jukebox:
                 # we really need command-line support for /play and /close arguments. unfortunately,
                 # this support used to be available in the built-in windows media player, but is
                 # no longer present.
-                #self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
+                # self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
                 self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close"]
             else:
                 self.audio_player_command_args = []

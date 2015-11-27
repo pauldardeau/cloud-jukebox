@@ -78,7 +78,7 @@ the playing of the song.
 
 Run the command: `python jukebox.py play`
 
-For playback, the downloaded songs will be stored locally in the **playlist** subdirectory. This
+For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
 deleted from this directory.
 
