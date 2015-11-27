@@ -770,8 +770,7 @@ if __name__ == '__main__':
         else:
             print("no creds file (%s)" % creds_file_path)
 
-        enc_iv = "sw4mpb1ts.juk3b0x"
-        options.encryption_iv = enc_iv
+        options.encryption_iv = "sw4mpb1ts.juk3b0x"
 
         command = args.command
         if command == 'help' or command == 'usage':
