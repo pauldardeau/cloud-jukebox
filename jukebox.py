@@ -149,14 +149,14 @@ class Jukebox:
             return None
 
     def artist_from_file_name(self, file_name):
-        if (file_name is not None) and (len(file_name) > 0):
+        if file_name is not None and file_name:
             components = self.artist_and_song_from_file_name(file_name)
             if components is not None and len(components) == 2:
                 return components[0]
         return None
 
     def song_from_file_name(self, file_name):
-        if (file_name is not None) and (len(file_name) > 0):
+        if file_name is not None and file_name:
             components = self.artist_and_song_from_file_name(file_name)
             if len(components) == 2:
                 return components[1]
@@ -197,11 +197,10 @@ class Jukebox:
                 sys.stdout.flush()
                 sys.stdout.write("\b" * (progressbar_width + 1))  # return to start of line, after '['
 
-            encryption = None
-
-            if self.jukebox_options is not None:
-                if self.jukebox_options.use_encryption:
-                    encryption = self.get_encryptor()
+            if self.jukebox_options is not None and self.jukebox_options.use_encryption:
+                encryption = self.get_encryptor()
+            else:
+                encryption = None
 
             container_suffix = "-artist-songs"
             appended_file_ext = ""
@@ -225,7 +224,7 @@ class Jukebox:
                 if os.path.isfile(full_path):
                     file_name = listing_entry
                     extension = os.path.splitext(full_path)[1]
-                    if len(extension) > 0:
+                    if extension:
                         file_size = os.path.getsize(full_path)
                         artist = self.artist_from_file_name(file_name)
                         if file_size > 0 and artist is not None:
@@ -264,7 +263,7 @@ class Jukebox:
                                 print("error: unable to read file %s" % full_path)
 
                             if file_read and file_contents is not None:
-                                if len(file_contents) > 0:
+                                if file_contents:
                                     # for general purposes, it might be useful or helpful to have
                                     # a minimum size for compressing
                                     if self.jukebox_options.use_compression:
@@ -466,7 +465,7 @@ class Jukebox:
         if os.path.exists(song_file_path):
             print("playing %s" % song_file_path)
 
-            if len(self.audio_player_command_args) > 0:
+            if self.audio_player_command_args:
                 cmd_args = self.audio_player_command_args[:]
                 cmd_args.append(song_file_path)
                 exit_code = -1
@@ -501,7 +500,7 @@ class Jukebox:
             full_path = os.path.join(self.song_play_dir, listing_entry)
             if os.path.isfile(full_path):
                 extension = os.path.splitext(full_path)[1]
-                if len(extension) > 0 and extension != self.download_extension:
+                if extension and extension != self.download_extension:
                     song_file_count += 1
 
         file_cache_count = self.jukebox_options.file_cache_count
@@ -522,7 +521,7 @@ class Jukebox:
                             break
                 check_index += 1
 
-            if len(dl_songs) > 0:
+            if dl_songs:
                 download_thread = song_downloader.SongDownloader(self, dl_songs)
                 download_thread.start()
 
@@ -730,7 +729,7 @@ if __name__ == '__main__':
             print("error: unable to read key file '%s'" % args.keyfile)
             sys.exit(1)
 
-        if encryption_key is not None and len(encryption_key) > 0:
+        if encryption_key is not None and encryption_key:
             options.encryption_key = encryption_key
         else:
             print("error: no key found in file '%s'" % args.keyfile)
@@ -762,7 +761,7 @@ if __name__ == '__main__':
                 with open(creds_file, 'r') as input_file:
                     for line in input_file.readlines():
                         line = line.strip()
-                        if len(line) > 0:
+                        if line:
                             key, value = line.split("=")
                             key = key.strip()
                             value = value.strip()
