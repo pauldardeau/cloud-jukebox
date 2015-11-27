@@ -40,7 +40,6 @@
 # ******************************************************************************
 
 import datetime
-import hashlib
 import optparse
 import os
 import os.path
@@ -55,6 +54,7 @@ import s3
 import swift
 import song_file
 import song_downloader
+import utils
 
 
 class Jukebox:
@@ -164,14 +164,6 @@ class Jukebox:
                 return components[1]
         return None
 
-    @staticmethod
-    def md5_for_file(path_to_file):
-        with open(path_to_file, mode='rb') as f:
-            d = hashlib.md5()
-            for buf in f.read(4096):
-                d.update(buf)
-        return d.hexdigest()
-
     def store_song_metadata(self, fs_song):
         db_song = self.jukebox_db.retrieve_song(fs_song.uid)
         if db_song is not None:
@@ -251,7 +243,7 @@ class Jukebox:
                             fs_song.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
                             fs_song.artist_name = artist
                             fs_song.song_name = self.song_from_file_name(file_name)
-                            fs_song.md5 = self.md5_for_file(full_path)
+                            fs_song.md5 = utils.md5_for_file(full_path)
                             fs_song.compressed = self.jukebox_options.use_compression
                             fs_song.encrypted = self.jukebox_options.use_encryption
                             fs_song.object_name = object_name
@@ -466,7 +458,6 @@ class Jukebox:
                     if encrypted:
                         encryption = self.get_encryptor()
                         file_contents = encryption.decrypt(file_contents)
-
                     if compressed:
                         file_contents = zlib.decompress(file_contents)
 
@@ -602,15 +593,12 @@ class Jukebox:
 
             if self.download_song(self.song_list[0]):
                 print("first song downloaded. starting playing now.")
-
                 while True:
                     self.download_songs()
                     self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
-
                     self.song_index += 1
                     if self.song_index >= self.number_songs:
                         self.song_index = 0
-
             else:
                 print("error: unable to download songs")
                 sys.exit(1)
