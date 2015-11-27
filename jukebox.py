@@ -197,25 +197,21 @@ class Jukebox:
                 sys.stdout.flush()
                 sys.stdout.write("\b" * (progressbar_width + 1))  # return to start of line, after '['
 
-            encrypting = False
-            compressing = False
             encryption = None
 
             if self.jukebox_options is not None:
-                encrypting = self.jukebox_options.use_encryption
-                compressing = self.jukebox_options.use_compression
-                if encrypting:
+                if self.jukebox_options.use_encryption:
                     encryption = self.get_encryptor()
 
             container_suffix = "-artist-songs"
             appended_file_ext = ""
-            if encrypting and compressing:
+            if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
                 container_suffix += "-ez"
                 appended_file_ext = ".egz"
-            elif encrypting:
+            elif self.jukebox_options.use_encryption:
                 container_suffix += "-e"
                 appended_file_ext = ".e"
-            elif compressing:
+            elif self.jukebox_options.use_compression:
                 container_suffix += "-z"
                 appended_file_ext = ".gz"
 
@@ -271,13 +267,13 @@ class Jukebox:
                                 if len(file_contents) > 0:
                                     # for general purposes, it might be useful or helpful to have
                                     # a minimum size for compressing
-                                    if compressing:
+                                    if self.jukebox_options.use_compression:
                                         if self.debug_print:
                                             print("compressing file")
 
                                         file_contents = zlib.compress(file_contents, 9)
 
-                                    if encrypting:
+                                    if self.jukebox_options.use_encryption:
                                         if self.debug_print:
                                             print("encrypting file")
 
