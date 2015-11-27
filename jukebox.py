@@ -40,7 +40,7 @@
 # ******************************************************************************
 
 import datetime
-import optparse
+import argparse
 import os
 import os.path
 import sys
@@ -59,7 +59,6 @@ import utils
 
 class Jukebox:
     def __init__(self, jb_options, storage_sys, debug_print=False):
-
         self.jukebox_options = jb_options
         self.storage_system = storage_sys
         self.debug_print = debug_print
@@ -141,7 +140,6 @@ class Jukebox:
             base_file_name = file_name[0:pos_extension]
         else:
             base_file_name = file_name
-
         components = base_file_name.split('--')
         if len(components) == 2:
             encoded_artist = components[0]
@@ -179,7 +177,8 @@ class Jukebox:
         # key_block_size = 16  # AES-128
         # key_block_size = 24  # AES-192
         key_block_size = 32  # AES-256
-        return aes.AESBlockEncryption(key_block_size, self.jukebox_options.encryption_key,
+        return aes.AESBlockEncryption(key_block_size,
+                                      self.jukebox_options.encryption_key,
                                       self.jukebox_options.encryption_iv)
 
     def import_songs(self):
@@ -210,7 +209,6 @@ class Jukebox:
 
             container_suffix = "-artist-songs"
             appended_file_ext = ""
-
             if encrypting and compressing:
                 container_suffix += "-ez"
                 appended_file_ext = ".egz"
@@ -227,7 +225,6 @@ class Jukebox:
 
             for listing_entry in dir_listing:
                 full_path = os.path.join(self.song_import_dir, listing_entry)
-
                 # ignore it if it's not a file
                 if os.path.isfile(full_path):
                     file_name = listing_entry
@@ -257,8 +254,7 @@ class Jukebox:
                             else:
                                 artist_letter = artist[0:1]
 
-                            container = artist_letter.lower() + container_suffix
-                            fs_song.container = container
+                            fs_song.container = artist_letter.lower() + container_suffix
 
                             # read file contents
                             file_read = False
@@ -301,12 +297,10 @@ class Jukebox:
                                 # now that we have the data that will be stored, set the file size for
                                 # what's being stored
                                 fs_song.stored_file_size = len(file_contents)
-
                                 start_upload_time = time.time()
 
                                 # store song file to storage system
                                 if self.storage_system.store_song_file(fs_song, file_contents):
-
                                     end_upload_time = time.time()
                                     upload_elapsed_time = end_upload_time - start_upload_time
                                     cumulative_upload_time += upload_elapsed_time
@@ -326,7 +320,6 @@ class Jukebox:
                     progressbar_chars += progresschars_per_iteration
                     if int(progressbar_chars) > bar_chars:
                         num_new_chars = int(progressbar_chars) - bar_chars
-
                         if num_new_chars > 0:
                             # update progress bar
                             for j in xrange(num_new_chars):
@@ -385,11 +378,10 @@ class Jukebox:
                 if self.debug_print:
                     print("checking integrity for %s" % song.uid)
 
-                playlist_md5 = self.md5_for_file(file_path)
+                playlist_md5 = utils.md5_for_file(file_path)
                 if playlist_md5 == song.md5:
                     if self.debug_print:
                         print("integrity check SUCCESS")
-
                     file_integrity_passed = True
                 else:
                     print("file integrity check failed: %s" % song.uid)
@@ -530,7 +522,6 @@ class Jukebox:
             for j in xrange(self.number_songs):
                 if check_index >= self.number_songs:
                     check_index = 0
-
                 if check_index != self.song_index:
                     si = self.song_list[check_index]
                     file_path = self.song_path_in_playlist(si)
@@ -538,7 +529,6 @@ class Jukebox:
                         dl_songs.append(si)
                         if len(dl_songs) >= file_cache_count:
                             break
-
                 check_index += 1
 
             if len(dl_songs) > 0:
@@ -614,29 +604,6 @@ class Jukebox:
             self.jukebox_db.show_listings()
 
 
-def show_usage():
-    print('Usage: python jukebox.py [options] <command>')
-    print('')
-    print('Options:')
-    print('\t--debug                                - run in debug mode')
-    print('\t--file-cache-count <positive integer>  - specify number of songs to buffer in cache')
-    print('\t--integrity-checks                     - check file integrity after download')
-    print('\t--compress                             - use gzip compression')
-    print('\t--encrypt                              - encrypt file contents')
-    print('\t--key <encryption_key>                 - specify encryption key')
-    print('\t--keyfile <keyfile_path>               - specify path to file containing encryption key')
-    print('\t--storage <storage type>               - specifies storage system type (s3 or swift)')
-    print('')
-    print('Commands:')
-    print('\thelp            - show this help message')
-    print('\timport-songs    - import all new songs from song-import subdirectory')
-    print('\tlist-songs      - show listing of all available songs')
-    print('\tlist-containers - show listing of all available storage containers')
-    print('\tplay            - start playing songs')
-    print('\tusage           - show this help message')
-    print('')
-
-
 def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
     if system_name == "swift":
         if not swift.is_available():
@@ -701,102 +668,94 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
         return None
 
 
+def show_usage():
+    print('Supported Commands:')
+    print('\thelp            - show this help message')
+    print('\timport-songs    - import all new songs from song-import subdirectory')
+    print('\tlist-songs      - show listing of all available songs')
+    print('\tlist-containers - show listing of all available storage containers')
+    print('\tplay            - start playing songs')
+    print('\tusage           - show this help message')
+    print('')
+
+
 if __name__ == '__main__':
     debug_mode = False
     swift_system = "swift"
     s3_system = "s3"
     storage_type = swift_system
 
-    optKeyDebug = "debug"
-    optKeyFileCacheCount = "fileCacheCount"
-    optKeyIntegrityChecks = "integrityChecks"
-    optKeyCompression = "compression"
-    optKeyEncryption = "encrypt"
-    optKeyEncryptionKey = "encryption_key"
-    optKeyEncryptionKeyFile = "encryptionKeyFile"
-    optKeyStorageType = "storageType"
-
-    opt_parser = optparse.OptionParser()
-    opt_parser.add_option("--debug", action="store_true", dest=optKeyDebug)
-    opt_parser.add_option("--file-cache-count", action="store", type="int", dest=optKeyFileCacheCount)
-    opt_parser.add_option("--integrity-checks", action="store_true", dest=optKeyIntegrityChecks)
-    opt_parser.add_option("--compress", action="store_true", dest=optKeyCompression)
-    opt_parser.add_option("--encrypt", action="store_true", dest=optKeyEncryption)
-    opt_parser.add_option("--key", action="store", type="string", dest=optKeyEncryptionKey)
-    opt_parser.add_option("--keyfile", action="store", type="string", dest=optKeyEncryptionKeyFile)
-    opt_parser.add_option("--storage", action="store", type="string", dest=optKeyStorageType)
-
-    opt, args = opt_parser.parse_args()
-    stem_var = "opt."
-    optValDebug = eval(stem_var + optKeyDebug)
-    optValFileCacheCount = eval(stem_var + optKeyFileCacheCount)
-    optValIntegrityChecks = eval(stem_var + optKeyIntegrityChecks)
-    optValCompression = eval(stem_var + optKeyCompression)
-    optValEncryption = eval(stem_var + optKeyEncryption)
-    optValEncryptionKey = eval(stem_var + optKeyEncryptionKey)
-    optValEncryptionKeyFile = eval(stem_var + optKeyEncryptionKeyFile)
-    optValStorageType = eval(stem_var + optKeyStorageType)
-
+    opt_parser = argparse.ArgumentParser()
+    opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
+    opt_parser.add_argument("--file-cache-count", type=int, help="number of songs to buffer in cache")
+    opt_parser.add_argument("--integrity-checks", action="store_true", help="check file integrity after download")
+    opt_parser.add_argument("--compress", action="store_true", help="use gzip compression")
+    opt_parser.add_argument("--encrypt", action="store_true", help="encrypt file contents")
+    opt_parser.add_argument("--key", help="encryption key")
+    opt_parser.add_argument("--keyfile", help="path to file containing encryption key")
+    opt_parser.add_argument("--storage", help="storage system type (s3 or swift)")
+    opt_parser.add_argument("command", help="command for jukebox")
+    args = opt_parser.parse_args()
     options = jukebox_options.JukeboxOptions()
 
-    if optValDebug is not None:
+    if args.debug:
         debug_mode = True
-        options.debug_mode = optValDebug
+        options.debug_mode = True
 
-    if optValFileCacheCount is not None:
+    if args.file_cache_count > 0:
         if debug_mode:
-            print("setting file cache count=" + repr(optValFileCacheCount))
-        options.file_cache_count = optValFileCacheCount
+            print("setting file cache count=" + repr(args.file_cache_count))
+        options.file_cache_count = args.file_cache_count
 
-    if optValIntegrityChecks is not None:
+    if args.integrity_checks:
         if debug_mode:
             print("setting integrity checks on")
-        options.check_data_integrity = optValIntegrityChecks
+        options.check_data_integrity = True
 
-    if optValCompression is not None:
+    if args.compress:
         if debug_mode:
             print("setting compression on")
-        options.use_compression = optValCompression
+        options.use_compression = True
 
-    if optValEncryption is not None:
+    if args.encrypt:
         if debug_mode:
             print("setting encryption on")
-        options.use_encryption = optValEncryption
+        options.use_encryption = True
 
-    if optValEncryptionKey is not None:
+    if args.key:
         if debug_mode:
-            print("setting encryption key='%s'" % optValEncryptionKey)
-        options.encryption_key = optValEncryptionKey
+            print("setting encryption key='%s'" % args.key)
+        options.encryption_key = args.key
 
-    if optValEncryptionKeyFile is not None:
+    if args.keyfile is not None:
         if debug_mode:
-            print("reading encryption key file='%s'" % optValEncryptionKeyFile)
+            print("reading encryption key file='%s'" % args.keyfile)
         encryption_key = ''
 
         try:
-            with open(optValEncryptionKeyFile, 'rt') as key_file:
+            with open(args.keyfile, 'rt') as key_file:
                 encryption_key = key_file.read().strip()
         except IOError:
-            print("error: unable to read key file '%s'" % optValEncryptionKeyFile)
+            print("error: unable to read key file '%s'" % args.keyfile)
             sys.exit(1)
 
         if encryption_key is not None and len(encryption_key) > 0:
             options.encryption_key = encryption_key
         else:
-            print("error: no key found in file '%s'" % optValEncryptionKeyFile)
+            print("error: no key found in file '%s'" % args.keyfile)
             sys.exit(1)
 
-    if optValStorageType is not None:
-        if optValStorageType != swift_system and optValStorageType != s3_system:
-            print("error: invalid storage type '%s'" % optValStorageType)
+    if args.storage is not None:
+        if args.storage != swift_system and args.storage != s3_system:
+            print("error: invalid storage type '%s'" % args.storage)
             print("valid values are '%s' and '%s'" % (swift_system, s3_system))
             sys.exit(1)
         else:
             if debug_mode:
-                print("setting storage system to '%s'" % optValStorageType)
-            storage_type = optValStorageType
+                print("setting storage system to '%s'" % args.storage)
+            storage_type = args.storage
 
-    if len(args) > 0:
+    if args.command:
         if debug_mode:
             print("using storage system type '%s'" % storage_type)
 
@@ -826,7 +785,7 @@ if __name__ == '__main__':
         enc_iv = "sw4mpb1ts.juk3b0x"
         options.encryption_iv = enc_iv
 
-        command = args[0]
+        command = args.command
         if command == 'help' or command == 'usage':
             show_usage()
         elif command == 'import-songs':
