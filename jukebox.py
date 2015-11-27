@@ -29,13 +29,13 @@
 #
 # first time use (or when new songs are added):
 # (1) copy one or more song files to $JUKEBOX/song-import
-# (2) import songs with command: 'python jukebox.py import-songs'
+# (2) import songs with command: 'python jukebox_main.py import-songs'
 #
 # show song listings:
-# python jukebox.py list-songs
+# python jukebox_main.py list-songs
 #
 # play songs:
-# python jukebox.py play
+# python jukebox_main.py play
 #
 # ******************************************************************************
 
@@ -72,6 +72,7 @@ class Jukebox:
         self.song_play_length_seconds = 20
         self.cumulative_download_bytes = 0
         self.cumulative_download_time = 0
+        self.exit_requested = False
 
         if jb_options is not None and jb_options.debug_mode:
             self.debug_print = True
@@ -389,18 +390,24 @@ class Jukebox:
         self.cumulative_download_time = 0
 
     def batch_download_complete(self):
-        if self.cumulative_download_time > 0:
-            cumulative_download_kb = self.cumulative_download_bytes / 1000.0
-            print("average download throughput = %s KB/sec" % (
-                int(cumulative_download_kb / self.cumulative_download_time)))
-        self.cumulative_download_bytes = 0
-        self.cumulative_download_time = 0
+        if not self.exit_requested:
+            if self.cumulative_download_time > 0:
+                cumulative_download_kb = self.cumulative_download_bytes / 1000.0
+                print("average download throughput = %s KB/sec" % (
+                    int(cumulative_download_kb / self.cumulative_download_time)))
+            self.cumulative_download_bytes = 0
+            self.cumulative_download_time = 0
 
     def download_song(self, song):
+        if self.exit_requested:
+            return False
+
         if song is not None:
             file_path = self.song_path_in_playlist(song)
             download_start_time = time.time()
             song_bytes_retrieved = self.storage_system.retrieve_song_file(song, self.song_play_dir)
+            if self.exit_requested:
+                return False
 
             if self.debug_print:
                 print("bytes retrieved: %s" % song_bytes_retrieved)
@@ -567,17 +574,22 @@ class Jukebox:
 
             print("downloading first song...")
 
-            if self.download_song(self.song_list[0]):
-                print("first song downloaded. starting playing now.")
-                while True:
-                    self.download_songs()
-                    self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
-                    self.song_index += 1
-                    if self.song_index >= self.number_songs:
-                        self.song_index = 0
-            else:
-                print("error: unable to download songs")
-                sys.exit(1)
+            try:
+                if self.download_song(self.song_list[0]):
+                    print("first song downloaded. starting playing now.")
+                    while True:
+                        self.download_songs()
+                        if not self.exit_requested:
+                            self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
+                            self.song_index += 1
+                            if self.song_index >= self.number_songs:
+                                self.song_index = 0
+                else:
+                    print("error: unable to download songs")
+                    sys.exit(1)
+            except KeyboardInterrupt:
+                print("\nexiting jukebox")
+                self.exit_requested = True
 
     def show_list_containers(self):
         if self.storage_system is not None:

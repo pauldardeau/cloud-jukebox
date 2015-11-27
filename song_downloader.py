@@ -11,5 +11,8 @@ class SongDownloader(threading.Thread):
         if self.jukebox is not None and self.list_songs is not None:
             self.jukebox.batch_download_start()
             for song in self.list_songs:
-                self.jukebox.download_song(song)
+                if self.jukebox.exit_requested:
+                    break
+                else:
+                    self.jukebox.download_song(song)
             self.jukebox.batch_download_complete()
