@@ -51,7 +51,7 @@ Importing Songs
 ---------------
 1. Create a subdirectory named **'song-import'**
 2. Copy your MP3 files into the song-import directory
-3. Run the command `python jukeboxy.py import-songs`
+3. Run the command `python jukeboxy_main.py import-songs`
 
 ###Song File Naming Convention###
 
@@ -76,7 +76,7 @@ If you do not have the designated audio player on your system, you're on a diffe
 or there is an error in starting the audio player, the jukebox will pause for 20 seconds to simulate
 the playing of the song.
 
-Run the command: `python jukebox.py play`
+Run the command: `python jukebox_main.py play`
 
 For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
@@ -89,7 +89,7 @@ song files are downloaded as a batch in the background. The number of files that
 at once is configurable. By default, 3 files are downloaded together. To change this value, use
 the **--file-cache-count** command-line argument with the desired value.
 
-Example: `python jukebox.py --file-cache-count 10 play`
+Example: `python jukebox_main.py --file-cache-count 10 play`
 
 Integrity Checks
 ----------------
@@ -108,8 +108,8 @@ command-line option along with **'swift'** or **'s3'**.
 
 Examples:
 
-    python jukebox.py --storage s3 play
-    python jukebox.py --storage swift play
+    python jukebox_main.py --storage s3 play
+    python jukebox_main.py --storage swift play
 
 Compression
 -----------
@@ -131,20 +131,20 @@ Encryption is probably not desired for song files, but may be desired for other 
 
 Examples:
 
-    python jukebox.py --encrypt --key SK34slk3032u91 import-songs
-    python jukebox.py --encrypt --keyfile keyfile.txt import-songs
+    python jukebox_main.py --encrypt --key SK34slk3032u91 import-songs
+    python jukebox_main.py --encrypt --keyfile keyfile.txt import-songs
 
-    python jukebox.py --encrypt --key SK34slk3032u91 play
-    python jukebox.py --encrypt --keyfile keyfile.txt play
+    python jukebox_main.py --encrypt --key SK34slk3032u91 play
+    python jukebox_main.py --encrypt --keyfile keyfile.txt play
 
 
 Displaying Available Songs
 ----------------------
-Run `python jukebox.py list-songs`
+Run `python jukebox_main.py list-songs`
 
 Displaying List of Storage Containers
 -------------------------------------
-Run `python jukebox.py list-containers`
+Run `python jukebox_main.py list-containers`
 
 Debugging
 ---------
