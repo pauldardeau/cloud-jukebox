@@ -5,7 +5,6 @@ _storage_system_azure_supported = False
 
 try:
     from azure.storage import *
-
     _storage_system_azure_supported = True
 except ImportError:
     _storage_system_azure_supported = False

@@ -2,6 +2,7 @@ import argparse
 import os
 import s3
 import swift
+import azure
 import sys
 from jukebox import Jukebox
 import jukebox_options
@@ -67,6 +68,31 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
                                       aws_secret_key,
                                       prefix,
                                       in_debug_mode)
+    elif system_name == "azure":
+        if not azure.is_available():
+            print("error: azure is not supported on this system. please install azure client first.")
+            sys.exit(1)
+
+        azure_account_name = ""
+        azure_account_key = ""
+        if "azure_account_name" in credentials:
+            azure_account_name = credentials["azure_account_name"]
+        if "azure_account_key" in credentials:
+            azure_account_key = credentials["azure_account_key"]
+
+        if in_debug_mode:
+            print("azure_account_name='%s'" % azure_account_name)
+            print("azure_account_key='%s'" % azure_account_key)
+
+        if len(azure_account_name) == 0 or len(azure_account_key) == 0:
+            print("""error: no azure credentials given. please specify azure_account_name
+                  and azure_account_key in credentials file""")
+            sys.exit(1)
+        else:
+            return azure.AzureStorageSystem(azure_account_name,
+                                            azure_account_key,
+                                            prefix,
+                                            in_debug_mode)
     else:
         return None
 
@@ -84,9 +110,7 @@ def show_usage():
 
 def main():
     debug_mode = False
-    swift_system = "swift"
-    s3_system = "s3"
-    storage_type = swift_system
+    storage_type = "swift"
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
@@ -96,7 +120,7 @@ def main():
     opt_parser.add_argument("--encrypt", action="store_true", help="encrypt file contents")
     opt_parser.add_argument("--key", help="encryption key")
     opt_parser.add_argument("--keyfile", help="path to file containing encryption key")
-    opt_parser.add_argument("--storage", help="storage system type (s3 or swift)")
+    opt_parser.add_argument("--storage", help="storage system type (s3, swift, azure)")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     options = jukebox_options.JukeboxOptions()
@@ -146,9 +170,10 @@ def main():
             sys.exit(1)
 
     if args.storage is not None:
-        if args.storage != swift_system and args.storage != s3_system:
+        supported_systems = ("swift", "s3", "azure")
+        if args.storage not in supported_systems:
             print("error: invalid storage type '%s'" % args.storage)
-            print("valid values are '%s' and '%s'" % (swift_system, s3_system))
+            print("supported systems are: %s" % str(supported_systems))
             sys.exit(1)
         else:
             if debug_mode:
