@@ -4,11 +4,6 @@
 # BSD license -- see LICENSE file for details
 #
 # StorageSystem - abstract base class for an object storage system
-#
-# Swift_StorageSystem - storage system using Swift Object Storage (https://wiki.openstack.org/wiki/Swift)
-# For getting started with Swift, see: http://docs.openstack.org/developer/swift/development_saio.html
-#
-# S3_StorageSystem - storage system using Amazon's S3 (using boto client)
 # ******************************************************************************
 
 import os.path
