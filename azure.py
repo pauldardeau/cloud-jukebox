@@ -1,5 +1,5 @@
 import os.path
-from StorageSystem import StorageSystem
+from storage_system import StorageSystem
 
 _storage_system_azure_supported = False
 

@@ -1,11 +1,10 @@
-from StorageSystem import StorageSystem
+from storage_system import StorageSystem
 
 
 _storage_system_swift_supported = False
 
 try:
     import swiftclient
-
     _storage_system_swift_supported = True
 except ImportError:
     _storage_system_swift_supported = False
