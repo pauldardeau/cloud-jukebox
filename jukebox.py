@@ -275,8 +275,7 @@ class Jukebox:
                                         if self.debug_print:
                                             print("compressing file")
 
-                                        compressed_contents = zlib.compress(file_contents, 9)
-                                        file_contents = compressed_contents
+                                        file_contents = zlib.compress(file_contents, 9)
 
                                     if encrypting:
                                         if self.debug_print:
@@ -291,8 +290,7 @@ class Jukebox:
                                             file_contents += "".ljust(num_pad_chars, ' ')
                                             fs_song.pad_char_count = num_pad_chars
 
-                                        cipher_text = encryption.encrypt(file_contents)
-                                        file_contents = cipher_text
+                                        file_contents = encryption.encrypt(file_contents)
 
                                 # now that we have the data that will be stored, set the file size for
                                 # what's being stored
@@ -334,7 +332,6 @@ class Jukebox:
                     for j in xrange(num_new_chars):
                         sys.stdout.write(progressbar_char)
                     sys.stdout.flush()
-
                 sys.stdout.write("\n")
 
             if file_import_count > 0:
@@ -440,12 +437,10 @@ class Jukebox:
                 if encrypted or compressed:
                     try:
                         with open(file_path, 'rb') as content_file:
-                            storage_file_contents = content_file.read()
+                            file_contents = content_file.read()
                     except IOError:
                         print("error: unable to read file %s" % file_path)
                         return False
-
-                    file_contents = storage_file_contents
 
                     if encrypted:
                         encryption = self.get_encryptor()
