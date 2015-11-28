@@ -8,91 +8,103 @@ from jukebox import Jukebox
 import jukebox_options
 
 
+def connect_swift_system(credentials, prefix, in_debug_mode=False):
+    if not swift.is_available():
+        print("error: swift is not supported on this system. please install swiftclient first.")
+        sys.exit(1)
+
+    swift_auth_host = ""
+    swift_account = ""
+    swift_user = ""
+    swift_password = ""
+    if "swift_auth_host" in credentials:
+        swift_auth_host = credentials["swift_auth_host"]
+    if "swift_account" in credentials:
+        swift_account = credentials["swift_account"]
+    if "swift_user" in credentials:
+        swift_user = credentials["swift_user"]
+    if "swift_password" in credentials:
+        swift_password = credentials["swift_password"]
+
+    if in_debug_mode:
+        print("swift_auth_host='%s'" % swift_auth_host)
+        print("swift_account='%s'" % swift_account)
+        print("swift_user='%s'" % swift_user)
+        print("swift_password='%s'" % swift_password)
+
+    if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
+        print("""error: no swift credentials given. please specify swift_account,
+              swift_user, and swift_password in credentials""")
+        sys.exit(1)
+
+    return swift.SwiftStorageSystem(swift_auth_host,
+                                    swift_account,
+                                    swift_user,
+                                    swift_password,
+                                    in_debug_mode)
+
+
+def connect_s3_system(credentials, prefix, in_debug_mode=False):
+    if not s3.is_available():
+        print("error: s3 is not supported on this system. please install boto (s3 client) first.")
+        sys.exit(1)
+
+    aws_access_key = ""
+    aws_secret_key = ""
+    if "aws_access_key" in credentials:
+        aws_access_key = credentials["aws_access_key"]
+    if "aws_secret_key" in credentials:
+        aws_secret_key = credentials["aws_secret_key"]
+
+    if in_debug_mode:
+        print("aws_access_key='%s'" % aws_access_key)
+        print("aws_secret_key='%s'" % aws_secret_key)
+
+    if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
+        print("""error: no s3 credentials given. please specify aws_access_key
+              and aws_secret_key in credentials file""")
+        sys.exit(1)
+    else:
+        return s3.S3StorageSystem(aws_access_key,
+                                  aws_secret_key,
+                                  prefix,
+                                  in_debug_mode)
+
+
+def connect_azure_system(credentials, prefix, in_debug_mode=False):
+    if not azure.is_available():
+        print("error: azure is not supported on this system. please install azure client first.")
+        sys.exit(1)
+
+    azure_account_name = ""
+    azure_account_key = ""
+    if "azure_account_name" in credentials:
+        azure_account_name = credentials["azure_account_name"]
+    if "azure_account_key" in credentials:
+        azure_account_key = credentials["azure_account_key"]
+
+    if in_debug_mode:
+        print("azure_account_name='%s'" % azure_account_name)
+        print("azure_account_key='%s'" % azure_account_key)
+
+    if len(azure_account_name) == 0 or len(azure_account_key) == 0:
+        print("""error: no azure credentials given. please specify azure_account_name
+              and azure_account_key in credentials file""")
+        sys.exit(1)
+    else:
+        return azure.AzureStorageSystem(azure_account_name,
+                                        azure_account_key,
+                                        prefix,
+                                        in_debug_mode)
+
+    
 def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
     if system_name == "swift":
-        if not swift.is_available():
-            print("error: swift is not supported on this system. please install swiftclient first.")
-            sys.exit(1)
-
-        swift_auth_host = ""
-        swift_account = ""
-        swift_user = ""
-        swift_password = ""
-        if "swift_auth_host" in credentials:
-            swift_auth_host = credentials["swift_auth_host"]
-        if "swift_account" in credentials:
-            swift_account = credentials["swift_account"]
-        if "swift_user" in credentials:
-            swift_user = credentials["swift_user"]
-        if "swift_password" in credentials:
-            swift_password = credentials["swift_password"]
-
-        if in_debug_mode:
-            print("swift_auth_host='%s'" % swift_auth_host)
-            print("swift_account='%s'" % swift_account)
-            print("swift_user='%s'" % swift_user)
-            print("swift_password='%s'" % swift_password)
-
-        if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
-            print("""error: no swift credentials given. please specify swift_account,
-                  swift_user, and swift_password in credentials""")
-            sys.exit(1)
-
-        return swift.SwiftStorageSystem(swift_auth_host,
-                                        swift_account,
-                                        swift_user,
-                                        swift_password,
-                                        in_debug_mode)
+        return connect_swift_system(credentials, prefix, in_debug_mode)
     elif system_name == "s3":
-        if not s3.is_available():
-            print("error: s3 is not supported on this system. please install boto (s3 client) first.")
-            sys.exit(1)
-
-        aws_access_key = ""
-        aws_secret_key = ""
-        if "aws_access_key" in credentials:
-            aws_access_key = credentials["aws_access_key"]
-        if "aws_secret_key" in credentials:
-            aws_secret_key = credentials["aws_secret_key"]
-
-        if in_debug_mode:
-            print("aws_access_key='%s'" % aws_access_key)
-            print("aws_secret_key='%s'" % aws_secret_key)
-
-        if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
-            print("""error: no s3 credentials given. please specify aws_access_key
-                  and aws_secret_key in credentials file""")
-            sys.exit(1)
-        else:
-            return s3.S3StorageSystem(aws_access_key,
-                                      aws_secret_key,
-                                      prefix,
-                                      in_debug_mode)
+        return connect_s3_system(credentials, prefix, in_debug_mode)
     elif system_name == "azure":
-        if not azure.is_available():
-            print("error: azure is not supported on this system. please install azure client first.")
-            sys.exit(1)
-
-        azure_account_name = ""
-        azure_account_key = ""
-        if "azure_account_name" in credentials:
-            azure_account_name = credentials["azure_account_name"]
-        if "azure_account_key" in credentials:
-            azure_account_key = credentials["azure_account_key"]
-
-        if in_debug_mode:
-            print("azure_account_name='%s'" % azure_account_name)
-            print("azure_account_key='%s'" % azure_account_key)
-
-        if len(azure_account_name) == 0 or len(azure_account_key) == 0:
-            print("""error: no azure credentials given. please specify azure_account_name
-                  and azure_account_key in credentials file""")
-            sys.exit(1)
-        else:
-            return azure.AzureStorageSystem(azure_account_name,
-                                            azure_account_key,
-                                            prefix,
-                                            in_debug_mode)
+        return connect_azure_system(credentials, prefix, in_debug_mode)
     else:
         return None
 
