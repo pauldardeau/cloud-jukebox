@@ -76,7 +76,7 @@ For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolli
 Playing Songs
 -------------
 The cloud jukebox relies on an external music player and does not provide a music player
-of its own.  On Mac OSX, the built-in **afplay** is used. On other Unix variants (Linux, FreeBSD), **mplayer** is used.  On Windows, a 3rd-party player (MPC-HC) is used because the built-in
+of its own.  On Mac OSX, the built-in **afplay** is used. On other Unix variants (Linux, FreeBSD), **mplayer** is used.  On Windows, **MPC-HC** (3rd-party) player is used because the built-in
 player is not well suited for this model of usage. If you do not have the designated audio
 player on your system or there is an error in starting the audio player, the jukebox will
 pause for 20 seconds to simulate the playing of the song.
@@ -150,6 +150,10 @@ Examples:
 Displaying Available Songs
 ----------------------
 Run `python jukebox_main.py list-songs`
+
+Displaying Available Artists
+----------------------
+Run `python jukebox_main.py list-artists`
 
 Displaying List of Storage Containers
 -------------------------------------
