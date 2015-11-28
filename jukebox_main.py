@@ -102,6 +102,7 @@ def show_usage():
     print('\thelp            - show this help message')
     print('\timport-songs    - import all new songs from song-import subdirectory')
     print('\tlist-songs      - show listing of all available songs')
+    print('\tlist-artists    - show listing of all available artists')
     print('\tlist-containers - show listing of all available storage containers')
     print('\tplay            - start playing songs')
     print('\tusage           - show this help message')
@@ -233,6 +234,11 @@ def main():
                 sys.exit(1)
             with Jukebox(options, None) as jukebox:
                 jukebox.show_listings()
+        elif command == 'list-artists':
+            if not options.validate_options():
+                sys.exit(1)
+            with Jukebox(options, None) as jukebox:
+                jukebox.show_artists()
         elif command == 'list-containers':
             if not options.validate_options():
                 sys.exit(1)

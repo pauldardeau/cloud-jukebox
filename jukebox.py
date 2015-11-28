@@ -601,4 +601,6 @@ class Jukebox:
         if self.jukebox_db is not None:
             self.jukebox_db.show_listings()
 
-
+    def show_artists(self):
+        if self.jukebox_db is not None:
+            self.jukebox_db.show_artists()

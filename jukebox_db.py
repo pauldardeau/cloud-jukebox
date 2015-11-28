@@ -240,3 +240,13 @@ class JukeboxDB:
                 artist = row[0]
                 song = row[1]
                 print("%s, %s" % (artist, song))
+
+    def show_artists(self):
+        if self.db_connection is not None:
+            sql = "SELECT DISTINCT artist FROM song "
+            sql += self.sql_where_clause()
+            sql += " ORDER BY artist"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                artist = row[0]
+                print("%s" % artist)
