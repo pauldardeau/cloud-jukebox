@@ -83,6 +83,30 @@ class JukeboxDB:
 
         return have_tables_in_db
 
+    def songs_for_query(self, sql, query_args=None):
+        result_songs = []
+        db_cursor = self.db_connection.cursor()
+        if query_args is not None:
+            db_results = db_cursor.execute(sql, query_args)
+        else:
+            db_results = db_cursor.execute(sql)
+        for row in db_results:
+            song = song_file.SongFile()
+            song.uid = row[0]
+            song.file_time = row[1]
+            song.origin_file_size = row[2]
+            song.stored_file_size = row[3]
+            song.pad_char_count = row[4]
+            song.artist_name = row[5]
+            song.song_name = row[6]
+            song.md5 = row[7]
+            song.compressed = row[8]
+            song.encrypted = row[9]
+            song.container = row[10]
+            song.object_name = row[11]
+            result_songs.append(song)
+        return result_songs
+                
     def retrieve_song(self, file_name):
         if self.db_connection is not None:
             sql = """SELECT filetime,
@@ -97,24 +121,9 @@ class JukeboxDB:
                   container,
                   objectname
                   FROM song WHERE uid = ?"""
-            cursor = self.db_connection.cursor()
-            cursor.execute(sql, [file_name])
-            song_fields = cursor.fetchone()
-            if song_fields is not None:
-                song = song_file.SongFile()
-                song.uid = file_name
-                song.file_time = song_fields[0]
-                song.origin_file_size = song_fields[1]
-                song.stored_file_size = song_fields[2]
-                song.pad_char_count = song_fields[3]
-                song.artist_name = song_fields[4]
-                song.song_name = song_fields[5]
-                song.md5 = song_fields[6]
-                song.compressed = song_fields[7]
-                song.encrypted = song_fields[8]
-                song.container = song_fields[9]
-                song.object_name = song_fields[10]
-                return song
+            song_results = self.songs_for_query(sql, [file_name])
+            if song_results is not None and song_results:
+                return song_results[0]
         return None
 
     def insert_song(self, song):
@@ -211,23 +220,27 @@ class JukeboxDB:
                   container,
                   objectname FROM song"""
             sql += self.sql_where_clause()
+            songs = self.songs_for_query(sql)
+        return songs
 
-            cursor = self.db_connection.cursor()
-            for row in cursor.execute(sql):
-                song = song_file.SongFile()
-                song.uid = row[0]
-                song.file_time = row[1]
-                song.origin_file_size = row[2]
-                song.stored_file_size = row[3]
-                song.pad_char_count = row[4]
-                song.artist_name = row[5]
-                song.song_name = row[6]
-                song.md5 = row[7]
-                song.compressed = row[8]
-                song.encrypted = row[9]
-                song.container = row[10]
-                song.object_name = row[11]
-                songs.append(song)
+    def songs_for_artist(self, artist_name):
+        songs = []
+        if self.db_connection is not None:
+            sql = """SELECT uid,
+                  filetime,
+                  origin_filesize,
+                  stored_filesize,
+                  padchar_count,
+                  artist,
+                  songname,
+                  md5,
+                  compressed,
+                  encrypted,
+                  container,
+                  objectname FROM song"""
+            sql += self.sql_where_clause()
+            sql += " AND artist = ?"
+            songs = self.songs_for_query(sql, [artist_name])
         return songs
 
     def show_listings(self):
