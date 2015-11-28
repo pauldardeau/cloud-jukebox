@@ -7,9 +7,12 @@
 # ******************************************************************************
 
 import os.path
+import abc
 
 
 class StorageSystem:
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, storage_system_type, debug_mode=False):
         self.debug_mode = debug_mode
         self.authenticated = False
@@ -67,34 +70,34 @@ class StorageSystem:
             print("error: unable to read file %s" % file_path)
             return False
 
-    # @abstractmethod
+    @abc.abstractmethod
     def list_account_containers(self):
         return None
 
-    # @abstractmethod
+    @abc.abstractmethod
     def create_container(self, container_name):
         return False
 
-    # @abstractmethod
+    @abc.abstractmethod
     def delete_container(self, container_name):
         return False
 
-    # @abstractmethod
+    @abc.abstractmethod
     def list_container_contents(self, container_name):
         return None
 
-    # @abstractmethod
+    @abc.abstractmethod
     def get_file_metadata(self, container_name, object_name):
         return None
 
-    # @abstractmethod
+    @abc.abstractmethod
     def add_file(self, container_name, object_name, file_contents, headers=None):
         return False
 
-    # @abstractmethod
+    @abc.abstractmethod
     def delete_file(self, container_name, object_name):
         return False
 
-    # @abstractmethod
+    @abc.abstractmethod
     def retrieve_file(self, container_name, object_name, local_file_path):
         return False
