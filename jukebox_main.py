@@ -104,6 +104,8 @@ def show_usage():
     print('\tlist-songs      - show listing of all available songs')
     print('\tlist-artists    - show listing of all available artists')
     print('\tlist-containers - show listing of all available storage containers')
+    print('\tlist-albums     - show listing of all available albums')
+    print('\tlist-genres     - show listing of all available genres')
     print('\tplay            - start playing songs')
     print('\tusage           - show this help message')
     print('')
@@ -248,6 +250,24 @@ def main():
                                         debug_mode) as storage_system:
                 with Jukebox(options, storage_system) as jukebox:
                     jukebox.show_list_containers()
+        elif command == 'list-genres':
+            if not options.validate_options():
+                sys.exit(1)
+            with connect_storage_system(storage_type,
+                                        creds,
+                                        container_prefix,
+                                        debug_mode) as storage_system:
+                with Jukebox(options, storage_system) as jukebox:
+                    jukebox.show_genres()
+        elif command == 'list-albums':
+            if not options.validate_options():
+                sys.exit(1)
+            with connect_storage_system(storage_type,
+                                        creds,
+                                        container_prefix,
+                                        debug_mode) as storage_system:
+                with Jukebox(options, storage_system) as jukebox:
+                    jukebox.show_albums()
         else:
             print("Unrecognized command '%s'" % command)
             print('')

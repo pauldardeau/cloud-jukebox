@@ -160,7 +160,7 @@ class Jukebox:
         return None
 
     def store_song_metadata(self, fs_song):
-        db_song = self.jukebox_db.retrieve_song(fs_song.uid)
+        db_song = self.jukebox_db.retrieve_song(fs_song.song_uid)
         if db_song is not None:
             if fs_song != db_song:
                 return self.jukebox_db.update_song(fs_song)
@@ -227,12 +227,13 @@ class Jukebox:
                         if file_size > 0 and artist is not None:
                             object_name = file_name + appended_file_ext
                             fs_song = song_file.SongFile()
-                            fs_song.uid = object_name
+                            fs_song.song_uid = object_name
+                            fs_song.album_uid = None
                             fs_song.origin_file_size = file_size
                             fs_song.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
                             fs_song.artist_name = artist
                             fs_song.song_name = self.song_from_file_name(file_name)
-                            fs_song.md5 = utils.md5_for_file(full_path)
+                            fs_song.md5_hash = utils.md5_for_file(full_path)
                             fs_song.compressed = self.jukebox_options.use_compression
                             fs_song.encrypted = self.jukebox_options.use_encryption
                             fs_song.object_name = object_name
@@ -246,7 +247,7 @@ class Jukebox:
                             else:
                                 artist_letter = artist[0:1]
 
-                            fs_song.container = artist_letter.lower() + container_suffix
+                            fs_song.container_name = artist_letter.lower() + container_suffix
 
                             # read file contents
                             file_read = False
@@ -356,7 +357,7 @@ class Jukebox:
                 print("average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time)))
 
     def song_path_in_playlist(self, song):
-        return os.path.join(self.song_play_dir, song.uid)
+        return os.path.join(self.song_play_dir, song.song_uid)
 
     def check_file_integrity(self, song):
         file_integrity_passed = True
@@ -365,7 +366,7 @@ class Jukebox:
             file_path = self.song_path_in_playlist(song)
             if os.path.exists(file_path):
                 if self.debug_print:
-                    print("checking integrity for %s" % song.uid)
+                    print("checking integrity for %s" % song.song_uid)
 
                 playlist_md5 = utils.md5_for_file(file_path)
                 if playlist_md5 == song.md5:
@@ -373,7 +374,7 @@ class Jukebox:
                         print("integrity check SUCCESS")
                     file_integrity_passed = True
                 else:
-                    print("file integrity check failed: %s" % song.uid)
+                    print("file integrity check failed: %s" % song.song_uid)
                     file_integrity_passed = False
             else:
                 # file doesn't exist
@@ -604,3 +605,11 @@ class Jukebox:
     def show_artists(self):
         if self.jukebox_db is not None:
             self.jukebox_db.show_artists()
+
+    def show_genres(self):
+        if self.jukebox_db is not None:
+            self.jukebox_db.show_genres()
+
+    def show_albums(self):
+        if self.jukebox_db is not None:
+            self.jukebox_db.show_albums()
