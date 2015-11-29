@@ -50,21 +50,56 @@ class JukeboxDB:
             if self.debug_print:
                 print("creating tables")
 
-            sql = """CREATE TABLE song (
-                  uid text,
-                  filetime text,
-                  origin_filesize integer,
-                  stored_filesize integer,
-                  padchar_count integer,
-                  artist text,
-                  songname text,
-                  md5 text,
-                  compressed integer,
-                  encrypted integer,
-                  container text,
-                  objectname text)"""
+            create_genre_table = """CREATE TABLE genre (
+                                 genre_uid TEXT UNIQUE NOT NULL,
+                                 genre_name TEXT UNIQUE NOT NULL,
+                                 genre_description TEXT)"""
+
+            create_artist_table = """CREATE TABLE artist (
+                                  artist_uid TEXT UNIQUE NOT NULL,
+                                  artist_name TEXT UNIQUE NOT NULL,
+                                  artist_description TEXT)"""
+
+            create_album_table = """CREATE TABLE album (
+                                 album_uid TEXT UNIQUE NOT NULL,
+                                 album_name TEXT UNIQUE NOT NULL,
+                                 album_description TEXT,
+                                 artist_uid TEXT NOT NULL REFERENCES artist.artist_uid,
+                                 genre_uid TEXT REFERENCES genre.genre_uid)"""
+
+            create_song_table = """CREATE TABLE song (
+                                song_uid TEXT UNIQUE NOT NULL,
+                                file_time TEXT,
+                                origin_file_size INTEGER,
+                                stored_file_size INTEGER,
+                                padchar_count INTEGER,
+                                artist_name TEXT,
+                                artist_uid TEXT REFERENCES artist.artist_uid,
+                                song_name TEXT NOT NULL,
+                                md5_hash TEXT NOT NULL,
+                                compressed INTEGER,
+                                encrypted INTEGER,
+                                container_name TEXT NOT NULL,
+                                object_name TEXT NOT NULL,
+                                album_uid TEXT REFERENCES album.album_uid)"""
+
+            create_playlist_table = """CREATE TABLE playlist (
+                                    playlist_uid TEXT UNIQUE NOT NULL,
+                                    playlist_name TEXT UNIQUE NOT NULL,
+                                    playlist_description TEXT)"""
+
+            create_playlist_song_table = """CREATE TABLE playlist_song (
+                                         playlist_song_uid TEXT UNIQUE NOT NULL,
+                                         playlist_uid TEXT NOT NULL REFERENCES playlist.playlist_uid,
+                                         song_uid TEXT NOT NULL REFERENCES song.song_uid)"""
+
             try:
-                self.db_connection.execute(sql)
+                self.db_connection.execute(create_genre_table)
+                self.db_connection.execute(create_artist_table)
+                self.db_connection.execute(create_album_table)
+                self.db_connection.execute(create_song_table)
+                self.db_connection.execute(create_playlist_table)
+                self.db_connection.execute(create_playlist_song_table)
                 return True
             except sqlite3.Error as e:
                 print('error creating table: ' + e.args[0])
@@ -86,48 +121,51 @@ class JukeboxDB:
     def retrieve_song(self, file_name):
         if self.db_connection is not None:
             sql = """SELECT filetime,
-                  origin_filesize,
-                  stored_filesize,
+                  origin_file_size,
+                  stored_file_size,
                   padchar_count,
-                  artist,
-                  songname,
-                  md5,
+                  artist_name,
+                  song_name,
+                  md5_hash,
                   compressed,
                   encrypted,
-                  container,
-                  objectname
-                  FROM song WHERE uid = ?"""
+                  container_name,
+                  object_name,
+                  album_uid
+                  FROM song WHERE song_uid = ?"""
             cursor = self.db_connection.cursor()
             cursor.execute(sql, [file_name])
             song_fields = cursor.fetchone()
             if song_fields is not None:
                 song = song_file.SongFile()
-                song.uid = file_name
+                song.song_uid = file_name
                 song.file_time = song_fields[0]
                 song.origin_file_size = song_fields[1]
                 song.stored_file_size = song_fields[2]
-                song.pad_char_count = song_fields[3]
+                song.padchar_count = song_fields[3]
                 song.artist_name = song_fields[4]
                 song.song_name = song_fields[5]
-                song.md5 = song_fields[6]
+                song.md5_hash = song_fields[6]
                 song.compressed = song_fields[7]
                 song.encrypted = song_fields[8]
-                song.container = song_fields[9]
+                song.container_name = song_fields[9]
                 song.object_name = song_fields[10]
+                song.album_uid = song_fields[11]
                 return song
         return None
 
     def insert_song(self, song):
         insert_success = False
 
-        if (self.db_connection is not None) and (song is not None):
-            sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        if self.db_connection is not None and song is not None:
+            sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
             cursor = self.db_connection.cursor()
             try:
                 cursor.execute(sql,
-                               [song.uid, song.file_time, song.origin_file_size, song.stored_file_size,
-                                song.pad_char_count, song.artist, song.song, song.md5, song.compressed,
-                                song.encrypted, song.container, song.bject_name])
+                               [song.song_uid, song.file_time, song.origin_file_size, song.stored_file_size,
+                                song.padchar_count, song.artist_name, song.song_name, song.md5_hash,
+                                song.compressed, song.encrypted, song.container_name, song.object_name,
+                                song.album_uid])
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
@@ -138,24 +176,25 @@ class JukeboxDB:
     def update_song(self, song):
         update_success = False
 
-        if (self.db_connection is not None) and (song is not None) and (len(song.uid) > 0):
-            sql = """UPDATE song SET filetime=?,
-                  origin_filesize=?,
-                  stored_filesize=?,
+        if self.db_connection is not None and song is not None and song.song_uid:
+            sql = """UPDATE song SET file_time=?,
+                  origin_file_size=?,
+                  stored_file_size=?,
                   padchar_count=?,
-                  artist=?,
-                  songname=?,
-                  md5=?,
+                  artist_name=?,
+                  song_name=?,
+                  md5_hash=?,
                   compressed=?,
                   encrypted=?,
-                  container=?,
-                  objectname=? WHERE uid = ?"""
+                  container_name=?,
+                  object_name=?,
+                  album_uid=? WHERE song_uid = ?"""
             cursor = self.db_connection.cursor()
 
             try:
-                cursor.execute(sql, [song.file_time, song.origin_file_size, song.stored_file_size, song.pad_char_count,
-                                     song.artist, song.song, song.md5, song.compressed, song.encrypted, song.container,
-                                     song.object_name, song.uid])
+                cursor.execute(sql, [song.file_time, song.origin_file_size, song.stored_file_size, song.padchar_count,
+                                     song.artist, song.song_name, song.md5_hash, song.compressed, song.encrypted,
+                                     song.container_name, song.object_name, song.album_uid, song.song_uid])
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
@@ -198,43 +237,43 @@ class JukeboxDB:
     def retrieve_songs(self):
         songs = []
         if self.db_connection is not None:
-            sql = """SELECT uid,
-                  filetime,
-                  origin_filesize,
-                  stored_filesize,
+            sql = """SELECT song_uid,
+                  file_time,
+                  origin_file_size,
+                  stored_file_size,
                   padchar_count,
-                  artist,
-                  songname,
-                  md5,
+                  artist_name,
+                  song_name,
+                  md5_hash,
                   compressed,
                   encrypted,
-                  container,
-                  objectname FROM song"""
+                  container_name,
+                  object_name,
+                  album_uid FROM song"""
             sql += self.sql_where_clause()
 
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 song = song_file.SongFile()
-                song.uid = row[0]
+                song.song_uid = row[0]
                 song.file_time = row[1]
                 song.origin_file_size = row[2]
                 song.stored_file_size = row[3]
-                song.pad_char_count = row[4]
+                song.padchar_count = row[4]
                 song.artist_name = row[5]
                 song.song_name = row[6]
-                song.md5 = row[7]
+                song.md5_hash = row[7]
                 song.compressed = row[8]
                 song.encrypted = row[9]
-                song.container = row[10]
+                song.container_name = row[10]
                 song.object_name = row[11]
+                song.album_uid = row[12]
                 songs.append(song)
         return songs
 
     def show_listings(self):
         if self.db_connection is not None:
-            sql = "SELECT artist, songname FROM song "
-            sql += self.sql_where_clause()
-            sql += " ORDER BY artist, songname"
+            sql = "SELECT artist_name, song_name FROM song ORDER BY artist_name, song_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 artist = row[0]
@@ -243,10 +282,28 @@ class JukeboxDB:
 
     def show_artists(self):
         if self.db_connection is not None:
-            sql = "SELECT DISTINCT artist FROM song "
-            sql += self.sql_where_clause()
-            sql += " ORDER BY artist"
+            sql = "SELECT DISTINCT artist_name FROM song ORDER BY artist_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 artist = row[0]
                 print("%s" % artist)
+
+    def show_genres(self):
+        if self.db_connection is not None:
+            sql = "SELECT genre_name FROM genre ORDER BY genre_name"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                genre_name = row[0]
+                print("%s" % genre_name)
+
+    def show_albums(self):
+        if self.db_connection is not None:
+            sql = "SELECT album.album_name, artist.artist_name " + \
+                  "FROM album, artist " + \
+                  "WHERE album.artist_uid = artist_artist_uid " + \
+                  "ORDER BY album.album_name"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                album_name = row[0]
+                artist_name = row[1]
+                print("%s (%s)" % (album_name, artist_name))
