@@ -52,6 +52,8 @@ class StorageSystem:
     def retrieve_song_file(self, song_file, local_directory):
         if song_file is not None and local_directory is not None:
             file_path = os.path.join(local_directory, song_file.song_uid)
+            # print("retrieving container=%s" % song_file.container_name)
+            # print("retrieving object=%s" % song_file.object_name)
             return self.retrieve_file(song_file.container_name, song_file.object_name, file_path)
         return False
 

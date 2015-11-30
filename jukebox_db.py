@@ -143,22 +143,26 @@ class JukeboxDB:
             song.stored_file_size = row[3]
             song.pad_char_count = row[4]
             song.artist_name = row[5]
-            song.song_name = row[6]
-            song.md5 = row[7]
-            song.compressed = row[8]
-            song.encrypted = row[9]
-            song.container = row[10]
-            song.object_name = row[11]
+            song.artist_uid = row[6]
+            song.song_name = row[7]
+            song.md5_hash = row[8]
+            song.compressed = row[9]
+            song.encrypted = row[10]
+            song.container_name = row[11]
+            song.object_name = row[12]
+            song.album_uid = row[13]
             result_songs.append(song)
         return result_songs
                 
     def retrieve_song(self, file_name):
         if self.db_connection is not None:
-            sql = """SELECT file_time,
+            sql = """SELECT song_uid,
+                  file_time,
                   origin_file_size,
                   stored_file_size,
                   pad_char_count,
                   artist_name,
+                  artist_uid,
                   song_name,
                   md5_hash,
                   compressed,
@@ -200,6 +204,7 @@ class JukeboxDB:
                   stored_file_size=?,
                   pad_char_count=?,
                   artist_name=?,
+                  artist_uid=?,
                   song_name=?,
                   md5_hash=?,
                   compressed=?,
@@ -211,7 +216,7 @@ class JukeboxDB:
 
             try:
                 cursor.execute(sql, [song.file_time, song.origin_file_size, song.stored_file_size, song.pad_char_count,
-                                     song.artist, song.song_name, song.md5_hash, song.compressed, song.encrypted,
+                                     song.artist, "", song.song_name, song.md5_hash, song.compressed, song.encrypted,
                                      song.container_name, song.object_name, song.album_uid, song.song_uid])
                 self.db_connection.commit()
                 update_success = True
@@ -261,6 +266,7 @@ class JukeboxDB:
                   stored_file_size,
                   pad_char_count,
                   artist_name,
+                  artist_uid,
                   song_name,
                   md5_hash,
                   compressed,
@@ -276,17 +282,19 @@ class JukeboxDB:
         songs = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
-                  file time,
+                  file_time,
                   origin_file size,
                   stored_file size,
                   pad_char_count,
                   artist_name,
+                  artist_uid,
                   song_name,
                   md5_hash,
                   compressed,
                   encrypted,
                   container_name,
-                  object_name FROM song"""
+                  object_name,
+                  album_uid FROM song"""
             sql += self.sql_where_clause()
             sql += " AND artist = ?"
             songs = self.songs_for_query(sql, [artist_name])
