@@ -321,7 +321,7 @@ class JukeboxDB:
         if self.db_connection is not None:
             sql = "SELECT album.album_name, artist.artist_name " + \
                   "FROM album, artist " + \
-                  "WHERE album.artist_uid = artist_artist_uid " + \
+                  "WHERE album.artist_uid = artist.artist_uid " + \
                   "ORDER BY album.album_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
