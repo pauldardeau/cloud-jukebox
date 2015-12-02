@@ -77,13 +77,13 @@ class AzureStorageSystem(StorageSystem):
             return list_contents
         return None
 
-    def get_file_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name, object_name):
         if self.blob_service is not None and container_name is not None and object_name is not None:
             return self.blob_service.get_blob_properties(self.prefixed_container(container_name))
         return None
 
-    def add_file(self, container_name, object_name, file_contents, headers=None):
-        file_added = False
+    def put_object(self, container_name, object_name, file_contents, headers=None):
+        object_added = False
         if self.blob_service is not None and container_name is not None and \
                 object_name is not None and file_contents is not None:
 
@@ -96,27 +96,27 @@ class AzureStorageSystem(StorageSystem):
             resp = self.blob_service.put_block_blob_from_bytes(self.prefixed_container(container_name), object_name,
                                                                file_contents)
             if resp is None:
-                file_added = True
+                object_added = True
             else:
                 if self.debug_mode:
                     print("error: unable to store file '%s'" % object_name)
 
-        return file_added
+        return object_added
 
-    def delete_file(self, container_name, object_name):
-        file_deleted = False
+    def delete_object(self, container_name, object_name):
+        object_deleted = False
         if self.blob_service is not None and container_name is not None and object_name is not None:
             resp = self.blob_service.delete_blob(self.prefixed_container(container_name), object_name)
             if resp is None:
-                file_deleted = True
+                object_deleted = True
             else:
                 if self.debug_mode:
                     print("error: unable to delete file '%s'" % object_name)
 
-        return file_deleted
+        return object_deleted
 
-    def retrieve_file(self, container_name, object_name, local_file_path):
-        file_bytes_retrieved = 0
+    def get_object(self, container_name, object_name, local_file_path):
+        bytes_retrieved = 0
 
         if self.blob_service is not None and container_name is not None and \
                 object_name is not None and local_file_path is not None:
@@ -126,9 +126,9 @@ class AzureStorageSystem(StorageSystem):
                                                       local_file_path)
             if resp is None:
                 if os.path.exists(local_file_path):
-                    file_bytes_retrieved = os.path.getsize(local_file_path)
+                    bytes_retrieved = os.path.getsize(local_file_path)
             else:
                 if self.debug_mode:
                     print("error: unable to retrieve file '%s'" % object_name)
 
-        return file_bytes_retrieved
+        return bytes_retrieved

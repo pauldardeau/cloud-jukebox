@@ -1,11 +1,3 @@
-# ******************************************************************************
-# Storage system for cloud jukebox
-# Copyright Paul Dardeau, SwampBits LLC, 2014
-# BSD license -- see LICENSE file for details
-#
-# StorageSystem - abstract base class for an object storage system
-# ******************************************************************************
-
 import os.path
 import abc
 
@@ -44,30 +36,27 @@ class StorageSystem:
         if self.list_containers is not None:
             self.list_containers.remove(container_name)
 
-    def delete_song_file(self, song_file):
-        if song_file is not None:
-            return self.delete_file(song_file.container_name, song_file.object_name)
+    def retrieve_file(self, fm, local_directory):
+        if fm is not None and local_directory is not None:
+            file_path = os.path.join(local_directory, fm.file_uid)
+            # print("retrieving container=%s" % fm.container_name)
+            # print("retrieving object=%s" % fm.object_name)
+            return self.get_object(fm.container_name, fm.object_name, file_path)
         return False
 
-    def retrieve_song_file(self, song_file, local_directory):
-        if song_file is not None and local_directory is not None:
-            file_path = os.path.join(local_directory, song_file.song_uid)
-            # print("retrieving container=%s" % song_file.container_name)
-            # print("retrieving object=%s" % song_file.object_name)
-            return self.retrieve_file(song_file.container_name, song_file.object_name, file_path)
-        return False
-
-    def store_song_file(self, song_file, file_contents):
-        if song_file is not None and file_contents is not None:
-            return self.add_file(song_file.container_name, song_file.object_name, file_contents,
-                                 song_file.to_dictionary(self.metadata_prefix))
+    def store_file(self, fm, file_contents):
+        if fm is not None and file_contents is not None:
+            return self.put_object(fm.container_name,
+                                   fm.object_name,
+                                   file_contents,
+                                   fm.to_dictionary(self.metadata_prefix))
         return False
 
     def add_file_from_path(self, container_name, object_name, file_path):
         try:
             with open(file_path, 'rb') as input_file:
                 file_contents = input_file.read()
-            return self.add_file(container_name, object_name, file_contents)
+            return self.put_object(container_name, object_name, file_contents)
         except IOError:
             print("error: unable to read file %s" % file_path)
             return False
@@ -89,17 +78,17 @@ class StorageSystem:
         return None
 
     @abc.abstractmethod
-    def get_file_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name, object_name):
         return None
 
     @abc.abstractmethod
-    def add_file(self, container_name, object_name, file_contents, headers=None):
+    def put_object(self, container_name, object_name, file_contents, headers=None):
         return False
 
     @abc.abstractmethod
-    def delete_file(self, container_name, object_name):
+    def delete_object(self, container_name, object_name):
         return False
 
     @abc.abstractmethod
-    def retrieve_file(self, container_name, object_name, local_file_path):
+    def get_object(self, container_name, object_name, local_file_path):
         return False
