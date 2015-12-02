@@ -1,5 +1,5 @@
 import sqlite3
-import song_file
+import song_metadata
 
 
 class JukeboxDB:
@@ -136,7 +136,7 @@ class JukeboxDB:
         else:
             db_results = db_cursor.execute(sql)
         for row in db_results:
-            song = song_file.SongFile()
+            song = song_metadata.SongMetadata()
             song.song_uid = row[0]
             song.file_time = row[1]
             song.origin_file_size = row[2]
