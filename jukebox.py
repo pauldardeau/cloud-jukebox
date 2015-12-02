@@ -293,7 +293,7 @@ class Jukebox:
                                 start_upload_time = time.time()
 
                                 # store song file to storage system
-                                if self.storage_system.put_object(fs_song, file_contents):
+                                if self.storage_system.put_object(fs_song.fm.container_name, fs_song.fm.object_name, file_contents):
                                     end_upload_time = time.time()
                                     upload_elapsed_time = end_upload_time - start_upload_time
                                     cumulative_upload_time += upload_elapsed_time
