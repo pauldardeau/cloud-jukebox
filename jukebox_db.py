@@ -1,8 +1,10 @@
 import sqlite3
-import song_file
+from song_metadata import SongMetadata
+from file_metadata import FileMetadata
 
 
 class JukeboxDB:
+
     def __init__(self, metadata_db_file_path=None, debug_print=False):
         self.debug_print = debug_print
         self.db_connection = None
@@ -26,9 +28,12 @@ class JukeboxDB:
         return open_success
 
     def close(self):
+        did_close = False
         if self.db_connection is not None:
             self.db_connection.close()
             self.db_connection = None
+            did_close = True
+        return did_close
 
     def __enter__(self):
         # look for stored metadata in the storage system
@@ -136,20 +141,21 @@ class JukeboxDB:
         else:
             db_results = db_cursor.execute(sql)
         for row in db_results:
-            song = song_file.SongFile()
-            song.song_uid = row[0]
-            song.file_time = row[1]
-            song.origin_file_size = row[2]
-            song.stored_file_size = row[3]
-            song.pad_char_count = row[4]
+            song = SongMetadata()
+            song.fm = FileMetadata()
+            song.fm.file_uid = row[0]
+            song.fm.file_time = row[1]
+            song.fm.origin_file_size = row[2]
+            song.fm.stored_file_size = row[3]
+            song.fm.pad_char_count = row[4]
             song.artist_name = row[5]
             song.artist_uid = row[6]
             song.song_name = row[7]
-            song.md5_hash = row[8]
-            song.compressed = row[9]
-            song.encrypted = row[10]
-            song.container_name = row[11]
-            song.object_name = row[12]
+            song.fm.md5_hash = row[8]
+            song.fm.compressed = row[9]
+            song.fm.encrypted = row[10]
+            song.fm.container_name = row[11]
+            song.fm.object_name = row[12]
             song.album_uid = row[13]
             result_songs.append(song)
         return result_songs
@@ -184,9 +190,9 @@ class JukeboxDB:
             cursor = self.db_connection.cursor()
             try:
                 cursor.execute(sql,
-                               [song.song_uid, song.file_time, song.origin_file_size, song.stored_file_size,
-                                song.pad_char_count, song.artist_name, "", song.song_name, song.md5_hash,
-                                song.compressed, song.encrypted, song.container_name, song.object_name,
+                               [song.fm.file_uid, song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
+                                song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
+                                song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
                                 song.album_uid])
                 self.db_connection.commit()
                 insert_success = True
@@ -215,9 +221,10 @@ class JukeboxDB:
             cursor = self.db_connection.cursor()
 
             try:
-                cursor.execute(sql, [song.file_time, song.origin_file_size, song.stored_file_size, song.pad_char_count,
-                                     song.artist, "", song.song_name, song.md5_hash, song.compressed, song.encrypted,
-                                     song.container_name, song.object_name, song.album_uid, song.song_uid])
+                cursor.execute(sql, [song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
+                                     song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
+                                     song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
+                                     song.album_uid, song.fm.file_uid])
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
