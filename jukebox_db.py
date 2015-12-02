@@ -23,6 +23,8 @@ class JukeboxDB:
         if self.db_connection is not None:
             if not self.have_tables():
                 open_success = self.create_tables()
+                if not open_success:
+                    print('error: unable to create all tables')
             else:
                 open_success = True
         return open_success
@@ -204,7 +206,7 @@ class JukeboxDB:
     def update_song(self, song):
         update_success = False
 
-        if self.db_connection is not None and song is not None and song.song_uid:
+        if self.db_connection is not None and song is not None and song.fm.file_uid:
             sql = """UPDATE song SET file_time=?,
                   origin_file_size=?,
                   stored_file_size=?,
@@ -233,7 +235,7 @@ class JukeboxDB:
         return update_success
 
     def store_song_metadata(self, song):
-        db_song = self.retrieve_song(song.song_uid)
+        db_song = self.retrieve_song(song.fm.file_uid)
         if db_song is not None:
             if song != db_song:
                 return self.update_song(song)

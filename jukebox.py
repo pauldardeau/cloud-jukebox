@@ -343,9 +343,13 @@ class Jukebox:
                     self.jukebox_db.close()
                     self.jukebox_db = None
 
+                    db_file_contents = ''
+                    with open(self.get_metadata_db_file_path(), 'r') as db_file:
+                        db_file_contents = db_file.read()
+
                     metadata_db_upload = self.storage_system.put_object(self.metadata_container,
                                                                         self.metadata_db_file,
-                                                                        self.get_metadata_db_file_path())
+                                                                        db_file_contents)
 
                     if self.debug_print:
                         if metadata_db_upload:
@@ -433,8 +437,8 @@ class Jukebox:
                         return False
 
                 # is it encrypted? if so, unencrypt it
-                encrypted = song.encrypted
-                compressed = song.compressed
+                encrypted = song.fm.encrypted
+                compressed = song.fm.compressed
 
                 if encrypted or compressed:
                     try:
