@@ -344,8 +344,8 @@ class Jukebox:
                     self.jukebox_db = None
 
                     metadata_db_upload = self.storage_system.put_object(self.metadata_container,
-                                                                                self.metadata_db_file,
-                                                                                self.get_metadata_db_file_path())
+                                                                        self.metadata_db_file,
+                                                                        self.get_metadata_db_file_path())
 
                     if self.debug_print:
                         if metadata_db_upload:
