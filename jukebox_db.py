@@ -66,48 +66,48 @@ class JukeboxDB:
             if self.debug_print:
                 print("creating tables")
 
-            create_genre_table = """CREATE TABLE genre (
-                                 genre_uid TEXT UNIQUE NOT NULL,
-                                 genre_name TEXT UNIQUE NOT NULL,
-                                 genre_description TEXT)"""
+            create_genre_table = "CREATE TABLE genre (" + \
+                                 "genre_uid TEXT UNIQUE NOT NULL," + \
+                                 "genre_name TEXT UNIQUE NOT NULL," + \
+                                 "genre_description TEXT)"
 
-            create_artist_table = """CREATE TABLE artist (
-                                  artist_uid TEXT UNIQUE NOT NULL,
-                                  artist_name TEXT UNIQUE NOT NULL,
-                                  artist_description TEXT)"""
+            create_artist_table = "CREATE TABLE artist (" + \
+                                  "artist_uid TEXT UNIQUE NOT NULL," + \
+                                  "artist_name TEXT UNIQUE NOT NULL," + \
+                                  "artist_description TEXT)"
 
-            create_album_table = """CREATE TABLE album (
-                                 album_uid TEXT UNIQUE NOT NULL,
-                                 album_name TEXT UNIQUE NOT NULL,
-                                 album_description TEXT,
-                                 artist_uid TEXT NOT NULL REFERENCES artist(artist_uid),
-                                 genre_uid TEXT REFERENCES genre(genre_uid))"""
+            create_album_table = "CREATE TABLE album (" + \
+                                 "album_uid TEXT UNIQUE NOT NULL," + \
+                                 "album_name TEXT UNIQUE NOT NULL," + \
+                                 "album_description TEXT," + \
+                                 "artist_uid TEXT NOT NULL REFERENCES artist(artist_uid)," + \
+                                 "genre_uid TEXT REFERENCES genre(genre_uid))"
 
-            create_song_table = """CREATE TABLE song (
-                                song_uid TEXT UNIQUE NOT NULL,
-                                file_time TEXT,
-                                origin_file_size INTEGER,
-                                stored_file_size INTEGER,
-                                pad_char_count INTEGER,
-                                artist_name TEXT,
-                                artist_uid TEXT REFERENCES artist(artist_uid),
-                                song_name TEXT NOT NULL,
-                                md5_hash TEXT NOT NULL,
-                                compressed INTEGER,
-                                encrypted INTEGER,
-                                container_name TEXT NOT NULL,
-                                object_name TEXT NOT NULL,
-                                album_uid TEXT REFERENCES album(album_uid))"""
+            create_song_table = "CREATE TABLE song (" + \
+                                "song_uid TEXT UNIQUE NOT NULL," + \
+                                "file_time TEXT," + \
+                                "origin_file_size INTEGER," + \
+                                "stored_file_size INTEGER," + \
+                                "pad_char_count INTEGER," + \
+                                "artist_name TEXT," + \
+                                "artist_uid TEXT REFERENCES artist(artist_uid)," + \
+                                "song_name TEXT NOT NULL," + \
+                                "md5_hash TEXT NOT NULL," + \
+                                "compressed INTEGER," + \
+                                "encrypted INTEGER," + \
+                                "container_name TEXT NOT NULL," + \
+                                "object_name TEXT NOT NULL," + \
+                                "album_uid TEXT REFERENCES album(album_uid))"
 
-            create_playlist_table = """CREATE TABLE playlist (
-                                    playlist_uid TEXT UNIQUE NOT NULL,
-                                    playlist_name TEXT UNIQUE NOT NULL,
-                                    playlist_description TEXT)"""
+            create_playlist_table = "CREATE TABLE playlist (" + \
+                                    "playlist_uid TEXT UNIQUE NOT NULL," + \
+                                    "playlist_name TEXT UNIQUE NOT NULL," + \
+                                    "playlist_description TEXT)"
 
-            create_playlist_song_table = """CREATE TABLE playlist_song (
-                                         playlist_song_uid TEXT UNIQUE NOT NULL,
-                                         playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid),
-                                         song_uid TEXT NOT NULL REFERENCES song(song_uid))"""
+            create_playlist_song_table = "CREATE TABLE playlist_song (" + \
+                                         "playlist_song_uid TEXT UNIQUE NOT NULL," + \
+                                         "playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid)," + \
+                                         "song_uid TEXT NOT NULL REFERENCES song(song_uid))"
 
             try:
                 return self.create_table(create_genre_table) and \
