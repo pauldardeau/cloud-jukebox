@@ -1,5 +1,5 @@
 import os.path
-from StorageSystem import StorageSystem
+from storage_system import StorageSystem
 
 
 _storage_system_s3_supported = False
@@ -24,25 +24,25 @@ class S3StorageSystem(StorageSystem):
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         if container_prefix is not None and len(container_prefix) > 0:
-            self.set_container_prefix(container_prefix)
+            self.container_prefix = container_prefix
 
     def __enter__(self):
-        if self.is_debug_mode():
-            print "attempting to connect to S3"
+        if self.debug_mode:
+            print("attempting to connect to S3")
 
         self.conn = S3Connection(self.aws_access_key, self.aws_secret_key)
-        self.set_authenticated(1)
-        self.set_list_containers(self.list_account_containers())
+        self.authenticated = True
+        self.list_containers = self.list_account_containers()
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
-            if self.is_debug_mode():
-                print "closing S3 connection object"
+            if self.debug_mode:
+                print("closing S3 connection object")
 
-            self.set_authenticated(0)
-            self.set_list_containers([])
+            self.authenticated = False
+            self.list_containers = None
             self.conn.close()
             self.conn = None
 
@@ -66,7 +66,7 @@ class S3StorageSystem(StorageSystem):
         container_created = False
         if self.conn is not None:
             try:
-                self.conn.create_bucket(self.get_prefixed_container(container_name))
+                self.conn.create_bucket(self.prefixed_container(container_name))
                 self.add_container(container_name)
                 container_created = True
             except (boto.exception.S3CreateError, boto.exception.S3ResponseError):
@@ -78,7 +78,7 @@ class S3StorageSystem(StorageSystem):
         container_deleted = False
         if self.conn is not None:
             try:
-                self.conn.delete_bucket(self.get_prefixed_container(container_name))
+                self.conn.delete_bucket(self.prefixed_container(container_name))
                 self.remove_container(container_name)
                 container_deleted = True
             except boto.exception.S3ResponseError:
@@ -89,7 +89,7 @@ class S3StorageSystem(StorageSystem):
     def list_container_contents(self, container_name):
         if self.conn is not None:
             try:
-                container = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                container = self.conn.get_bucket(self.prefixed_container(container_name))
                 rs = container.list()
                 list_contents = []
 
@@ -102,10 +102,10 @@ class S3StorageSystem(StorageSystem):
 
         return None
 
-    def get_file_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name, object_name):
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 if object_key is not None:
                     pass
@@ -117,8 +117,8 @@ class S3StorageSystem(StorageSystem):
 
         return None
 
-    def add_file(self, container_name, object_name, file_contents, headers=None):
-        file_added = False
+    def put_object(self, container_name, object_name, file_contents, headers=None):
+        object_added = False
 
         if self.conn is not None and container_name is not None and \
                 object_name is not None and file_contents is not None:
@@ -127,43 +127,43 @@ class S3StorageSystem(StorageSystem):
                 self.create_container(container_name)
 
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = Key(bucket)
                 object_key.key = object_name
                 object_key.set_contents_from_string(file_contents)
-                file_added = True
+                object_added = True
             except boto.exception.S3ResponseError:
                 pass
 
-        return file_added
+        return object_added
 
-    def delete_file(self, container_name, object_name):
-        file_deleted = False
+    def delete_object(self, container_name, object_name):
+        object_deleted = False
 
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 object_key.delete()
-                file_deleted = True
+                object_deleted = True
             except boto.exception.S3ResponseError:
                 pass
 
-        return file_deleted
+        return object_deleted
 
-    def retrieve_file(self, container_name, object_name, local_file_path):
-        file_bytes_retrieved = 0
+    def get_object(self, container_name, object_name, local_file_path):
+        bytes_retrieved = 0
 
         if self.conn is not None and container_name is not None and \
                 object_name is not None and local_file_path is not None:
 
             try:
-                bucket = self.conn.get_bucket(self.get_prefixed_container(container_name))
+                bucket = self.conn.get_bucket(self.prefixed_container(container_name))
                 object_key = bucket.get_key(object_name)
                 object_key.get_contents_to_filename(local_file_path)
                 if os.path.exists(local_file_path):
-                    file_bytes_retrieved = os.path.getsize(local_file_path)
+                    bytes_retrieved = os.path.getsize(local_file_path)
             except (Exception, boto.exception.S3ResponseError):
                 pass
 
-        return file_bytes_retrieved
+        return bytes_retrieved

@@ -1,11 +1,10 @@
-from StorageSystem import StorageSystem
+from storage_system import StorageSystem
 
 
 _storage_system_swift_supported = False
 
 try:
     import swiftclient
-
     _storage_system_swift_supported = True
 except ImportError:
     _storage_system_swift_supported = False
@@ -26,7 +25,7 @@ class SwiftStorageSystem(StorageSystem):
         self.account = account
         self.username = username
         self.password = password
-        self.set_metadata_prefix("x-meta-")
+        self.metadata_prefix = "x-meta-"
         self.auth_url = ""
 
         if self.auth_ssl:
@@ -42,7 +41,7 @@ class SwiftStorageSystem(StorageSystem):
         self.account_username = "%s:%s" % (self.account, self.username)
 
     def __enter__(self):
-        if self.is_debug_mode():
+        if self.debug_mode:
             print "attempting to connect to swift server at %s" % self.auth_url
 
         self.conn = swiftclient.Connection(
@@ -50,18 +49,18 @@ class SwiftStorageSystem(StorageSystem):
             auth_version=self.auth_version, retries=1)
         dict_headers = self.conn.head_account()
         if dict_headers is not None:
-            self.set_authenticated(True)
-            self.set_list_containers(self.list_account_containers())
+            self.authenticated = True
+            self.list_containers = self.list_account_containers()
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
-            if self.is_debug_mode():
+            if self.debug_mode:
                 print "closing swift connection object"
 
-            self.set_authenticated(0)
-            self.set_list_containers([])
+            self.authenticated = False
+            self.list_containers = None
             self.conn.close()
             self.conn = None
 
@@ -117,7 +116,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return None
 
-    def get_file_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name, object_name):
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
                 return self.conn.head_object(container_name, object_name)
@@ -126,8 +125,8 @@ class SwiftStorageSystem(StorageSystem):
 
         return None
 
-    def add_file(self, container_name, object_name, file_contents, headers=None):
-        file_added = False
+    def put_object(self, container_name, object_name, file_contents, headers=None):
+        object_added = False
 
         if self.conn is not None and container_name is not None and \
                 object_name is not None and file_contents is not None:
@@ -137,26 +136,26 @@ class SwiftStorageSystem(StorageSystem):
 
             try:
                 self.conn.put_object(container_name, object_name, file_contents, headers=headers)
-                file_added = True
+                object_added = True
             except swiftclient.client.ClientException:
                 pass
 
-        return file_added
+        return object_added
 
-    def delete_file(self, container_name, object_name):
-        file_deleted = False
+    def delete_object(self, container_name, object_name):
+        object_deleted = False
 
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
                 self.conn.delete_object(container_name, object_name)
-                file_deleted = True
+                object_deleted = True
             except swiftclient.client.ClientException:
                 pass
 
-        return file_deleted
+        return object_deleted
 
-    def retrieve_file(self, container_name, object_name, local_file_path):
-        file_bytes_retrieved = 0
+    def get_object(self, container_name, object_name, local_file_path):
+        bytes_retrieved = 0
 
         if self.conn is not None and container_name is not None and \
                 object_name is not None and local_file_path is not None:
@@ -168,17 +167,17 @@ class SwiftStorageSystem(StorageSystem):
                         try:
                             with open(local_file_path, 'wb') as content_file:
                                 content_file.write(file_contents)
-                            file_bytes_retrieved = len(file_contents)
+                            bytes_retrieved = len(file_contents)
                         except IOError:
                             print "error: unable to write to file '%s'" % local_file_path
                     else:
                         # create empty file
                         try:
                             open(local_file_path, 'w').close()
-                            file_bytes_retrieved = 0
+                            bytes_retrieved = 0
                         except IOError:
                             print "error: unable to write to file '%s'" % local_file_path
             except swiftclient.client.ClientException:
                 pass
 
-        return file_bytes_retrieved
+        return bytes_retrieved

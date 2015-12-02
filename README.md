@@ -10,8 +10,8 @@ BSD
 Overview
 --------
 This repo is python code that implements a music player where the songs are stored
-in the cloud. Currently, the songs may be stored in either **Swift** (https://wiki.openstack.org/wiki/Swift)
-or in **Amazon S3**. Although the implementation is centered around audio files, most
+in the cloud. Currently, the songs may be stored in either **Swift** (https://wiki.openstack.org/wiki/Swift),
+**Amazon S3**, or in **Azure**. Although the implementation is centered around audio files, most
 of the code and functionality could easily be used for storing any kind of file. This
 is why compression and encryption functionality is included (compression is not
 needed for audio files such as MP3 files as they're already compressed, and most
@@ -20,8 +20,8 @@ people wouldn't be interested in encrypting their song files).
 Dependencies/Prerequisites
 --------------------------
 ###Storage###
-The cloud jukebox must have a storage system for data storage. Either **Swift** or
-**Amazon S3** can be used.
+The cloud jukebox must have a storage system for data storage. Either **Swift**,
+**Amazon S3**, or **Azure** can be used.
 
 ####Swift Dependencies####
 * swiftclient  `pip install python-swiftclient`
@@ -29,14 +29,18 @@ The cloud jukebox must have a storage system for data storage. Either **Swift** 
 ####Amazon S3 Dependencies####
 * boto  `pip install boto`
 
+####Microsoft Azure Dependencies####
+???
+
 ###Optional###
 ####Encryption Dependencies####
 * pycrypto  `pip install pycrypto`
 
 Configuration
 -------------
-You must enter your credentials for Swift or Amazon S3. If you're using Swift, update
+You must enter your credentials for the storage system. If you're using Swift, update
 the values in **swift_creds.txt**.  If you're using S3, update the values in **s3_creds.txt**.
+For Azure, update the values in **azure_creds.txt**.
 
 Song Metadata
 -------------
@@ -49,9 +53,9 @@ automatically be downloaded from cloud storage.
 
 Importing Songs
 ---------------
-1. Create a subdirectory named **'import'**
-2. Copy your MP3 files into the import directory
-3. Run the command `python jukeboxy.py import`
+1. Create a subdirectory named **'song-import'**
+2. Copy your MP3 files into the song-import directory
+3. Run the command `python jukeboxy_main.py import-songs`
 
 ###Song File Naming Convention###
 
@@ -71,14 +75,17 @@ For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolli
 
 Playing Songs
 -------------
-The cloud jukebox uses **afplay** on Mac OSX and **mplayer** on all other Unix variants (Linux, FreeBSD).
-If you do not have the designated audio player on your system, you're on a different system (Windows),
-or there is an error in starting the audio player, the jukebox will pause for 20 seconds to simulate
-the playing of the song.
+The cloud jukebox relies on an external music player and does not provide a music player
+of its own.  On Mac OSX, the built-in **afplay** is used. On other Unix variants (Linux, FreeBSD), **mplayer** is used.  On Windows, **MPC-HC** (3rd-party) player is used because the built-in
+player is not well suited for this model of usage. If you do not have the designated audio
+player on your system or there is an error in starting the audio player, the jukebox will
+pause for 20 seconds to simulate the playing of the song.
 
-Run the command: `python jukebox.py play`
+MPC-HC Windows player can be found here: https://mpc-hc.org
 
-For playback, the downloaded songs will be stored locally in the **playlist** subdirectory. This
+Run the command: `python jukebox_main.py play`
+
+For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
 deleted from this directory.
 
@@ -89,7 +96,7 @@ song files are downloaded as a batch in the background. The number of files that
 at once is configurable. By default, 3 files are downloaded together. To change this value, use
 the **--file-cache-count** command-line argument with the desired value.
 
-Example: `python jukebox.py --file-cache-count 10 play`
+Example: `python jukebox_main.py --file-cache-count 10 play`
 
 Integrity Checks
 ----------------
@@ -101,15 +108,17 @@ calculated on import to verify file integrity.
 
 Storage Type
 ------------
-The cloud jukebox supports **Swift** and **Amazon S3** for storage of audio files.  Put your Swift
-credentials in **swift_creds.txt**.  Put your S3 credentials in **s3_creds.txt**.  By default, the cloud
-jukebox is set to use Swift storage.  To explicitly specify the storage type, pass the **--storage**
-command-line option along with **'swift'** or **'s3'**.
+The cloud jukebox supports **Swift**, **Amazon S3**, and **Azure** for storage of audio files.
+Swift credentials are stored in **swift_creds.txt**, S3 credentials in **s3_creds.txt**, and
+Azure credentials in **azure_creds.txt**.  By default, the cloud jukebox is set to use Swift
+storage.  To explicitly specify the storage type, pass the **--storage** command-line option
+along with **'swift'**, **'s3'**, or **'azure'**.
 
 Examples:
 
-    python jukebox.py --storage s3 play
-    python jukebox.py --storage swift play
+    python jukebox_main.py --storage s3 play
+    python jukebox_main.py --storage swift play
+    python jukebox_main.py --storage azure play
 
 Compression
 -----------
@@ -131,20 +140,24 @@ Encryption is probably not desired for song files, but may be desired for other 
 
 Examples:
 
-    python jukebox.py --encrypt --key SK34slk3032u91 import
-    python jukebox.py --encrypt --keyfile keyfile.txt import
+    python jukebox_main.py --encrypt --key SK34slk3032u91 import-songs
+    python jukebox_main.py --encrypt --keyfile keyfile.txt import-songs
 
-    python jukebox.py --encrypt --key SK34slk3032u91 play
-    python jukebox.py --encrypt --keyfile keyfile.txt play
+    python jukebox_main.py --encrypt --key SK34slk3032u91 play
+    python jukebox_main.py --encrypt --keyfile keyfile.txt play
 
 
 Displaying Available Songs
 ----------------------
-Run `python jukebox.py list-songs`
+Run `python jukebox_main.py list-songs`
+
+Displaying Available Artists
+----------------------
+Run `python jukebox_main.py list-artists`
 
 Displaying List of Storage Containers
 -------------------------------------
-Run `python jukebox.py list-containers`
+Run `python jukebox_main.py list-containers`
 
 Debugging
 ---------

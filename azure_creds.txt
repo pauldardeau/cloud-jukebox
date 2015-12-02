@@ -1,0 +1,2 @@
+azure_account_name = your_azure_account_name_here
+azure_account_key = your_azure_account_key_here

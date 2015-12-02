@@ -1,0 +1,4 @@
+*.pyc
+*.mp3
+jukebox_db.sqlite3
+.idea/

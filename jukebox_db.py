@@ -1,8 +1,10 @@
 import sqlite3
-import song_file
+from song_metadata import SongMetadata
+from file_metadata import FileMetadata
 
 
 class JukeboxDB:
+
     def __init__(self, metadata_db_file_path=None, debug_print=False):
         self.debug_print = debug_print
         self.db_connection = None
@@ -26,18 +28,21 @@ class JukeboxDB:
         return open_success
 
     def close(self):
+        did_close = False
         if self.db_connection is not None:
             self.db_connection.close()
             self.db_connection = None
+            did_close = True
+        return did_close
 
     def __enter__(self):
         # look for stored metadata in the storage system
         self.db_connection = sqlite3.connect(self.metadata_db_file_path)
         if self.db_connection is not None:
             if self.debug_print:
-                print "have db connection"
+                print("have db connection")
         else:
-            print "unable to connect to database"
+            print("unable to connect to database")
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -45,31 +50,76 @@ class JukeboxDB:
             self.db_connection.close()
             self.db_connection = None
 
+    def create_table(self, sql):
+        try:
+            table_created = self.db_connection.execute(sql)
+            if not table_created:
+                print('creation of table failed')
+                print('%s' % sql)
+            return table_created
+        except sqlite3.Error as e:
+            print('error creating table: ' + e.args[0])
+            return False
+
     def create_tables(self):
         if self.db_connection is not None:
             if self.debug_print:
-                print "creating tables"
+                print("creating tables")
 
-            sql = """CREATE TABLE song (
-                  uid text,
-                  filetime text,
-                  origin_filesize integer,
-                  stored_filesize integer,
-                  padchar_count integer,
-                  artist text,
-                  songname text,
-                  md5 text,
-                  compressed integer,
-                  encrypted integer,
-                  container text,
-                  objectname text)"""
+            create_genre_table = """CREATE TABLE genre (
+                                 genre_uid TEXT UNIQUE NOT NULL,
+                                 genre_name TEXT UNIQUE NOT NULL,
+                                 genre_description TEXT)"""
+
+            create_artist_table = """CREATE TABLE artist (
+                                  artist_uid TEXT UNIQUE NOT NULL,
+                                  artist_name TEXT UNIQUE NOT NULL,
+                                  artist_description TEXT)"""
+
+            create_album_table = """CREATE TABLE album (
+                                 album_uid TEXT UNIQUE NOT NULL,
+                                 album_name TEXT UNIQUE NOT NULL,
+                                 album_description TEXT,
+                                 artist_uid TEXT NOT NULL REFERENCES artist(artist_uid),
+                                 genre_uid TEXT REFERENCES genre(genre_uid))"""
+
+            create_song_table = """CREATE TABLE song (
+                                song_uid TEXT UNIQUE NOT NULL,
+                                file_time TEXT,
+                                origin_file_size INTEGER,
+                                stored_file_size INTEGER,
+                                pad_char_count INTEGER,
+                                artist_name TEXT,
+                                artist_uid TEXT REFERENCES artist(artist_uid),
+                                song_name TEXT NOT NULL,
+                                md5_hash TEXT NOT NULL,
+                                compressed INTEGER,
+                                encrypted INTEGER,
+                                container_name TEXT NOT NULL,
+                                object_name TEXT NOT NULL,
+                                album_uid TEXT REFERENCES album(album_uid))"""
+
+            create_playlist_table = """CREATE TABLE playlist (
+                                    playlist_uid TEXT UNIQUE NOT NULL,
+                                    playlist_name TEXT UNIQUE NOT NULL,
+                                    playlist_description TEXT)"""
+
+            create_playlist_song_table = """CREATE TABLE playlist_song (
+                                         playlist_song_uid TEXT UNIQUE NOT NULL,
+                                         playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid),
+                                         song_uid TEXT NOT NULL REFERENCES song(song_uid))"""
+
             try:
-                self.db_connection.execute(sql)
-                return 1
+                return self.create_table(create_genre_table) and \
+                       self.create_table(create_artist_table) and \
+                       self.create_table(create_album_table) and \
+                       self.create_table(create_song_table) and \
+                       self.create_table(create_playlist_table) and \
+                       self.create_table(create_playlist_song_table)
             except sqlite3.Error as e:
-                print 'error creating table: ' + e.args[0]
+                print('error creating table: ' + e.args[0])
 
-        return 0
+        return False 
 
     def have_tables(self):
         have_tables_in_db = False
@@ -83,124 +133,118 @@ class JukeboxDB:
 
         return have_tables_in_db
 
-    def get_song_info(self, file_name):
+    def songs_for_query(self, sql, query_args=None):
+        result_songs = []
+        db_cursor = self.db_connection.cursor()
+        if query_args is not None:
+            db_results = db_cursor.execute(sql, query_args)
+        else:
+            db_results = db_cursor.execute(sql)
+        for row in db_results:
+            song = SongMetadata()
+            song.fm = FileMetadata()
+            song.fm.file_uid = row[0]
+            song.fm.file_time = row[1]
+            song.fm.origin_file_size = row[2]
+            song.fm.stored_file_size = row[3]
+            song.fm.pad_char_count = row[4]
+            song.artist_name = row[5]
+            song.artist_uid = row[6]
+            song.song_name = row[7]
+            song.fm.md5_hash = row[8]
+            song.fm.compressed = row[9]
+            song.fm.encrypted = row[10]
+            song.fm.container_name = row[11]
+            song.fm.object_name = row[12]
+            song.album_uid = row[13]
+            result_songs.append(song)
+        return result_songs
+                
+    def retrieve_song(self, file_name):
         if self.db_connection is not None:
-            sql = """SELECT filetime,
-                  origin_filesize,
-                  stored_filesize,
-                  padchar_count,
-                  artist,
-                  songname,
-                  md5,
+            sql = """SELECT song_uid,
+                  file_time,
+                  origin_file_size,
+                  stored_file_size,
+                  pad_char_count,
+                  artist_name,
+                  artist_uid,
+                  song_name,
+                  md5_hash,
                   compressed,
                   encrypted,
-                  container,
-                  objectname
-                  FROM song WHERE uid = ?"""
-            cursor = self.db_connection.cursor()
-            cursor.execute(sql, [file_name])
-            song_fields = cursor.fetchone()
-            if song_fields is not None:
-                song_info = song_file.SongFile()
-                song_info.set_uid(file_name)
-                song_info.set_file_time(song_fields[0])
-                song_info.set_origin_file_size(song_fields[1])
-                song_info.set_stored_file_size(song_fields[2])
-                song_info.set_pad_char_count(song_fields[3])
-                song_info.set_artist_name(song_fields[4])
-                song_info.set_song_name(song_fields[5])
-                song_info.set_md5(song_fields[6])
-                song_info.set_compressed(song_fields[7])
-                song_info.set_encrypted(song_fields[8])
-                song_info.set_container(song_fields[9])
-                song_info.set_object_name(song_fields[10])
-                return song_info
+                  container_name,
+                  object_name,
+                  album_uid
+                  FROM song WHERE song_uid = ?"""
+            song_results = self.songs_for_query(sql, [file_name])
+            if song_results is not None and song_results:
+                return song_results[0]
         return None
 
-    def insert_song_info(self, song_file_info):
+    def insert_song(self, song):
         insert_success = False
 
-        if (self.db_connection is not None) and (song_file_info is not None):
-            sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        if self.db_connection is not None and song is not None:
+            sql = "INSERT INTO song VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             cursor = self.db_connection.cursor()
-            sfi = song_file_info  # alias to save typing
-            uid = sfi.get_uid()
-            file_time = sfi.get_file_time()
-            origin_file_size = sfi.get_origin_file_size()
-            stored_file_size = sfi.get_stored_file_size()
-            pad_char_count = sfi.get_pad_char_count()
-            artist = sfi.get_artist_name()
-            song = sfi.get_song_name()
-            md5 = sfi.get_md5()
-            compressed = sfi.get_compressed()
-            encrypted = sfi.get_encrypted()
-            container = sfi.get_container()
-            object_name = sfi.get_object_name()
-
             try:
                 cursor.execute(sql,
-                               [uid, file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
-                                compressed, encrypted, container, object_name])
+                               [song.fm.file_uid, song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
+                                song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
+                                song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
+                                song.album_uid])
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
-                print "error inserting song: " + e.args[0]
+                print("error inserting song: " + e.args[0])
 
         return insert_success
 
-    def update_song_info(self, song_file_info):
+    def update_song(self, song):
         update_success = False
 
-        if (self.db_connection is not None) and (song_file_info is not None) and (len(song_file_info.get_uid()) > 0):
-            sql = """UPDATE song SET filetime=?,
-                  origin_filesize=?,
-                  stored_filesize=?,
-                  padchar_count=?,
-                  artist=?,
-                  songname=?,
-                  md5=?,
+        if self.db_connection is not None and song is not None and song.song_uid:
+            sql = """UPDATE song SET file_time=?,
+                  origin_file_size=?,
+                  stored_file_size=?,
+                  pad_char_count=?,
+                  artist_name=?,
+                  artist_uid=?,
+                  song_name=?,
+                  md5_hash=?,
                   compressed=?,
                   encrypted=?,
-                  container=?,
-                  objectname=? WHERE uid = ?"""
+                  container_name=?,
+                  object_name=?,
+                  album_uid=? WHERE song_uid = ?"""
             cursor = self.db_connection.cursor()
-            sfi = song_file_info  # alias to save typing
-            uid = sfi.get_uid()
-            file_time = sfi.get_file_time()
-            origin_file_size = sfi.get_origin_file_size()
-            stored_file_size = sfi.get_stored_file_size()
-            pad_char_count = sfi.get_pad_char_count()
-            artist = sfi.get_artist_name()
-            song = sfi.get_song_name()
-            md5 = sfi.get_md5()
-            compressed = sfi.get_compressed()
-            encrypted = sfi.get_encrypted()
-            container = sfi.get_container()
-            object_name = sfi.get_object_name()
 
             try:
-                cursor.execute(sql, [file_time, origin_file_size, stored_file_size, pad_char_count, artist, song, md5,
-                                     compressed, encrypted, container, object_name, uid])
+                cursor.execute(sql, [song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
+                                     song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
+                                     song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
+                                     song.album_uid, song.fm.file_uid])
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
-                print "error updating song: " + e.args[0]
+                print("error updating song: " + e.args[0])
 
         return update_success
 
-    def store_song_metadata(self, fs_song_info):
-        db_song_info = self.get_song_info(fs_song_info.get_uid())
-        if db_song_info is not None:
-            if fs_song_info != db_song_info:
-                return self.update_song_info(fs_song_info)
+    def store_song_metadata(self, song):
+        db_song = self.retrieve_song(song.song_uid)
+        if db_song is not None:
+            if song != db_song:
+                return self.update_song(song)
             else:
                 return True  # no insert or update needed (already up-to-date)
         else:
             # song is not in the database, insert it
-            return self.insert_song_info(fs_song_info)
+            return self.insert_song(song)
 
     @staticmethod
-    def get_sql_where_clause(using_encryption=False, using_compression=False):
+    def sql_where_clause(using_encryption=False, using_compression=False):
         if using_encryption:
             encryption = 1
         else:
@@ -220,48 +264,82 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def get_songs(self):
+    def retrieve_songs(self):
         songs = []
         if self.db_connection is not None:
-            sql = """SELECT uid,
-                  filetime,
-                  origin_filesize,
-                  stored_filesize,
-                  padchar_count,
-                  artist,
-                  songname,
-                  md5,
+            sql = """SELECT song_uid,
+                  file_time,
+                  origin_file_size,
+                  stored_file_size,
+                  pad_char_count,
+                  artist_name,
+                  artist_uid,
+                  song_name,
+                  md5_hash,
                   compressed,
                   encrypted,
-                  container,
-                  objectname FROM song"""
-            sql += self.get_sql_where_clause()
+                  container_name,
+                  object_name,
+                  album_uid FROM song"""
+            sql += self.sql_where_clause()
+            songs = self.songs_for_query(sql)
+        return songs
 
-            cursor = self.db_connection.cursor()
-            for row in cursor.execute(sql):
-                song_info = song_file.SongFile()
-                song_info.set_uid(row[0])
-                song_info.set_file_time(row[1])
-                song_info.set_origin_file_size(row[2])
-                song_info.set_stored_file_size(row[3])
-                song_info.set_pad_char_count(row[4])
-                song_info.set_artist_name(row[5])
-                song_info.set_song_name(row[6])
-                song_info.set_md5(row[7])
-                song_info.set_compressed(row[8])
-                song_info.set_encrypted(row[9])
-                song_info.set_container(row[10])
-                song_info.set_object_name(row[11])
-                songs.append(song_info)
+    def songs_for_artist(self, artist_name):
+        songs = []
+        if self.db_connection is not None:
+            sql = """SELECT song_uid,
+                  file_time,
+                  origin_file size,
+                  stored_file size,
+                  pad_char_count,
+                  artist_name,
+                  artist_uid,
+                  song_name,
+                  md5_hash,
+                  compressed,
+                  encrypted,
+                  container_name,
+                  object_name,
+                  album_uid FROM song"""
+            sql += self.sql_where_clause()
+            sql += " AND artist = ?"
+            songs = self.songs_for_query(sql, [artist_name])
         return songs
 
     def show_listings(self):
         if self.db_connection is not None:
-            sql = "SELECT artist, songname FROM song "
-            sql += self.get_sql_where_clause()
-            sql += " ORDER BY artist, songname"
+            sql = "SELECT artist_name, song_name FROM song ORDER BY artist_name, song_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 artist = row[0]
                 song = row[1]
-                print "%s, %s" % (artist, song)
+                print("%s, %s" % (artist, song))
+
+    def show_artists(self):
+        if self.db_connection is not None:
+            sql = "SELECT DISTINCT artist_name FROM song ORDER BY artist_name"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                artist = row[0]
+                print("%s" % artist)
+
+    def show_genres(self):
+        if self.db_connection is not None:
+            sql = "SELECT genre_name FROM genre ORDER BY genre_name"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                genre_name = row[0]
+                print("%s" % genre_name)
+
+    def show_albums(self):
+        if self.db_connection is not None:
+            sql = "SELECT album.album_name, artist.artist_name " + \
+                  "FROM album, artist " + \
+                  "WHERE album.artist_uid = artist.artist_uid " + \
+                  "ORDER BY album.album_name"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                album_name = row[0]
+                artist_name = row[1]
+                print("%s (%s)" % (album_name, artist_name))
