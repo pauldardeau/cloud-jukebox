@@ -6,25 +6,27 @@ import jukebox_db
 class TestJukeboxDB(unittest.TestCase):
 
     def setUp(self):
-        self.options = jukebox_db.JukeboxDB()
-        self.options.debug_mode = False
-        self.options.use_encryption = False
-        self.options.use_compression = False
-        self.options.check_data_integrity = False
-        self.options.file_cache_count = 3
-        self.options.number_songs = 0
-        self.options.encryption_key = ""
-        self.options.encryption_key_file = ""
-        self.options.encryption_iv = ""
+        self.mdb_file_path = 'test_jukebox_db.sqlite3'
+        self.jb_db = jukebox_db.JukeboxDB(self.mdb_file_path)
+        self.jb_db.open()
+        self.jb_db.create_tables()
+
+    def tearDown(self):
+        self.jb_db.close()
+        # TODO: delete file
 
     def test_is_open(self):
-        self.assertTrue(False)
+        self.assertTrue(self.jb_db.is_open())
+        self.jb_db.close()
+        self.assertFalse(self.jb_db.is_open())
 
     def test_open(self):
-        self.assertTrue(False)
+        self.jb_db.close()
+        self.assertTrue(self.jb_db.open())
 
     def test_close(self):
-        self.assertTrue(False)
+        self.assertTrue(self.jb_db.close())
+        self.assertFalse(self.jb_db.close())
 
     def test_create_table(self):
         self.assertTrue(False)

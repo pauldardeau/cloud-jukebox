@@ -13,12 +13,12 @@ class TestJukebox(unittest.TestCase):
         self.ss = MemoryStorageSystem()
         self.jb = Jukebox(self.jb_options, self.ss)
         song_metadata = SongMetadata()
-        self.jb.add_song(song_metadata)
-        self.jb.add_song(song_metadata)
-        self.jb.add_song(song_metadata)
-        self.jb.add_song(song_metadata)
-        self.jb.add_song(song_metadata)
-        self.jb.add_song(song_metadata)
+        self.jb.add_song(song_metadata, '')
+        self.jb.add_song(song_metadata, '')
+        self.jb.add_song(song_metadata, '')
+        self.jb.add_song(song_metadata, '')
+        self.jb.add_song(song_metadata, '')
+        self.jb.add_song(song_metadata, '')
 
     def test_artist_and_song_from_file_name(self):
         self.assertTrue(False)
