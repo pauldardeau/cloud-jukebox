@@ -174,7 +174,7 @@ class SwiftStorageSystem(StorageSystem):
                         # create empty file
                         try:
                             open(local_file_path, 'w').close()
-                            file_bytes_retrieved = 0
+                            bytes_retrieved = 0
                         except IOError:
                             print "error: unable to write to file '%s'" % local_file_path
             except swiftclient.client.ClientException:
