@@ -4,6 +4,7 @@ import s3
 import swift
 import azure
 import sys
+import requests
 from jukebox import Jukebox
 import jukebox_options
 
@@ -223,67 +224,72 @@ def main():
         options.encryption_iv = "sw4mpb1ts.juk3b0x"
 
         command = args.command
-        if command == 'help' or command == 'usage':
-            show_usage()
-        elif command == 'import-songs':
-            if not options.validate_options():
-                sys.exit(1)
-            with connect_storage_system(storage_type,
-                                        creds,
-                                        container_prefix,
-                                        debug_mode) as storage_system:
-                with Jukebox(options, storage_system) as jukebox:
-                    jukebox.import_songs()
-        elif command == 'play':
-            if not options.validate_options():
-                sys.exit(1)
-            with connect_storage_system(storage_type,
-                                        creds,
-                                        container_prefix,
-                                        debug_mode) as storage_system:
-                with Jukebox(options, storage_system) as jukebox:
-                    jukebox.play_songs()
-        elif command == 'list-songs':
-            if not options.validate_options():
-                sys.exit(1)
-            with Jukebox(options, None) as jukebox:
-                jukebox.show_listings()
-        elif command == 'list-artists':
-            if not options.validate_options():
-                sys.exit(1)
-            with Jukebox(options, None) as jukebox:
-                jukebox.show_artists()
-        elif command == 'list-containers':
-            if not options.validate_options():
-                sys.exit(1)
-            with connect_storage_system(storage_type,
-                                        creds,
-                                        container_prefix,
-                                        debug_mode) as storage_system:
-                with Jukebox(options, storage_system) as jukebox:
-                    jukebox.show_list_containers()
-        elif command == 'list-genres':
-            if not options.validate_options():
-                sys.exit(1)
-            with connect_storage_system(storage_type,
-                                        creds,
-                                        container_prefix,
-                                        debug_mode) as storage_system:
-                with Jukebox(options, storage_system) as jukebox:
-                    jukebox.show_genres()
-        elif command == 'list-albums':
-            if not options.validate_options():
-                sys.exit(1)
-            with connect_storage_system(storage_type,
-                                        creds,
-                                        container_prefix,
-                                        debug_mode) as storage_system:
-                with Jukebox(options, storage_system) as jukebox:
-                    jukebox.show_albums()
-        else:
-            print("Unrecognized command '%s'" % command)
-            print('')
-            show_usage()
+
+        try:
+            if command == 'help' or command == 'usage':
+                show_usage()
+            elif command == 'import-songs':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.import_songs()
+            elif command == 'play':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.play_songs()
+            elif command == 'list-songs':
+                if not options.validate_options():
+                    sys.exit(1)
+                with Jukebox(options, None) as jukebox:
+                    jukebox.show_listings()
+            elif command == 'list-artists':
+                if not options.validate_options():
+                    sys.exit(1)
+                with Jukebox(options, None) as jukebox:
+                    jukebox.show_artists()
+            elif command == 'list-containers':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.show_list_containers()
+            elif command == 'list-genres':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.show_genres()
+            elif command == 'list-albums':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.show_albums()
+            else:
+                print("Unrecognized command '%s'" % command)
+                print('')
+                show_usage()
+        except requests.exceptions.ConnectionError:
+            print("Error: unable to connect to storage system server")
+            sys.exit(1)
     else:
         print("Error: no command given")
         show_usage()
