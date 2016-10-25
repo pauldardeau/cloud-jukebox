@@ -235,7 +235,8 @@ class JukeboxDB:
                                 song.fm.md5_hash,
                                 song.fm.compressed,
                                 song.fm.encrypted,
-                                song.fm.container_name, song.fm.object_name,
+                                song.fm.container_name,
+                                song.fm.object_name,
                                 song.album_uid])
                 self.db_connection.commit()
                 insert_success = True

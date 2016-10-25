@@ -283,6 +283,15 @@ def main():
                                             debug_mode) as storage_system:
                     with Jukebox(options, storage_system) as jukebox:
                         jukebox.show_albums()
+            elif command == 'retrieve-catalog':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        pass
             else:
                 print("Unrecognized command '%s'" % command)
                 print('')

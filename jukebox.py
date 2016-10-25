@@ -12,15 +12,17 @@
 #
 # Song file naming convention:
 #
-# The-Artist-Name--The-Song-Name.ext
-#       |         |       |       |
-#       |         |       |       |----  file extension (e.g., 'mp3')
+# The-Artist-Name--Album-Name--The-Song-Name.ext
+#       |         |       |           |       |
+#       |         |       |           |       |----  file extension (e.g., 'mp3')
+#       |         |       |           |
+#       |         |       |           |---- name of the song (' ' replaced with '-')
 #       |         |       |
-#       |         |       |---- name of the song with ' ' replaced with '-'
+#       |         |       |---- name of the album (' ' replaced with '-')
 #       |         |
 #       |         |---- double dashes to separate the artist name and song name
 #       |
-#       |---- artist name with ' ' replaced with '-'
+#       |---- artist name (' ' replaced with '-')
 #
 # For example, the MP3 version of the song 'Under My Thumb' from artist 'The
 # Rolling Stones' should be named:
@@ -132,32 +134,42 @@ class Jukebox:
     def unencode_value(encoded_value):
         return encoded_value.replace('-', ' ')
 
-    def artist_and_song_from_file_name(self, file_name):
+    def components_from_file_name(self, file_name):
         pos_extension = file_name.find('.')
         if pos_extension > -1:
             base_file_name = file_name[0:pos_extension]
         else:
             base_file_name = file_name
         components = base_file_name.split('--')
-        if len(components) == 2:
+        if len(components) == 3:
             encoded_artist = components[0]
-            encoded_song = components[1]
-            return [self.unencode_value(encoded_artist), self.unencode_value(encoded_song)]
+            encoded_album = components[1]
+            encoded_song = components[2]
+            return [self.unencode_value(encoded_artist),
+                    self.unencode_value(encoded_album),
+                    self.unencode_value(encoded_song)]
         else:
             return None
 
     def artist_from_file_name(self, file_name):
         if file_name is not None and file_name:
-            components = self.artist_and_song_from_file_name(file_name)
-            if components is not None and len(components) == 2:
+            components = self.components_from_file_name(file_name)
+            if components is not None and len(components) == 3:
                 return components[0]
+        return None
+
+    def album_from_file_name(self, file_name):
+        if file_name is not None and file_name:
+            components = self.components_from_file_name(file_name)
+            if components is not None and len(components) == 3:
+                return components[1]
         return None
 
     def song_from_file_name(self, file_name):
         if file_name is not None and file_name:
-            components = self.artist_and_song_from_file_name(file_name)
-            if len(components) == 2:
-                return components[1]
+            components = self.components_from_file_name(file_name)
+            if components is not None and len(components) == 3:
+                return components[2]
         return None
 
     def store_song_metadata(self, fs_song):
@@ -225,7 +237,9 @@ class Jukebox:
                     if extension:
                         file_size = os.path.getsize(full_path)
                         artist = self.artist_from_file_name(file_name)
-                        if file_size > 0 and artist is not None:
+                        album = self.album_from_file_name(file_name)
+                        song = self.song_from_file_name(file_name)
+                        if file_size > 0 and artist is not None and album is not None and song is not None:
                             object_name = file_name + appended_file_ext
                             fs_song = song_metadata.SongMetadata()
                             fs_song.fm = file_metadata.FileMetadata()
@@ -234,7 +248,7 @@ class Jukebox:
                             fs_song.fm.origin_file_size = file_size
                             fs_song.fm.file_time = datetime.datetime.fromtimestamp(os.path.getmtime(full_path))
                             fs_song.artist_name = artist
-                            fs_song.song_name = self.song_from_file_name(file_name)
+                            fs_song.song_name = song
                             fs_song.fm.md5_hash = utils.md5_for_file(full_path)
                             fs_song.fm.compressed = self.jukebox_options.use_compression
                             fs_song.fm.encrypted = self.jukebox_options.use_encryption
@@ -293,7 +307,9 @@ class Jukebox:
                                 start_upload_time = time.time()
 
                                 # store song file to storage system
-                                if self.storage_system.put_object(fs_song.fm.container_name, fs_song.fm.object_name, file_contents):
+                                if self.storage_system.put_object(fs_song.fm.container_name,
+                                                                  fs_song.fm.object_name,
+                                                                  file_contents):
                                     end_upload_time = time.time()
                                     upload_elapsed_time = end_upload_time - start_upload_time
                                     cumulative_upload_time += upload_elapsed_time
@@ -567,7 +583,7 @@ class Jukebox:
 
             if sys.platform == "darwin":
                 self.audio_player_command_args = ["afplay"]
-                self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
+                #self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
             elif os.name == "posix":
                 self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
                 self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
