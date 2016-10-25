@@ -89,11 +89,17 @@ pause for 20 seconds to simulate the playing of the song.
 
 MPC-HC Windows player can be found here: https://mpc-hc.org
 
-Run the command: `python jukebox_main.py play`
+Run the command: `python jukebox_main.py [options] play`
 
 For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
 deleted from this directory.
+
+Options:
+   --artist <artist_name>
+   --album <album_name>
+   --song <song_name>
+   --playlist <playlist_name>
 
 File Cache Count
 ----------------
@@ -157,9 +163,17 @@ Displaying Available Songs
 ----------------------
 Run `python jukebox_main.py list-songs`
 
+Displaying Available Albums
+----------------------
+Run `python jukebox_main.py list-albums`
+
 Displaying Available Artists
 ----------------------
 Run `python jukebox_main.py list-artists`
+
+Displaying Available Playlists
+----------------------
+Run `python jukebox_main.py list-playlists`
 
 Displaying List of Storage Containers
 -------------------------------------
