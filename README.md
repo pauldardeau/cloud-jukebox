@@ -91,16 +91,24 @@ MPC-HC Windows player can be found here: https://mpc-hc.org
 
 Run the command: `python jukebox_main.py [options] play`
 
-For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
-directory will be automatically created. Once playback of a song is complete, the song file is
-deleted from this directory.
-
 Options:
 
     --artist <artist_name>
     --album <album_name>
-    --song <song_name>
+    --compress
+    --debug
+    --encrypt
+    --file-cache-count <number_files_to_cache_locally>
+    --integrity-checks
+    --key <encryption_key>
+    --keyfile <path_to_file_containing_encryption_key>
     --playlist <playlist_name>
+    --song <song_name>
+    --storage [swift|s3|azure]
+
+For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
+directory will be automatically created. Once playback of a song is complete, the song file is
+deleted from this directory.
 
 File Cache Count
 ----------------
