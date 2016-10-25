@@ -96,10 +96,11 @@ directory will be automatically created. Once playback of a song is complete, th
 deleted from this directory.
 
 Options:
-   --artist <artist_name>
-   --album <album_name>
-   --song <song_name>
-   --playlist <playlist_name>
+
+    --artist <artist_name>
+    --album <album_name>
+    --song <song_name>
+    --playlist <playlist_name>
 
 File Cache Count
 ----------------
