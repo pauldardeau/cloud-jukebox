@@ -67,13 +67,13 @@ Importing Songs
           |         |       |               |       |
           |         |       |               |       |----  file extension (e.g., 'mp3')
           |         |       |               |
-          |         |       |               |---- name of the song with ' ' replaced with '-'
+          |         |       |               |---- name of the song (' ' replaced with '-')
           |         |       |
-          |         |       |---- album name with ' ' replaced with '-'
+          |         |       |---- album name (' ' replaced with '-')
           |         |
           |         |---- double dashes to separate the artist name and album name
           |
-          |---- artist name with ' ' replaced with '-'
+          |---- artist name (' ' replaced with '-')
 
 For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones' on the album 'Aftermath' should be named:
 
