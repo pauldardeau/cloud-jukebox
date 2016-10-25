@@ -126,7 +126,9 @@ class JukeboxDB:
     def have_tables(self):
         have_tables_in_db = False
         if self.db_connection is not None:
-            sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='song'"
+            sql = "SELECT name " + \
+                  "FROM sqlite_master " + \
+                  "WHERE type='table' AND name='song'"
             cursor = self.db_connection.cursor()
             cursor.execute(sql)
             name = cursor.fetchone()
@@ -134,6 +136,36 @@ class JukeboxDB:
                 have_tables_in_db = True
 
         return have_tables_in_db
+
+    def id_for_artist(self, artist_name):
+        pass
+
+    def id_for_album(self, artist_name, album_name):
+        pass
+
+    def insert_artist(self, artist_name):
+        pass
+
+    def insert_album(self, album_name, artist_id):
+        pass
+
+    def albums_for_artist(self, artist_id):
+        pass
+
+    def get_artists(self):
+        pass
+
+    def songs_for_album(self, album_id):
+        pass
+
+    def songs_for_artist(self, artist_id):
+        pass
+
+    def get_playlists(self):
+        pass
+
+    def get_playlist(self, playlist_id):
+        pass
 
     def songs_for_query(self, sql, query_args=None):
         result_songs = []
@@ -192,9 +224,18 @@ class JukeboxDB:
             cursor = self.db_connection.cursor()
             try:
                 cursor.execute(sql,
-                               [song.fm.file_uid, song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
-                                song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
-                                song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
+                               [song.fm.file_uid,
+                                song.fm.file_time,
+                                song.fm.origin_file_size,
+                                song.fm.stored_file_size,
+                                song.fm.pad_char_count,
+                                song.artist_name,
+                                "",
+                                song.song_name,
+                                song.fm.md5_hash,
+                                song.fm.compressed,
+                                song.fm.encrypted,
+                                song.fm.container_name, song.fm.object_name,
                                 song.album_uid])
                 self.db_connection.commit()
                 insert_success = True
@@ -223,10 +264,20 @@ class JukeboxDB:
             cursor = self.db_connection.cursor()
 
             try:
-                cursor.execute(sql, [song.fm.file_time, song.fm.origin_file_size, song.fm.stored_file_size,
-                                     song.fm.pad_char_count, song.artist_name, "", song.song_name, song.fm.md5_hash,
-                                     song.fm.compressed, song.fm.encrypted, song.fm.container_name, song.fm.object_name,
-                                     song.album_uid, song.fm.file_uid])
+                cursor.execute(sql, [song.fm.file_time,
+                                     song.fm.origin_file_size,
+                                     song.fm.stored_file_size,
+                                     song.fm.pad_char_count,
+                                     song.artist_name,
+                                     "",
+                                     song.song_name,
+                                     song.fm.md5_hash,
+                                     song.fm.compressed,
+                                     song.fm.encrypted,
+                                     song.fm.container_name,
+                                     song.fm.object_name,
+                                     song.album_uid,
+                                     song.fm.file_uid])
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
@@ -311,7 +362,9 @@ class JukeboxDB:
 
     def show_listings(self):
         if self.db_connection is not None:
-            sql = "SELECT artist_name, song_name FROM song ORDER BY artist_name, song_name"
+            sql = "SELECT artist_name, song_name " + \
+                  "FROM song " + \
+                  "ORDER BY artist_name, song_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 artist = row[0]
@@ -320,7 +373,9 @@ class JukeboxDB:
 
     def show_artists(self):
         if self.db_connection is not None:
-            sql = "SELECT DISTINCT artist_name FROM song ORDER BY artist_name"
+            sql = "SELECT DISTINCT artist_name " + \
+                  "FROM song " + \
+                  "ORDER BY artist_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 artist = row[0]
@@ -328,11 +383,16 @@ class JukeboxDB:
 
     def show_genres(self):
         if self.db_connection is not None:
-            sql = "SELECT genre_name FROM genre ORDER BY genre_name"
+            sql = "SELECT genre_name " + \
+                  "FROM genre " + \
+                  "ORDER BY genre_name"
             cursor = self.db_connection.cursor()
             for row in cursor.execute(sql):
                 genre_name = row[0]
                 print("%s" % genre_name)
+
+    def show_artist_albums(self, artist_name):
+        pass
 
     def show_albums(self):
         if self.db_connection is not None:
@@ -345,3 +405,7 @@ class JukeboxDB:
                 album_name = row[0]
                 artist_name = row[1]
                 print("%s (%s)" % (album_name, artist_name))
+
+    def show_playlists(self):
+        pass
+
