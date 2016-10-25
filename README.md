@@ -42,6 +42,10 @@ You must enter your credentials for the storage system. If you're using Swift, u
 the values in **swift_creds.txt**.  If you're using S3, update the values in **s3_creds.txt**.
 For Azure, update the values in **azure_creds.txt**.
 
+Swift Server Configuration
+--------------------------
+If you are using Swift All-In-One (SAIO), be sure that 'bind_ip' (/etc/swift/proxy-server.conf) is using public network interface instead of localhost.
+
 Song Metadata
 -------------
 Song metadata is stored in **SQLite**. This SQLite metadata database is stored in cloud
