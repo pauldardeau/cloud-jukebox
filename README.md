@@ -63,19 +63,21 @@ Importing Songs
 
 ###Song File Naming Convention###
 
-    The-Artist-Name--The-Song-Name.ext
-          |         |       |       |
-          |         |       |       |----  file extension (e.g., 'mp3')
+    The-Artist-Name--The-Album-Name--The-Song-Name.ext
+          |         |       |               |       |
+          |         |       |               |       |----  file extension (e.g., 'mp3')
+          |         |       |               |
+          |         |       |               |---- name of the song with ' ' replaced with '-'
           |         |       |
-          |         |       |---- name of the song with ' ' replaced with '-'
+          |         |       |---- album name with ' ' replaced with '-'
           |         |
-          |         |---- double dashes to separate the artist name and song name
+          |         |---- double dashes to separate the artist name and album name
           |
           |---- artist name with ' ' replaced with '-'
 
-For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones' should be named:
+For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones' on the album 'Aftermath' should be named:
 
-`The-Rolling-Stones--Under-My-Thumb.mp3`
+`The-Rolling-Stones--Aftermath--Under-My-Thumb.mp3`
 
 Playing Songs
 -------------
