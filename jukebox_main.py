@@ -112,15 +112,17 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
 
 def show_usage():
     print('Supported Commands:')
-    print('\thelp            - show this help message')
-    print('\timport-songs    - import all new songs from song-import subdirectory')
-    print('\tlist-songs      - show listing of all available songs')
-    print('\tlist-artists    - show listing of all available artists')
-    print('\tlist-containers - show listing of all available storage containers')
-    print('\tlist-albums     - show listing of all available albums')
-    print('\tlist-genres     - show listing of all available genres')
-    print('\tplay            - start playing songs')
-    print('\tusage           - show this help message')
+    print('\thelp             - show this help message')
+    print('\timport-songs     - import all new songs from song-import subdirectory')
+    print('\tlist-songs       - show listing of all available songs')
+    print('\tlist-artists     - show listing of all available artists')
+    print('\tlist-containers  - show listing of all available storage containers')
+    print('\tlist-albums      - show listing of all available albums')
+    print('\tlist-genres      - show listing of all available genres')
+    print('\tplay             - start playing songs')
+    print('\tshuffle-play     - play songs randomly')
+    print('\tretrieve-catalog - retrieve copy of music catalog')
+    print('\tusage            - show this help message')
     print('')
 
 
@@ -245,7 +247,16 @@ def main():
                                             container_prefix,
                                             debug_mode) as storage_system:
                     with Jukebox(options, storage_system) as jukebox:
-                        jukebox.play_songs()
+                        jukebox.play_songs(shuffle=False)
+            elif command == 'shuffle-play':
+                if not options.validate_options():
+                    sys.exit(1)
+                with connect_storage_system(storage_type,
+                                            creds,
+                                            container_prefix,
+                                            debug_mode) as storage_system:
+                    with Jukebox(options, storage_system) as jukebox:
+                        jukebox.play_songs(shuffle=True)
             elif command == 'list-songs':
                 if not options.validate_options():
                     sys.exit(1)

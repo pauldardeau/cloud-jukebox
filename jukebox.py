@@ -47,6 +47,7 @@ import os.path
 import sys
 import time
 import zlib
+import random
 from subprocess import Popen
 import aes
 import jukebox_db
@@ -552,7 +553,7 @@ class Jukebox:
                 download_thread = song_downloader.SongDownloader(self, dl_songs)
                 download_thread.start()
 
-    def play_songs(self):
+    def play_songs(self, shuffle=False):
         self.song_list = self.jukebox_db.retrieve_songs()
         if self.song_list is not None:
             self.number_songs = len(self.song_list)
@@ -597,6 +598,9 @@ class Jukebox:
                 self.audio_player_command_args = []
 
             print("downloading first song...")
+
+            if shuffle:
+                self.song_list = random.sample(self.song_list, len(self.song_list))
 
             try:
                 if self.download_song(self.song_list[0]):
