@@ -593,7 +593,7 @@ class Jukebox:
                 # this support used to be available in the built-in windows media player, but is
                 # no longer present.
                 # self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
-                self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close"]
+                self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close", "/minimized"]
             else:
                 self.audio_player_command_args = []
 
