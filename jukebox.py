@@ -587,7 +587,7 @@ class Jukebox:
                 #self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
             elif os.name == "posix":
                 self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
-                self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
+                #self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
             elif sys.platform == "win32":
                 # we really need command-line support for /play and /close arguments. unfortunately,
                 # this support used to be available in the built-in windows media player, but is
