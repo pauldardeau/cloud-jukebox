@@ -129,6 +129,8 @@ def show_usage():
 def main():
     debug_mode = False
     storage_type = "swift"
+    artist = None
+    shuffle = False
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
@@ -139,6 +141,7 @@ def main():
     opt_parser.add_argument("--key", help="encryption key")
     opt_parser.add_argument("--keyfile", help="path to file containing encryption key")
     opt_parser.add_argument("--storage", help="storage system type (s3, swift, azure)")
+    opt_parser.add_argument("--artist", type=str, help="limit operations to specified artist")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     options = jukebox_options.JukeboxOptions()
@@ -198,6 +201,9 @@ def main():
                 print("setting storage system to '%s'" % args.storage)
             storage_type = args.storage
 
+    if args.artist is not None:
+        artist = args.artist
+
     if args.command:
         if debug_mode:
             print("using storage system type '%s'" % storage_type)
@@ -247,7 +253,7 @@ def main():
                                             container_prefix,
                                             debug_mode) as storage_system:
                     with Jukebox(options, storage_system) as jukebox:
-                        jukebox.play_songs(shuffle=False)
+                        jukebox.play_songs(shuffle, artist)
             elif command == 'shuffle-play':
                 if not options.validate_options():
                     sys.exit(1)
@@ -255,8 +261,9 @@ def main():
                                             creds,
                                             container_prefix,
                                             debug_mode) as storage_system:
+                    shuffle = True
                     with Jukebox(options, storage_system) as jukebox:
-                        jukebox.play_songs(shuffle=True)
+                        jukebox.play_songs(shuffle, artist)
             elif command == 'list-songs':
                 if not options.validate_options():
                     sys.exit(1)

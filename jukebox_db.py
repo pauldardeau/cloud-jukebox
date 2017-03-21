@@ -318,7 +318,7 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def retrieve_songs(self):
+    def retrieve_songs(self, artist=None):
         songs = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
@@ -336,6 +336,8 @@ class JukeboxDB:
                   object_name,
                   album_uid FROM song"""
             sql += self.sql_where_clause()
+            if artist is not None:
+               sql += " AND artist_name='%s'" % artist
             songs = self.songs_for_query(sql)
         return songs
 
