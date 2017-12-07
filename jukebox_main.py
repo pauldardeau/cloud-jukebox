@@ -98,7 +98,7 @@ def connect_azure_system(credentials, prefix, in_debug_mode=False):
                                         prefix,
                                         in_debug_mode)
 
-    
+
 def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
     if system_name == "swift":
         return connect_swift_system(credentials, prefix, in_debug_mode)

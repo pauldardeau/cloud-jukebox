@@ -7,4 +7,3 @@ def md5_for_file(path_to_file):
         for buf in f.read(4096):
             d.update(buf)
     return d.hexdigest()
-

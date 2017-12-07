@@ -121,7 +121,7 @@ class JukeboxDB:
             except sqlite3.Error as e:
                 print('error creating table: ' + e.args[0])
 
-        return False 
+        return False
 
     def have_tables(self):
         have_tables_in_db = False
@@ -193,7 +193,7 @@ class JukeboxDB:
             song.album_uid = row[13]
             result_songs.append(song)
         return result_songs
-                
+
     def retrieve_song(self, file_name):
         if self.db_connection is not None:
             sql = """SELECT song_uid,
@@ -303,7 +303,7 @@ class JukeboxDB:
             encryption = 1
         else:
             encryption = 0
-            
+
         if using_compression:
             compression = 1
         else:
@@ -411,4 +411,3 @@ class JukeboxDB:
 
     def show_playlists(self):
         pass
-
