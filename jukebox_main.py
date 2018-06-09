@@ -114,13 +114,17 @@ def show_usage():
     print('Supported Commands:')
     print('\thelp             - show this help message')
     print('\timport-songs     - import all new songs from song-import subdirectory')
+    print('\timport-playlists - import all new playlists from playlist-import subdirectory')
     print('\tlist-songs       - show listing of all available songs')
     print('\tlist-artists     - show listing of all available artists')
     print('\tlist-containers  - show listing of all available storage containers')
     print('\tlist-albums      - show listing of all available albums')
     print('\tlist-genres      - show listing of all available genres')
+    print('\tlist-playlists   - show listing of all available playlists')
+    print('\tshow-playlist    - show songs in specified playlist')
     print('\tplay             - start playing songs')
     print('\tshuffle-play     - play songs randomly')
+    print('\tplay-playlist    - play specified playlist')
     print('\tretrieve-catalog - retrieve copy of music catalog')
     print('\tusage            - show this help message')
     print('')
@@ -131,6 +135,7 @@ def main():
     storage_type = "swift"
     artist = None
     shuffle = False
+    playlist = None
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
@@ -142,6 +147,7 @@ def main():
     opt_parser.add_argument("--keyfile", help="path to file containing encryption key")
     opt_parser.add_argument("--storage", help="storage system type (s3, swift, azure)")
     opt_parser.add_argument("--artist", type=str, help="limit operations to specified artist")
+    opt_parser.add_argument("--playlist", type=str, help="limit operations to specified playlist")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     options = jukebox_options.JukeboxOptions()
@@ -204,6 +210,9 @@ def main():
     if args.artist is not None:
         artist = args.artist
 
+    if args.playlist is not None:
+        playlist = args.playlist
+
     if args.command:
         if debug_mode:
             print("using storage system type '%s'" % storage_type)
@@ -233,90 +242,60 @@ def main():
 
         command = args.command
 
-        try:
-            if command == 'help' or command == 'usage':
+        help_cmds = ['help', 'usage']
+        non_help_cmds = ['import-songs','play','shuffle-play','list-songs',\
+                         'list-artists','list-containers','list-genres',\
+                         'list-albums','retrieve-catalog','import-playlists',\
+                         'list-playlists','show-playlist','play-playlist']
+        all_cmds = help_cmds + non_help_cmds
+
+        if command not in all_cmds:
+            print("Unrecognized command '%s'" % command)
+            print('')
+            show_usage()
+        else:
+            if command in help_cmds:
                 show_usage()
-            elif command == 'import-songs':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.import_songs()
-            elif command == 'play':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.play_songs(shuffle, artist)
-            elif command == 'shuffle-play':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    shuffle = True
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.play_songs(shuffle, artist)
-            elif command == 'list-songs':
-                if not options.validate_options():
-                    sys.exit(1)
-                with Jukebox(options, None) as jukebox:
-                    jukebox.show_listings()
-            elif command == 'list-artists':
-                if not options.validate_options():
-                    sys.exit(1)
-                with Jukebox(options, None) as jukebox:
-                    jukebox.show_artists()
-            elif command == 'list-containers':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.show_list_containers()
-            elif command == 'list-genres':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.show_genres()
-            elif command == 'list-albums':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        jukebox.show_albums()
-            elif command == 'retrieve-catalog':
-                if not options.validate_options():
-                    sys.exit(1)
-                with connect_storage_system(storage_type,
-                                            creds,
-                                            container_prefix,
-                                            debug_mode) as storage_system:
-                    with Jukebox(options, storage_system) as jukebox:
-                        pass
             else:
-                print("Unrecognized command '%s'" % command)
-                print('')
-                show_usage()
-        except requests.exceptions.ConnectionError:
-            print("Error: unable to connect to storage system server")
-            sys.exit(1)
+                if not options.validate_options():
+                    sys.exit(1)
+                try:
+                    with connect_storage_system(storage_type,
+                                                creds,
+                                                container_prefix,
+                                                debug_mode) as storage_system:
+                        with Jukebox(options, storage_system) as jukebox:
+                            if command == 'import-songs':
+                                jukebox.import_songs()
+                            elif command == 'import-playlists':
+                                jukebox.import_playlists()
+                            elif command == 'play':
+                                shuffle = False
+                                jukebox.play_songs(shuffle, artist)
+                            elif command == 'shuffle-play':
+                                shuffle = True
+                                jukebox.play_songs(shuffle, artist)
+                            elif command == 'list-songs':
+                                jukebox.show_listings()
+                            elif command == 'list-artists':
+                                jukebox.show_artists()
+                            elif command == 'list-containers':
+                                jukebox.show_list_containers()
+                            elif command == 'list-genres':
+                                jukebox.show_genres()
+                            elif command == 'list-albums':
+                                jukebox.show_albums()
+                            elif command == 'list-playlists':
+                                jukebox.show_playlists()
+                            elif command == 'show-playlist':
+                                jukebox.show_playlist(playlist) 
+                            elif command == 'play-playlist':
+                                jukebox.play_playlist(playlist) 
+                            elif command == 'retrieve-catalog':
+                                pass
+                except requests.exceptions.ConnectionError:
+                    print("Error: unable to connect to storage system server")
+                    sys.exit(1)
     else:
         print("Error: no command given")
         show_usage()

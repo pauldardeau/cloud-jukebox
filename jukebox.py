@@ -55,6 +55,7 @@ import file_metadata
 import song_metadata
 import song_downloader
 import utils
+import json
 
 
 class Jukebox:
@@ -65,10 +66,12 @@ class Jukebox:
         self.jukebox_db = None
         self.current_dir = os.getcwd()
         self.song_import_dir = os.path.join(self.current_dir, 'song-import')
+        self.playlist_import_dir = os.path.join(self.current_dir, 'playlist-import')
         self.song_play_dir = os.path.join(self.current_dir, 'song-play')
         self.download_extension = ".download"
         self.metadata_db_file = 'jukebox_db.sqlite3'
         self.metadata_container = 'music-metadata'
+        self.playlist_container = 'playlists'
         self.song_list = []
         self.number_songs = 0
         self.song_index = -1
@@ -183,6 +186,15 @@ class Jukebox:
         else:
             # song is not in the database, insert it
             return self.jukebox_db.insert_song(fs_song)
+
+    def store_song_playlist(self, file_name, file_contents):
+        pl = json.loads(file_contents)
+        if 'name' in pl.keys():
+            pl_name = pl['name']
+            pl_uid = file_name
+            return self.jukebox_db.insert_playlist(pl_uid, pl_name)
+        else:
+            return False
 
     def get_encryptor(self):
         # key_block_size = 16  # AES-128
@@ -348,31 +360,7 @@ class Jukebox:
                 sys.stdout.write("\n")
 
             if file_import_count > 0:
-                if not self.storage_system.has_container(self.metadata_container):
-                    have_metadata_container = self.storage_system.create_container(self.metadata_container)
-                else:
-                    have_metadata_container = True
-
-                if have_metadata_container:
-                    if self.debug_print:
-                        print("uploading metadata db file to storage system")
-
-                    self.jukebox_db.close()
-                    self.jukebox_db = None
-
-                    db_file_contents = ''
-                    with open(self.get_metadata_db_file_path(), 'r') as db_file:
-                        db_file_contents = db_file.read()
-
-                    metadata_db_upload = self.storage_system.put_object(self.metadata_container,
-                                                                        self.metadata_db_file,
-                                                                        db_file_contents)
-
-                    if self.debug_print:
-                        if metadata_db_upload:
-                            print("metadata db file uploaded")
-                        else:
-                            print("unable to upload metadata db file")
+                self.upload_metadata_db()
 
             print("%s song files imported" % file_import_count)
 
@@ -640,3 +628,125 @@ class Jukebox:
     def show_albums(self):
         if self.jukebox_db is not None:
             self.jukebox_db.show_albums()
+
+    def read_file_contents(self, file_path, allow_encryption=True):
+        file_read = False
+        file_contents = None
+        pad_chars = 0
+
+        try:
+            with open(file_path, 'r') as content_file:
+                file_contents = content_file.read()
+                file_read = True
+        except IOError:
+            print("error: unable to read file %s" % file_path)
+
+        if file_read and file_contents is not None:
+            if file_contents:
+                # for general purposes, it might be useful or helpful to have
+                # a minimum size for compressing
+                if self.jukebox_options.use_compression:
+                    if self.debug_print:
+                        print("compressing file")
+
+                    file_contents = zlib.compress(file_contents, 9)
+
+                if allow_encryption and self.jukebox_options.use_encryption:
+                    if self.debug_print:
+                        print("encrypting file")
+
+                    # the length of the data to encrypt must be a multiple of 16
+                    num_extra_chars = len(file_contents) % 16
+                    if num_extra_chars > 0:
+                        if self.debug_print:
+                            print("padding file for encryption")
+                        pad_chars = 16 - num_extra_chars
+                        file_contents += "".ljust(pad_chars, ' ')
+
+                    file_contents = encryption.encrypt(file_contents)
+
+        return (file_read, file_contents, pad_chars)
+
+    def upload_metadata_db(self):
+        metadata_db_upload = False
+        if not self.storage_system.has_container(self.metadata_container):
+            have_metadata_container = self.storage_system.create_container(self.metadata_container)
+        else:
+            have_metadata_container = True
+
+        if have_metadata_container:
+            if self.debug_print:
+                print("uploading metadata db file to storage system")
+
+            self.jukebox_db.close()
+            self.jukebox_db = None
+
+            db_file_contents = ''
+            with open(self.get_metadata_db_file_path(), 'r') as db_file:
+                db_file_contents = db_file.read()
+
+            metadata_db_upload = self.storage_system.put_object(self.metadata_container,
+                                                                self.metadata_db_file,
+                                                                db_file_contents)
+
+            if self.debug_print:
+                if metadata_db_upload:
+                    print("metadata db file uploaded")
+                else:
+                    print("unable to upload metadata db file")
+
+        return metadata_db_upload
+
+    def import_playlists(self):
+        if self.jukebox_db is not None and self.jukebox_db.is_open():
+            file_import_count = 0
+            dir_listing = os.listdir(self.playlist_import_dir)
+            if len(dir_listing) == 0:
+                print("no playlists found")
+                return
+
+            if not self.storage_system.has_container(self.playlist_container):
+                have_container = self.storage_system.create_container(self.playlist_container)
+            else:
+                have_container = True
+
+            if not have_container:
+                print("error: unable to create container for playlists. unable to import")
+                return
+
+            for listing_entry in dir_listing:
+                full_path = os.path.join(self.playlist_import_dir, listing_entry) 
+                # ignore it if it's not a file
+                if os.path.isfile(full_path):
+                    object_name = listing_entry
+                    file_read,file_contents,_ = self.read_file_contents(full_path)
+                    if file_read and file_contents is not None:
+                        if self.storage_system.put_object(self.playlist_container,
+                                                          object_name,
+                                                          file_contents):
+                            print("put of playlist succeeded")
+                            if not self.store_song_playlist(object_name, file_contents):
+                                print("storing of playlist to db failed")
+                                self.storage_system.delete_object(self.playlist_container,
+                                                                  object_name)
+                            else:
+                                print("storing of playlist succeeded")
+                                file_import_count += 1
+
+            if file_import_count > 0:
+                print("%d playlists imported" % file_import_count)
+                # upload metadata DB file
+                self.upload_metadata_db()
+            else:
+                print("no files imported")
+
+    def show_playlists(self):
+        if self.jukebox_db is not None:
+            self.jukebox_db.show_playlists()
+
+    def show_playlist(self, playlist):
+        print("TODO: implement jukebox.py:show_playlist")
+
+    def play_playlist(self, playlist):
+        print("TODO: implement jukebox.py:play_playlist")
+

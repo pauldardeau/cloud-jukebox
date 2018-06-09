@@ -216,6 +216,26 @@ class JukeboxDB:
                 return song_results[0]
         return None
 
+    def insert_playlist(self, pl_uid, pl_name, pl_desc=None):
+        insert_success = False
+
+        if self.db_connection is not None and \
+           pl_uid is not None and \
+           pl_name is not None and \
+           len(pl_uid) > 0 and \
+           len(pl_name) > 0:
+            sql = "INSERT INTO playlist VALUES (?,?,?)"
+            cursor = self.db_connection.cursor()
+            try:
+                cursor.execute(sql,
+                               [pl_uid, pl_name, pl_desc])
+                self.db_connection.commit()
+                insert_success = True
+            except sqlite3.Error as e:
+                print("error inserting playlist: " + e.args[0])
+
+        return insert_success
+
     def insert_song(self, song):
         insert_success = False
 
@@ -410,4 +430,13 @@ class JukeboxDB:
                 print("%s (%s)" % (album_name, artist_name))
 
     def show_playlists(self):
-        pass
+        if self.db_connection is not None:
+            sql = "SELECT playlist_uid, playlist_name " + \
+                  "FROM playlist " + \
+                  "ORDER BY playlist_uid"
+            cursor = self.db_connection.cursor()
+            for row in cursor.execute(sql):
+                pl_uid = row[0]
+                pl_name = row[1]
+                print("%s - %s" % (pl_uid, pl_name))
+        
