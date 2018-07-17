@@ -164,8 +164,16 @@ class JukeboxDB:
     def get_playlists(self):
         pass
 
-    def get_playlist(self, playlist_id):
-        pass
+    def get_playlist(self, playlist_name):
+        pl_object = None
+        if playlist_name is not None and len(playlist_name) > 0:
+            db_cursor = self.db_connection.cursor()
+            sql = "SELECT playlist_uid FROM playlist WHERE playlist_name = ?"
+            db_results = db_cursor.execute(sql, [playlist_name])
+            for row in db_results:
+                pl_object = row[0]
+                break
+        return pl_object
 
     def songs_for_query(self, sql, query_args=None):
         result_songs = []
@@ -235,6 +243,24 @@ class JukeboxDB:
                 print("error inserting playlist: " + e.args[0])
 
         return insert_success
+
+    def delete_playlist(self, pl_name):
+        delete_success = False
+
+        if self.db_connection is not None and \
+           pl_name is not None and \
+           len(pl_name) > 0:
+            sql = "DELETE FROM playlist " + \
+                  "WHERE playlist_name = ? "
+            cursor = self.db_connection.cursor()
+            try:
+                cursor.execute(sql, [pl_name])
+                self.db_connection.commit()
+                delete_success = True
+            except sqlite3.Error as e:
+                print("error deleting playlist: " + e.args[0])
+
+        return delete_success
 
     def insert_song(self, song):
         insert_success = False
@@ -439,4 +465,19 @@ class JukeboxDB:
                 pl_uid = row[0]
                 pl_name = row[1]
                 print("%s - %s" % (pl_uid, pl_name))
-        
+
+    def delete_song(self, song_uid):
+        was_deleted = False
+        if self.db_connection is not None:
+            if song_uid is not None and len(song_uid) > 0:
+                sql = "DELETE FROM song WHERE song_uid = ?"
+                cursor = self.db_connection.cursor()
+                try:
+                    cursor.execute(sql, [song_uid])
+                    self.db_connection.commit()
+                    was_deleted = True
+                except sqlite3.Error as e:
+                    print("error deleting song: " + e.args[0])
+
+        return was_deleted
+

@@ -13,6 +13,7 @@ class JukeboxOptions:
         self.encryption_key = ""
         self.encryption_key_file = ""
         self.encryption_iv = ""
+        self.suppress_metadata_download = False
 
     def validate_options(self):
         if self.file_cache_count < 0:

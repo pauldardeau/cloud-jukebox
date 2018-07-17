@@ -112,21 +112,25 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
 
 def show_usage():
     print('Supported Commands:')
-    print('\thelp             - show this help message')
-    print('\timport-songs     - import all new songs from song-import subdirectory')
-    print('\timport-playlists - import all new playlists from playlist-import subdirectory')
-    print('\tlist-songs       - show listing of all available songs')
-    print('\tlist-artists     - show listing of all available artists')
-    print('\tlist-containers  - show listing of all available storage containers')
-    print('\tlist-albums      - show listing of all available albums')
-    print('\tlist-genres      - show listing of all available genres')
-    print('\tlist-playlists   - show listing of all available playlists')
-    print('\tshow-playlist    - show songs in specified playlist')
-    print('\tplay             - start playing songs')
-    print('\tshuffle-play     - play songs randomly')
-    print('\tplay-playlist    - play specified playlist')
-    print('\tretrieve-catalog - retrieve copy of music catalog')
-    print('\tusage            - show this help message')
+    print('\tdelete-album       - delete specified album')
+    print('\tdelete-playlist    - delete specified playlist')
+    print('\tdelete-song        - delete specified song')
+    print('\thelp               - show this help message')
+    print('\timport-songs       - import all new songs from song-import subdirectory')
+    print('\timport-playlists   - import all new playlists from playlist-import subdirectory')
+    print('\tlist-songs         - show listing of all available songs')
+    print('\tlist-artists       - show listing of all available artists')
+    print('\tlist-containers    - show listing of all available storage containers')
+    print('\tlist-albums        - show listing of all available albums')
+    print('\tlist-genres        - show listing of all available genres')
+    print('\tlist-playlists     - show listing of all available playlists')
+    print('\tshow-playlist      - show songs in specified playlist')
+    print('\tplay               - start playing songs')
+    print('\tshuffle-play       - play songs randomly')
+    print('\tplay-playlist      - play specified playlist')
+    print('\tretrieve-catalog   - retrieve copy of music catalog')
+    print('\tupload-metadata-db - upload SQLite metadata')
+    print('\tusage              - show this help message')
     print('')
 
 
@@ -136,6 +140,8 @@ def main():
     artist = None
     shuffle = False
     playlist = None
+    song = None
+    album = None
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
@@ -148,6 +154,8 @@ def main():
     opt_parser.add_argument("--storage", help="storage system type (s3, swift, azure)")
     opt_parser.add_argument("--artist", type=str, help="limit operations to specified artist")
     opt_parser.add_argument("--playlist", type=str, help="limit operations to specified playlist")
+    opt_parser.add_argument("--song", type=str, help="limit operations to specified song")
+    opt_parser.add_argument("--album", type=str, help="limit operations to specified album")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     options = jukebox_options.JukeboxOptions()
@@ -213,6 +221,12 @@ def main():
     if args.playlist is not None:
         playlist = args.playlist
 
+    if args.song is not None:
+        song = args.song
+
+    if args.album is not None:
+        album = args.album
+
     if args.command:
         if debug_mode:
             print("using storage system type '%s'" % storage_type)
@@ -246,7 +260,9 @@ def main():
         non_help_cmds = ['import-songs','play','shuffle-play','list-songs',\
                          'list-artists','list-containers','list-genres',\
                          'list-albums','retrieve-catalog','import-playlists',\
-                         'list-playlists','show-playlist','play-playlist']
+                         'list-playlists','show-playlist','play-playlist',\
+                         'delete-song','delete-album','delete-playlist', \
+                         'upload-metadata-db']
         all_cmds = help_cmds + non_help_cmds
 
         if command not in all_cmds:
@@ -260,6 +276,11 @@ def main():
                 if not options.validate_options():
                     sys.exit(1)
                 try:
+                    if command == 'upload-metadata-db':
+                        options.suppress_metadata_download = True
+                    else:
+                        options.suppress_metadata_download = False
+
                     with connect_storage_system(storage_type,
                                                 creds,
                                                 container_prefix,
@@ -288,11 +309,55 @@ def main():
                             elif command == 'list-playlists':
                                 jukebox.show_playlists()
                             elif command == 'show-playlist':
-                                jukebox.show_playlist(playlist) 
+                                if playlist is not None:
+                                    jukebox.show_playlist(playlist) 
+                                else:
+                                    print("error: playlist must be specified using --playlist option")
+                                    sys.exit(1)
                             elif command == 'play-playlist':
-                                jukebox.play_playlist(playlist) 
+                                if playlist is not None:
+                                    jukebox.play_playlist(playlist) 
+                                else:
+                                    print("error: playlist must be specified using --playlist option")
+                                    sys.exit(1)
                             elif command == 'retrieve-catalog':
                                 pass
+                            elif command == 'delete-song':
+                                if song is not None:
+                                    if jukebox.delete_song(song):
+                                        print("song deleted")
+                                    else:
+                                        print("error: unable to delete song")
+                                        sys.exit(1)
+                                else:
+                                    print("error: song must be specified using --song option")
+                                    sys.exit(1)
+                            elif command == 'delete-album':
+                                if album is not None:
+                                    if jukebox.delete_album(album):
+                                        print("album deleted")
+                                    else:
+                                        print("error: unable to delete album")
+                                        sys.exit(1)
+                                else:
+                                    print("error: album must be specified using --album option")
+                                    sys.exit(1)
+                            elif command == 'delete-playlist':
+                                if playlist is not None:
+                                    if jukebox.delete_playlist(playlist):
+                                        print("playlist deleted")
+                                    else:
+                                        print("error: unable to delete playlist")
+                                        sys.exit(1)
+                                else:
+                                    print("error: playlist must be specified using --playlist option")
+                                    sys.exit(1)
+                            elif command == 'upload-metadata-db':
+                                if jukebox.upload_metadata_db():
+                                    print("metadata db uploaded")
+                                else:
+                                    print("error: unable to upload metadata db")
+                                    sys.exit(1)
                 except requests.exceptions.ConnectionError:
                     print("Error: unable to connect to storage system server")
                     sys.exit(1)

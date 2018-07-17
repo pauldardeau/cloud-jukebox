@@ -25,9 +25,9 @@
 #       |---- artist name (' ' replaced with '-')
 #
 # For example, the MP3 version of the song 'Under My Thumb' from artist 'The
-# Rolling Stones' should be named:
+# Rolling Stones' from the album 'Aftermath' should be named:
 #
-#   The-Rolling-Stones--Under-My-Thumb.mp3
+#   The-Rolling-Stones--Aftermath--Under-My-Thumb.mp3
 #
 # first time use (or when new songs are added):
 # (1) copy one or more song files to $JUKEBOX/song-import
@@ -91,7 +91,10 @@ class Jukebox:
 
     def __enter__(self):
         # look for stored metadata in the storage system
-        if self.storage_system is not None and self.storage_system.has_container(self.metadata_container):
+        if self.storage_system is not None and \
+           self.storage_system.has_container(self.metadata_container) and \
+           not self.jukebox_options.suppress_metadata_download:
+
             # metadata container exists, retrieve container listing
             container_contents = self.storage_system.list_container_contents(self.metadata_container)
 
@@ -204,6 +207,31 @@ class Jukebox:
                                       self.jukebox_options.encryption_key,
                                       self.jukebox_options.encryption_iv)
 
+    def container_for_song(self, song_uid):
+        if song_uid is None or len(song_uid) == 0:
+            return None
+        container_suffix = "-artist-songs"
+        appended_file_ext = ""
+        if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
+            container_suffix += "-ez"
+            appended_file_ext = ".egz"
+        elif self.jukebox_options.use_encryption:
+            container_suffix += "-e"
+            appended_file_ext = ".e"
+        elif self.jukebox_options.use_compression:
+            container_suffix += "-z"
+            appended_file_ext = ".gz"
+
+        artist = self.artist_from_file_name(song_uid)
+        if artist.startswith('A '):
+            artist_letter = artist[2:3]
+        elif artist.startswith('The '):
+            artist_letter = artist[4:5]
+        else:
+            artist_letter = artist[0:1]
+
+        return artist_letter.lower() + container_suffix
+
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
             dir_listing = os.listdir(self.song_import_dir)
@@ -224,18 +252,6 @@ class Jukebox:
                 encryption = self.get_encryptor()
             else:
                 encryption = None
-
-            container_suffix = "-artist-songs"
-            appended_file_ext = ""
-            if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
-                container_suffix += "-ez"
-                appended_file_ext = ".egz"
-            elif self.jukebox_options.use_encryption:
-                container_suffix += "-e"
-                appended_file_ext = ".e"
-            elif self.jukebox_options.use_compression:
-                container_suffix += "-z"
-                appended_file_ext = ".gz"
 
             cumulative_upload_time = 0
             cumulative_upload_bytes = 0
@@ -268,15 +284,7 @@ class Jukebox:
                             fs_song.fm.object_name = object_name
                             fs_song.fm.pad_char_count = 0
 
-                            # get first letter of artist name, ignoring 'A ' and 'The '
-                            if artist.startswith('A '):
-                                artist_letter = artist[2:3]
-                            elif artist.startswith('The '):
-                                artist_letter = artist[4:5]
-                            else:
-                                artist_letter = artist[0:1]
-
-                            fs_song.fm.container_name = artist_letter.lower() + container_suffix
+                            fs_song.fm.container_name = self.container_for_song(file_name)
 
                             # read file contents
                             file_read = False
@@ -749,4 +757,46 @@ class Jukebox:
 
     def play_playlist(self, playlist):
         print("TODO: implement jukebox.py:play_playlist")
+
+    def delete_song(self, song_uid):
+        is_deleted = False
+        if song_uid is not None and len(song_uid) > 0:
+            db_deleted = self.jukebox_db.delete_song(song_uid)
+            if db_deleted:
+                container = self.container_for_song(song_uid)
+                if container is not None and len(container) > 0:
+                    is_deleted = self.storage_system.delete_object(container, song_uid)
+                    if is_deleted:
+                        self.upload_metadata_db()
+
+        return is_deleted
+
+    def delete_album(self, album):
+        #TODO: implement delete_album
+        return False
+
+    def delete_playlist(self, playlist_name):
+        is_deleted = False
+        object_name = self.jukebox_db.get_playlist(playlist_name)
+        if object_name is not None and len(object_name) > 0:
+            object_deleted = False
+            db_deleted = self.jukebox_db.delete_playlist(playlist_name)
+            if db_deleted:
+                print("container='%s', object='%s'" % (self.playlist_container,object_name))
+                object_deleted = self.storage_system.delete_object(self.playlist_container,
+                                                                   object_name)
+                if object_deleted:
+                    is_deleted = True
+                else:
+                    print("error: object delete failed")
+            else:
+                print("error: database delete failed")
+            if is_deleted:
+                self.upload_metadata_db()
+            else:
+                print("delete of playlist failed")
+        else:
+            print("invalid playlist name")
+
+        return is_deleted
 
