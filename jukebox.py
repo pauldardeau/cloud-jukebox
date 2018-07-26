@@ -207,20 +207,30 @@ class Jukebox:
                                       self.jukebox_options.encryption_key,
                                       self.jukebox_options.encryption_iv)
 
+    def container_suffix(self):
+        suffix = ""
+        if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
+            suffix += "-ez"
+        elif self.jukebox_options.use_encryption:
+            suffix += "-e"
+        elif self.jukebox_options.use_compression:
+            suffix += "-z"
+        return suffix
+
+    def object_file_suffix(self):
+        suffix = ""
+        if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
+            suffix = ".egz"
+        elif self.jukebox_options.use_encryption:
+            suffix = ".e"
+        elif self.jukebox_options.use_compression:
+            suffix = ".gz"
+        return suffix
+
     def container_for_song(self, song_uid):
         if song_uid is None or len(song_uid) == 0:
             return None
-        container_suffix = "-artist-songs"
-        appended_file_ext = ""
-        if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
-            container_suffix += "-ez"
-            appended_file_ext = ".egz"
-        elif self.jukebox_options.use_encryption:
-            container_suffix += "-e"
-            appended_file_ext = ".e"
-        elif self.jukebox_options.use_compression:
-            container_suffix += "-z"
-            appended_file_ext = ".gz"
+        container_suffix = "-artist-songs" + self.container_suffix()
 
         artist = self.artist_from_file_name(song_uid)
         if artist.startswith('A '):
@@ -269,7 +279,7 @@ class Jukebox:
                         album = self.album_from_file_name(file_name)
                         song = self.song_from_file_name(file_name)
                         if file_size > 0 and artist is not None and album is not None and song is not None:
-                            object_name = file_name + appended_file_ext
+                            object_name = file_name + self.object_file_suffix()
                             fs_song = song_metadata.SongMetadata()
                             fs_song.fm = file_metadata.FileMetadata()
                             fs_song.fm.file_uid = object_name
