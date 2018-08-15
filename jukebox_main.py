@@ -118,6 +118,7 @@ def show_usage():
     print('\thelp               - show this help message')
     print('\timport-songs       - import all new songs from song-import subdirectory')
     print('\timport-playlists   - import all new playlists from playlist-import subdirectory')
+    print('\timport-album-art   - import all album art from album-art-import subdirectory')
     print('\tlist-songs         - show listing of all available songs')
     print('\tlist-artists       - show listing of all available artists')
     print('\tlist-containers    - show listing of all available storage containers')
@@ -262,7 +263,7 @@ def main():
                          'list-albums','retrieve-catalog','import-playlists',\
                          'list-playlists','show-playlist','play-playlist',\
                          'delete-song','delete-album','delete-playlist', \
-                         'upload-metadata-db']
+                         'upload-metadata-db','import-album-art']
         all_cmds = help_cmds + non_help_cmds
 
         if command not in all_cmds:
@@ -358,6 +359,8 @@ def main():
                                 else:
                                     print("error: unable to upload metadata db")
                                     sys.exit(1)
+                            elif command == 'import-album-art':
+                                jukebox.import_album_art()
                 except requests.exceptions.ConnectionError:
                     print("Error: unable to connect to storage system server")
                     sys.exit(1)

@@ -68,10 +68,12 @@ class Jukebox:
         self.song_import_dir = os.path.join(self.current_dir, 'song-import')
         self.playlist_import_dir = os.path.join(self.current_dir, 'playlist-import')
         self.song_play_dir = os.path.join(self.current_dir, 'song-play')
+        self.album_art_import_dir = os.path.join(self.current_dir, 'album-art-import')
         self.download_extension = ".download"
         self.metadata_db_file = 'jukebox_db.sqlite3'
         self.metadata_container = 'music-metadata'
         self.playlist_container = 'playlists'
+        self.album_art_container = 'album-art'
         self.song_list = []
         self.number_songs = 0
         self.song_index = -1
@@ -810,3 +812,36 @@ class Jukebox:
 
         return is_deleted
 
+    def import_album_art(self):
+        if self.jukebox_db is not None and self.jukebox_db.is_open():
+            file_import_count = 0
+            dir_listing = os.listdir(self.album_art_import_dir)
+            if len(dir_listing) == 0:
+                print("no album art found")
+                return
+
+            if not self.storage_system.has_container(self.album_art_container):
+                have_container = self.storage_system.create_container(self.album_art_container)
+            else:
+                have_container = True
+
+            if not have_container:
+                print("error: unable to create container for album art. unable to import")
+                return
+
+            for listing_entry in dir_listing:
+                full_path = os.path.join(self.album_art_import_dir, listing_entry)
+                # ignore it if it's not a file
+                if os.path.isfile(full_path):
+                    object_name = listing_entry
+                    file_read,file_contents,_ = self.read_file_contents(full_path)
+                    if file_read and file_contents is not None:
+                        if self.storage_system.put_object(self.album_art_container,
+                                                          object_name,
+                                                          file_contents):
+                            file_import_count += 1
+
+            if file_import_count > 0:
+                print("%d album art files imported" % file_import_count)
+            else:
+                print("no files imported")
