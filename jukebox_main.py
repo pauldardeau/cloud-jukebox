@@ -293,10 +293,10 @@ def main():
                                 jukebox.import_playlists()
                             elif command == 'play':
                                 shuffle = False
-                                jukebox.play_songs(shuffle, artist)
+                                jukebox.play_songs(shuffle, artist, album)
                             elif command == 'shuffle-play':
                                 shuffle = True
-                                jukebox.play_songs(shuffle, artist)
+                                jukebox.play_songs(shuffle, artist, album)
                             elif command == 'list-songs':
                                 jukebox.show_listings()
                             elif command == 'list-artists':

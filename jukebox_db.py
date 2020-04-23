@@ -1,4 +1,5 @@
 import sqlite3
+import jukebox
 from song_metadata import SongMetadata
 from file_metadata import FileMetadata
 
@@ -364,7 +365,7 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def retrieve_songs(self, artist=None):
+    def retrieve_songs(self, artist=None, album=None):
         songs = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
@@ -384,6 +385,10 @@ class JukeboxDB:
             sql += self.sql_where_clause()
             if artist is not None:
                sql += " AND artist_name='%s'" % artist
+            if album is not None:
+               encoded_artist = jukebox.Jukebox.encode_value(artist)
+               encoded_album = jukebox.Jukebox.encode_value(album)
+               sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist,encoded_album)
             songs = self.songs_for_query(sql)
         return songs
 

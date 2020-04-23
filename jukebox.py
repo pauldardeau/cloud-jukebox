@@ -143,6 +143,10 @@ class Jukebox:
     def unencode_value(encoded_value):
         return encoded_value.replace('-', ' ')
 
+    @staticmethod
+    def encode_value(value):
+        return value.replace(' ', '-')
+
     def components_from_file_name(self, file_name):
         pos_extension = file_name.find('.')
         if pos_extension > -1:
@@ -561,8 +565,8 @@ class Jukebox:
                 download_thread = song_downloader.SongDownloader(self, dl_songs)
                 download_thread.start()
 
-    def play_songs(self, shuffle=False, artist=None):
-        self.song_list = self.jukebox_db.retrieve_songs(artist)
+    def play_songs(self, shuffle=False, artist=None, album=None):
+        self.song_list = self.jukebox_db.retrieve_songs(artist, album)
         if self.song_list is not None:
             self.number_songs = len(self.song_list)
 
