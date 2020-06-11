@@ -44,6 +44,8 @@
 import datetime
 import os
 import os.path
+if os.name == 'posix':
+    import signal
 import sys
 import time
 import zlib
@@ -58,8 +60,23 @@ import utils
 import json
 
 
+g_jukebox_instance = None
+
+
+def signal_handler(signum, frame):
+    if signum == signal.SIGUSR1:
+        print("SIGUSR1 received")
+        if g_jukebox_instance is not None:
+            g_jukebox_instance.toggle_pause_play()
+    elif signum == signal.SIGUSR2:
+        if g_jukebox_instance is not None:
+            g_jukebox_instance.advance_to_next_song()
+
+
 class Jukebox:
     def __init__(self, jb_options, storage_sys, debug_print=False):
+        global g_jukebox_instance
+        g_jukebox_instance = self
         self.jukebox_options = jb_options
         self.storage_system = storage_sys
         self.debug_print = debug_print
@@ -78,10 +95,14 @@ class Jukebox:
         self.number_songs = 0
         self.song_index = -1
         self.audio_player_command_args = []
+        self.audio_player_popen = None
         self.song_play_length_seconds = 20
         self.cumulative_download_bytes = 0
         self.cumulative_download_time = 0
         self.exit_requested = False
+        self.is_paused = False
+        self.song_start_time = 0
+        self.song_seconds_offset = 0
 
         if jb_options is not None and jb_options.debug_mode:
             self.debug_print = True
@@ -135,6 +156,26 @@ class Jukebox:
             if self.jukebox_db.is_open():
                 self.jukebox_db.close()
             self.jukebox_db = None
+
+    def install_signal_handlers(self):
+        if os.name == 'posix':
+            signal.signal(signal.SIGUSR1, signal_handler)
+            signal.signal(signal.SIGUSR2, signal_handler)
+
+    def toggle_pause_play(self):
+        self.is_paused = not self.is_paused
+        if self.is_paused:
+            print("paused")
+            if self.audio_player_popen is not None:
+                # capture current song position (seconds into song)
+                self.audio_player_popen.terminate()
+        else:
+            print("resuming play")
+
+    def advance_to_next_song(self):
+        print("advancing to next song")
+        if self.audio_player_popen is not None:
+            self.audio_player_popen.terminate()
 
     def get_metadata_db_file_path(self):
         return os.path.join(self.current_dir, self.metadata_db_file)
@@ -509,26 +550,33 @@ class Jukebox:
                 cmd_args = self.audio_player_command_args[:]
                 cmd_args.append(song_file_path)
                 exit_code = -1
+                started_audio_player = False
                 try:
                     audio_player_proc = Popen(cmd_args)
                     if audio_player_proc is not None:
+                        started_audio_player = True
+                        self.song_start_time = time.time()
+                        self.audio_player_popen = audio_player_proc
                         exit_code = audio_player_proc.wait()
+                        self.audio_player_popen = None
                 except OSError:
                     # audio player not available
                     self.audio_player_command_args = []
+                    self.audio_player_popen = None
                     exit_code = -1
 
                 # if the audio player failed or is not present, just sleep
                 # for the length of time that audio would be played
-                if exit_code != 0:
+                if not started_audio_player and exit_code != 0:
                     time.sleep(self.song_play_length_seconds)
             else:
                 # we don't know about an audio player, so simulate a
                 # song being played by sleeping
                 time.sleep(self.song_play_length_seconds)
 
-            # delete the song file from the play list directory
-            os.remove(song_file_path)
+            if not self.is_paused:
+                # delete the song file from the play list directory
+                os.remove(song_file_path)
         else:
             print("song file doesn't exist: '%s'" % song_file_path)
 
@@ -593,6 +641,7 @@ class Jukebox:
                         pass
 
             self.song_index = 0
+            self.install_signal_handlers()
 
             if sys.platform == "darwin":
                 self.audio_player_command_args = ["afplay"]
@@ -617,18 +666,26 @@ class Jukebox:
             try:
                 if self.download_song(self.song_list[0]):
                     print("first song downloaded. starting playing now.")
+                    with open("jukebox.pid", "w") as f:
+                        f.write('%d\n' % os.getpid())
                     while True:
-                        self.download_songs()
                         if not self.exit_requested:
-                            self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
-                            self.song_index += 1
-                            if self.song_index >= self.number_songs:
-                                self.song_index = 0
+                            if not self.is_paused:
+                                self.download_songs()
+                                self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
+                            if not self.is_paused:
+                                self.song_index += 1
+                                if self.song_index >= self.number_songs:
+                                    self.song_index = 0
+                            else:
+                                time.sleep(1)
+                    os.remove("jukebox.pid")
                 else:
                     print("error: unable to download songs")
                     sys.exit(1)
             except KeyboardInterrupt:
                 print("\nexiting jukebox")
+                os.remove("jukebox.pid")
                 self.exit_requested = True
 
     def show_list_containers(self):
