@@ -65,7 +65,6 @@ g_jukebox_instance = None
 
 def signal_handler(signum, frame):
     if signum == signal.SIGUSR1:
-        print("SIGUSR1 received")
         if g_jukebox_instance is not None:
             g_jukebox_instance.toggle_pause_play()
     elif signum == signal.SIGUSR2:
