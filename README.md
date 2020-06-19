@@ -19,21 +19,21 @@ people wouldn't be interested in encrypting their song files).
 
 Dependencies/Prerequisites
 --------------------------
-###Storage###
+### Storage
 The cloud jukebox must have a storage system for data storage. Either **Swift**,
 **Amazon S3**, or **Azure** can be used.
 
-####Swift Dependencies####
+#### Swift Dependencies
 * swiftclient  `pip install python-swiftclient`
 
-####Amazon S3 Dependencies####
+#### Amazon S3 Dependencies
 * boto  `pip install boto`
 
-####Microsoft Azure Dependencies####
+#### Microsoft Azure Dependencies
 ???
 
-###Optional###
-####Encryption Dependencies####
+### Optional
+#### Encryption Dependencies
 * pycrypto  `pip install pycrypto`
 
 Configuration
@@ -61,7 +61,7 @@ Importing Songs
 2. Copy your MP3 files into the song-import directory
 3. Run the command `python jukebox_main.py import-songs`
 
-###Song File Naming Convention###
+### Song File Naming Convention
 
     The-Artist-Name--The-Album-Name--The-Song-Name.ext
           |         |       |               |       |
