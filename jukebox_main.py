@@ -112,6 +112,7 @@ def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False
 
 def show_usage():
     print('Supported Commands:')
+    print('\tdelete-artist      - delete specified artist')
     print('\tdelete-album       - delete specified album')
     print('\tdelete-playlist    - delete specified playlist')
     print('\tdelete-song        - delete specified song')
@@ -258,12 +259,13 @@ def main():
         command = args.command
 
         help_cmds = ['help', 'usage']
-        non_help_cmds = ['import-songs','play','shuffle-play','list-songs',\
-                         'list-artists','list-containers','list-genres',\
-                         'list-albums','retrieve-catalog','import-playlists',\
-                         'list-playlists','show-playlist','play-playlist',\
+        non_help_cmds = ['import-songs','play','shuffle-play','list-songs', \
+                         'list-artists','list-containers','list-genres', \
+                         'list-albums','retrieve-catalog','import-playlists', \
+                         'list-playlists','show-playlist','play-playlist', \
                          'delete-song','delete-album','delete-playlist', \
-                         'upload-metadata-db','import-album-art']
+                         'delete-artist', 'upload-metadata-db', \
+                         'import-album-art']
         all_cmds = help_cmds + non_help_cmds
 
         if command not in all_cmds:
@@ -332,6 +334,16 @@ def main():
                                         sys.exit(1)
                                 else:
                                     print("error: song must be specified using --song option")
+                                    sys.exit(1)
+                            elif command == 'delete-artist':
+                                if artist is not None:
+                                    if jukebox.delete_artist(artist):
+                                        print("artist deleted")
+                                    else:
+                                        print("error: unable to delete artist")
+                                        sys.exit(1)
+                                else:
+                                    print("error: artist must be specified using --artist option")
                                     sys.exit(1)
                             elif command == 'delete-album':
                                 if album is not None:

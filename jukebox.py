@@ -830,7 +830,7 @@ class Jukebox:
     def play_playlist(self, playlist):
         print("TODO: implement jukebox.py:play_playlist")
 
-    def delete_song(self, song_uid):
+    def delete_song(self, song_uid, upload_metadata=True):
         is_deleted = False
         if song_uid is not None and len(song_uid) > 0:
             db_deleted = self.jukebox_db.delete_song(song_uid)
@@ -838,8 +838,29 @@ class Jukebox:
                 container = self.container_for_song(song_uid)
                 if container is not None and len(container) > 0:
                     is_deleted = self.storage_system.delete_object(container, song_uid)
-                    if is_deleted:
+                    if is_deleted and upload_metadata:
                         self.upload_metadata_db()
+
+        return is_deleted
+
+    def delete_artist(self, artist):
+        is_deleted = False
+        if artist is not None and len(artist) > 0:
+            song_list = self.jukebox_db.retrieve_songs(artist)
+            if song_list is not None:
+                if len(song_list) == 0:
+                    print("no songs in jukebox")
+                    sys.exit(0)
+                else:
+                    for song in song_list:
+                        if not self.delete_song(song.fm.object_name, False):
+                            print("error deleting song '%s'" % song.fm.object_name)
+                            sys.exit(1)
+                    self.upload_metadata_db()
+                    is_deleted = True
+            else:
+                print("no songs in jukebox")
+                sys.exit(0)
 
         return is_deleted
 
