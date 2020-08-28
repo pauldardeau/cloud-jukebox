@@ -578,6 +578,8 @@ class Jukebox:
                 os.remove(song_file_path)
         else:
             print("song file doesn't exist: '%s'" % song_file_path)
+            with open("404.txt", "a+") as f:
+                f.write("%s\n" % song_file_path)
 
     def download_songs(self):
         # scan the play list directory to see if we need to download more songs
@@ -834,12 +836,13 @@ class Jukebox:
         is_deleted = False
         if song_uid is not None and len(song_uid) > 0:
             db_deleted = self.jukebox_db.delete_song(song_uid)
-            if db_deleted:
-                container = self.container_for_song(song_uid)
-                if container is not None and len(container) > 0:
-                    is_deleted = self.storage_system.delete_object(container, song_uid)
-                    if is_deleted and upload_metadata:
-                        self.upload_metadata_db()
+            container = self.container_for_song(song_uid)
+            ss_deleted = False
+            if container is not None and len(container) > 0:
+                ss_deleted = self.storage_system.delete_object(container, song_uid)
+            if db_deleted and upload_metadata:
+                self.upload_metadata_db()
+            is_deleted = db_deleted or ss_deleted
 
         return is_deleted
 
