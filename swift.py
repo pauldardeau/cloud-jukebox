@@ -42,7 +42,7 @@ class SwiftStorageSystem(StorageSystem):
 
     def __enter__(self):
         if self.debug_mode:
-            print "attempting to connect to swift server at %s" % self.auth_url
+            print("attempting to connect to swift server at %s" % self.auth_url)
 
         self.conn = swiftclient.Connection(
             self.auth_url, self.account_username, self.password,
@@ -57,7 +57,7 @@ class SwiftStorageSystem(StorageSystem):
     def __exit__(self, exception_type, exception_value, traceback):
         if self.conn is not None:
             if self.debug_mode:
-                print "closing swift connection object"
+                print("closing swift connection object")
 
             self.authenticated = False
             self.list_containers = None
@@ -169,14 +169,14 @@ class SwiftStorageSystem(StorageSystem):
                                 content_file.write(file_contents)
                             bytes_retrieved = len(file_contents)
                         except IOError:
-                            print "error: unable to write to file '%s'" % local_file_path
+                            print("error: unable to write to file '%s'" % local_file_path)
                     else:
                         # create empty file
                         try:
                             open(local_file_path, 'w').close()
                             bytes_retrieved = 0
                         except IOError:
-                            print "error: unable to write to file '%s'" % local_file_path
+                            print("error: unable to write to file '%s'" % local_file_path)
             except swiftclient.client.ClientException:
                 pass
 
