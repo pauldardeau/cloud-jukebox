@@ -409,7 +409,7 @@ class Jukebox:
                         num_new_chars = int(progressbar_chars) - bar_chars
                         if num_new_chars > 0:
                             # update progress bar
-                            for j in xrange(num_new_chars):
+                            for j in iter(range(num_new_chars)):
                                 sys.stdout.write(progressbar_char)
                             sys.stdout.flush()
                             bar_chars += num_new_chars
@@ -418,7 +418,7 @@ class Jukebox:
                 # if we haven't filled up the progress bar, fill it now
                 if bar_chars < progressbar_width:
                     num_new_chars = progressbar_width - bar_chars
-                    for j in xrange(num_new_chars):
+                    for j in iter(range(num_new_chars)):
                         sys.stdout.write(progressbar_char)
                     sys.stdout.flush()
                 sys.stdout.write("\n")
@@ -598,7 +598,7 @@ class Jukebox:
             dl_songs = []
             # start looking at the next song in the list
             check_index = self.song_index + 1
-            for j in xrange(self.number_songs):
+            for j in iter(range(self.number_songs)):
                 if check_index >= self.number_songs:
                     check_index = 0
                 if check_index != self.song_index:
