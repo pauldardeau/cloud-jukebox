@@ -160,13 +160,16 @@ def main():
     opt_parser.add_argument("--album", type=str, help="limit operations to specified album")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
+    if args is None:
+        print("error: unable to obtain command-line arguments")
+        sys.exit(1)
     options = jukebox_options.JukeboxOptions()
 
     if args.debug:
         debug_mode = True
         options.debug_mode = True
 
-    if args.file_cache_count > 0:
+    if args.file_cache_count is not None and args.file_cache_count > 0:
         if debug_mode:
             print("setting file cache count=" + repr(args.file_cache_count))
         options.file_cache_count = args.file_cache_count
