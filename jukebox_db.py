@@ -384,11 +384,11 @@ class JukeboxDB:
                   album_uid FROM song"""
             sql += self.sql_where_clause()
             if artist is not None:
-               sql += " AND artist_name='%s'" % artist
+                sql += " AND artist_name='%s'" % artist
             if album is not None:
-               encoded_artist = jukebox.Jukebox.encode_value(artist)
-               encoded_album = jukebox.Jukebox.encode_value(album)
-               sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist,encoded_album)
+                encoded_artist = jukebox.Jukebox.encode_value(artist)
+                encoded_album = jukebox.Jukebox.encode_value(album)
+                sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
             songs = self.songs_for_query(sql)
         return songs
 
@@ -485,4 +485,3 @@ class JukeboxDB:
                     print("error deleting song: " + e.args[0])
 
         return was_deleted
-

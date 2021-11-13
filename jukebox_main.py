@@ -47,7 +47,7 @@ def connect_swift_system(credentials, prefix, in_debug_mode=False):
 
 def connect_s3_system(credentials, prefix, in_debug_mode=False):
     if not s3.is_available():
-        print("error: s3 is not supported on this system. please install boto (s3 client) first.")
+        print("error: s3 is not supported on this system. please install boto3 (s3 client) first.")
         sys.exit(1)
 
     aws_access_key = ""
@@ -262,12 +262,12 @@ def main():
         command = args.command
 
         help_cmds = ['help', 'usage']
-        non_help_cmds = ['import-songs','play','shuffle-play','list-songs', \
-                         'list-artists','list-containers','list-genres', \
-                         'list-albums','retrieve-catalog','import-playlists', \
-                         'list-playlists','show-playlist','play-playlist', \
-                         'delete-song','delete-album','delete-playlist', \
-                         'delete-artist', 'upload-metadata-db', \
+        non_help_cmds = ['import-songs', 'play', 'shuffle-play', 'list-songs',
+                         'list-artists', 'list-containers', 'list-genres',
+                         'list-albums', 'retrieve-catalog', 'import-playlists',
+                         'list-playlists', 'show-playlist', 'play-playlist',
+                         'delete-song', 'delete-album', 'delete-playlist',
+                         'delete-artist', 'upload-metadata-db',
                          'import-album-art']
         all_cmds = help_cmds + non_help_cmds
 

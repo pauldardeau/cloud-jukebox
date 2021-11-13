@@ -655,7 +655,8 @@ class Jukebox:
                 # this support used to be available in the built-in windows media player, but is
                 # no longer present.
                 # self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
-                self.audio_player_command_args = ["C:\Program Files\MPC-HC\mpc-hc64.exe", "/play", "/close", "/minimized"]
+                self.audio_player_command_args = ["C:\\Program Files\\MPC-HC\\mpc-hc64.exe",
+                                                  "/play", "/close", "/minimized"]
             else:
                 self.audio_player_command_args = []
 
@@ -747,7 +748,7 @@ class Jukebox:
 
                     file_contents = encryption.encrypt(file_contents)
 
-        return (file_read, file_contents, pad_chars)
+        return file_read, file_contents, pad_chars
 
     def upload_metadata_db(self):
         metadata_db_upload = False
@@ -801,7 +802,7 @@ class Jukebox:
                 # ignore it if it's not a file
                 if os.path.isfile(full_path):
                     object_name = listing_entry
-                    file_read,file_contents,_ = self.read_file_contents(full_path)
+                    file_read, file_contents, _ = self.read_file_contents(full_path)
                     if file_read and file_contents is not None:
                         if self.storage_system.put_object(self.playlist_container,
                                                           object_name,
@@ -878,7 +879,7 @@ class Jukebox:
             object_deleted = False
             db_deleted = self.jukebox_db.delete_playlist(playlist_name)
             if db_deleted:
-                print("container='%s', object='%s'" % (self.playlist_container,object_name))
+                print("container='%s', object='%s'" % (self.playlist_container, object_name))
                 object_deleted = self.storage_system.delete_object(self.playlist_container,
                                                                    object_name)
                 if object_deleted:
@@ -918,7 +919,7 @@ class Jukebox:
                 # ignore it if it's not a file
                 if os.path.isfile(full_path):
                     object_name = listing_entry
-                    file_read,file_contents,_ = self.read_file_contents(full_path)
+                    file_read, file_contents, _ = self.read_file_contents(full_path)
                     if file_read and file_contents is not None:
                         if self.storage_system.put_object(self.album_art_container,
                                                           object_name,
