@@ -365,7 +365,8 @@ class Jukebox:
                                         if self.debug_print:
                                             print("compressing file")
 
-                                        file_contents = zlib.compress(file_contents, 9)
+                                        file_bytes = bytes(file_contents, 'utf-8')
+                                        file_contents = zlib.compress(file_bytes, 9)
 
                                     if self.jukebox_options.use_encryption:
                                         if self.debug_print:
@@ -737,7 +738,8 @@ class Jukebox:
                     if self.debug_print:
                         print("compressing file")
 
-                    file_contents = zlib.compress(file_contents, 9)
+                    file_bytes = bytes(file_contents, 'utf-8')
+                    file_contents = zlib.compress(file_bytes, 9)
 
                 if allow_encryption and self.jukebox_options.use_encryption:
                     if self.debug_print:
