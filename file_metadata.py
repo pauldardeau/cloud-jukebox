@@ -1,19 +1,22 @@
+from typing import Dict
+
+
 class FileMetadata(object):
 
     def __init__(self):
-        self.file_uid = ""
-        self.file_name = ""
-        self.origin_file_size = 0
-        self.stored_file_size = 0
-        self.pad_char_count = 0
-        self.file_time = ""
-        self.md5_hash = ""
-        self.compressed = 0
-        self.encrypted = 0
-        self.container_name = ""
-        self.object_name = ""
+        self.file_uid: str = ""
+        self.file_name: str = ""
+        self.origin_file_size: int = 0
+        self.stored_file_size: int = 0
+        self.pad_char_count: int = 0
+        self.file_time: str = ""
+        self.md5_hash: str = ""
+        self.compressed: int = 0
+        self.encrypted: int = 0
+        self.container_name: str = ""
+        self.object_name: str = ""
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'FileMetadata') -> bool:
         return self.file_uid == other.file_uid and \
                self.file_name == other.file_name and \
                self.origin_file_size == other.origin_file_size and \
@@ -26,10 +29,8 @@ class FileMetadata(object):
                self.container_name == other.container_name and \
                self.object_name == other.object_name
 
-    def from_dictionary(self, dictionary, prefix=None):
+    def from_dictionary(self, dictionary: Dict[str, object], prefix: str = ""):
         if dictionary is not None:
-            if prefix is None:
-                prefix = ""
             if prefix + "file_uid" in dictionary:
                 self.file_uid = dictionary[prefix + "file_uid"]
             if prefix + "file_name" in dictionary:
@@ -53,19 +54,16 @@ class FileMetadata(object):
             if prefix + "object_name" in dictionary:
                 self.object_name = dictionary[prefix + "object_name"]
 
-    def to_dictionary(self, prefix=None):
-        d = {}
-        if prefix is None:
-            prefix = ""
-        d[prefix + "file_uid"] = self.file_uid
-        d[prefix + "file_name"] = self.file_name
-        d[prefix + "origin_file_size"] = self.origin_file_size
-        d[prefix + "stored_file_size"] = self.stored_file_size
-        d[prefix + "pad_char_count"] = self.pad_char_count
-        d[prefix + "file_time"] = self.file_time
-        d[prefix + "md5_hash"] = self.md5_hash
-        d[prefix + "compressed"] = self.compressed
-        d[prefix + "encrypted"] = self.encrypted
-        d[prefix + "container_name"] = self.container_name
-        d[prefix + "object_name"] = self.object_name
+    def to_dictionary(self, prefix: str = "") -> Dict[str, object]:
+        d = {prefix + "file_uid": self.file_uid,
+             prefix + "file_name": self.file_name,
+             prefix + "origin_file_size": self.origin_file_size,
+             prefix + "stored_file_size": self.stored_file_size,
+             prefix + "pad_char_count": self.pad_char_count,
+             prefix + "file_time": self.file_time,
+             prefix + "md5_hash": self.md5_hash,
+             prefix + "compressed": self.compressed,
+             prefix + "encrypted": self.encrypted,
+             prefix + "container_name": self.container_name,
+             prefix + "object_name": self.object_name}
         return d

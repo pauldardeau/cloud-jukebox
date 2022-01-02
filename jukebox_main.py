@@ -9,7 +9,7 @@ from jukebox import Jukebox
 import jukebox_options
 
 
-def connect_swift_system(credentials, prefix, in_debug_mode=False):
+def connect_swift_system(credentials, prefix: str, in_debug_mode: bool = False):
     if not swift.is_available():
         print("error: swift is not supported on this system. please install swiftclient first.")
         sys.exit(1)
@@ -45,7 +45,7 @@ def connect_swift_system(credentials, prefix, in_debug_mode=False):
                                     in_debug_mode)
 
 
-def connect_s3_system(credentials, prefix, in_debug_mode=False):
+def connect_s3_system(credentials, prefix: str, in_debug_mode: bool = False):
     if not s3.is_available():
         print("error: s3 is not supported on this system. please install boto3 (s3 client) first.")
         sys.exit(1)
@@ -72,7 +72,7 @@ def connect_s3_system(credentials, prefix, in_debug_mode=False):
                                   in_debug_mode)
 
 
-def connect_azure_system(credentials, prefix, in_debug_mode=False):
+def connect_azure_system(credentials, prefix: str, in_debug_mode: bool = False):
     if not azure.is_available():
         print("error: azure is not supported on this system. please install azure client first.")
         sys.exit(1)
@@ -99,7 +99,7 @@ def connect_azure_system(credentials, prefix, in_debug_mode=False):
                                         in_debug_mode)
 
 
-def connect_storage_system(system_name, credentials, prefix, in_debug_mode=False):
+def connect_storage_system(system_name: str, credentials, prefix: str, in_debug_mode: bool = False):
     if system_name == "swift":
         return connect_swift_system(credentials, prefix, in_debug_mode)
     elif system_name == "s3":
@@ -139,11 +139,11 @@ def show_usage():
 def main():
     debug_mode = False
     storage_type = "swift"
-    artist = None
+    artist = ""
     shuffle = False
     playlist = None
-    song = None
-    album = None
+    song = ""
+    album = ""
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")

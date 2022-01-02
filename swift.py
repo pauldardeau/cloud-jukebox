@@ -1,5 +1,7 @@
-from storage_system import StorageSystem
+from typing import List
 
+from storage_system import StorageSystem
+import typing
 
 _storage_system_swift_supported = False
 
@@ -10,12 +12,12 @@ except ImportError:
     _storage_system_swift_supported = False
 
 
-def is_available():
+def is_available() -> bool:
     return _storage_system_swift_supported
 
 
 class SwiftStorageSystem(StorageSystem):
-    def __init__(self, auth_host, account, username, password, debug_mode=False):
+    def __init__(self, auth_host: str, account: str, username: str, password: str, debug_mode: bool = False):
         StorageSystem.__init__(self, "Swift", debug_mode)
         self.auth_host = auth_host
         self.auth_port = 8080
@@ -64,7 +66,7 @@ class SwiftStorageSystem(StorageSystem):
             self.conn.close()
             self.conn = None
 
-    def list_account_containers(self):
+    def list_account_containers(self) -> typing.Optional[List[str]]:
         if self.conn is not None:
             try:
                 dict_headers, list_containers = self.conn.get_account()
@@ -78,7 +80,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return None
 
-    def create_container(self, container_name):
+    def create_container(self, container_name: str) -> bool:
         container_created = False
         if self.conn is not None:
             try:
@@ -90,7 +92,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return container_created
 
-    def delete_container(self, container_name):
+    def delete_container(self, container_name: str) -> bool:
         container_deleted = False
         if self.conn is not None:
             try:
@@ -102,7 +104,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return container_deleted
 
-    def list_container_contents(self, container_name):
+    def list_container_contents(self, container_name: str) -> typing.Optional[List[str]]:
         if self.conn is not None:
             try:
                 dict_headers, list_contents = self.conn.get_container(container_name)
@@ -116,7 +118,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return None
 
-    def get_object_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name: str, object_name: str):
         if self.conn is not None and container_name is not None and object_name is not None:
             try:
                 return self.conn.head_object(container_name, object_name)
@@ -125,7 +127,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return None
 
-    def put_object(self, container_name, object_name, file_contents, headers=None):
+    def put_object(self, container_name: str, object_name: str, file_contents, headers=None) -> bool:
         object_added = False
 
         if self.conn is not None and container_name is not None and \
@@ -142,7 +144,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return object_added
 
-    def delete_object(self, container_name, object_name):
+    def delete_object(self, container_name: str, object_name: str) -> bool:
         object_deleted = False
 
         if self.conn is not None and container_name is not None and object_name is not None:
@@ -154,7 +156,7 @@ class SwiftStorageSystem(StorageSystem):
 
         return object_deleted
 
-    def get_object(self, container_name, object_name, local_file_path):
+    def get_object(self, container_name: str, object_name: str, local_file_path: str) -> int:
         bytes_retrieved = 0
 
         if self.conn is not None and container_name is not None and \

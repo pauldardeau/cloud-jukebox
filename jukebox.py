@@ -44,6 +44,9 @@
 import datetime
 import os
 import os.path
+
+from typing import List, Tuple
+
 if os.name == 'posix':
     import signal
 import sys
@@ -58,12 +61,13 @@ import song_metadata
 import song_downloader
 import utils
 import json
+import typing
 
 
-g_jukebox_instance = None
+g_jukebox_instance: typing.Optional['Jukebox'] = None
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum: int, frame):
     if signum == signal.SIGUSR1:
         if g_jukebox_instance is not None:
             g_jukebox_instance.toggle_pause_play()
@@ -72,14 +76,20 @@ def signal_handler(signum, frame):
             g_jukebox_instance.advance_to_next_song()
 
 
+def install_signal_handlers():
+    if os.name == 'posix':
+        signal.signal(signal.SIGUSR1, signal_handler)
+        signal.signal(signal.SIGUSR2, signal_handler)
+
+
 class Jukebox:
-    def __init__(self, jb_options, storage_sys, debug_print=False):
+    def __init__(self, jb_options, storage_sys, debug_print: bool = False):
         global g_jukebox_instance
         g_jukebox_instance = self
         self.jukebox_options = jb_options
         self.storage_system = storage_sys
         self.debug_print = debug_print
-        self.jukebox_db = None
+        self.jukebox_db: typing.Optional[jukebox_db.JukeboxDB] = None
         self.current_dir = os.getcwd()
         self.song_import_dir = os.path.join(self.current_dir, 'song-import')
         self.playlist_import_dir = os.path.join(self.current_dir, 'playlist-import')
@@ -90,7 +100,7 @@ class Jukebox:
         self.metadata_container = 'music-metadata'
         self.playlist_container = 'playlists'
         self.album_art_container = 'album-art'
-        self.song_list = []
+        self.song_list: List[song_metadata.SongMetadata] = []
         self.number_songs = 0
         self.song_index = -1
         self.audio_player_command_args = []
@@ -156,11 +166,6 @@ class Jukebox:
                 self.jukebox_db.close()
             self.jukebox_db = None
 
-    def install_signal_handlers(self):
-        if os.name == 'posix':
-            signal.signal(signal.SIGUSR1, signal_handler)
-            signal.signal(signal.SIGUSR2, signal_handler)
-
     def toggle_pause_play(self):
         self.is_paused = not self.is_paused
         if self.is_paused:
@@ -176,18 +181,20 @@ class Jukebox:
         if self.audio_player_popen is not None:
             self.audio_player_popen.terminate()
 
-    def get_metadata_db_file_path(self):
+    def get_metadata_db_file_path(self) -> str:
         return os.path.join(self.current_dir, self.metadata_db_file)
 
     @staticmethod
-    def unencode_value(encoded_value):
+    def unencode_value(encoded_value: str) -> str:
         return encoded_value.replace('-', ' ')
 
     @staticmethod
-    def encode_value(value):
+    def encode_value(value: str) -> str:
         return value.replace(' ', '-')
 
-    def components_from_file_name(self, file_name):
+    def components_from_file_name(self, file_name: str):  # -> typing.Optional[List[str, str, str]]:
+        if len(file_name) == 0:
+            return None
         pos_extension = file_name.find('.')
         if pos_extension > -1:
             base_file_name = file_name[0:pos_extension]
@@ -195,37 +202,34 @@ class Jukebox:
             base_file_name = file_name
         components = base_file_name.split('--')
         if len(components) == 3:
-            encoded_artist = components[0]
-            encoded_album = components[1]
-            encoded_song = components[2]
-            return [self.unencode_value(encoded_artist),
-                    self.unencode_value(encoded_album),
-                    self.unencode_value(encoded_song)]
+            return [self.unencode_value(components[0]),
+                    self.unencode_value(components[1]),
+                    self.unencode_value(components[2])]
         else:
             return None
 
-    def artist_from_file_name(self, file_name):
-        if file_name is not None and file_name:
+    def artist_from_file_name(self, file_name: str) -> typing.Optional[str]:
+        if len(file_name) > 0:
             components = self.components_from_file_name(file_name)
             if components is not None and len(components) == 3:
                 return components[0]
         return None
 
-    def album_from_file_name(self, file_name):
-        if file_name is not None and file_name:
+    def album_from_file_name(self, file_name: str) -> typing.Optional[str]:
+        if len(file_name) > 0:
             components = self.components_from_file_name(file_name)
             if components is not None and len(components) == 3:
                 return components[1]
         return None
 
-    def song_from_file_name(self, file_name):
-        if file_name is not None and file_name:
+    def song_from_file_name(self, file_name: str) -> typing.Optional[str]:
+        if len(file_name) > 0:
             components = self.components_from_file_name(file_name)
             if components is not None and len(components) == 3:
                 return components[2]
         return None
 
-    def store_song_metadata(self, fs_song):
+    def store_song_metadata(self, fs_song: song_metadata.SongMetadata) -> bool:
         db_song = self.jukebox_db.retrieve_song(fs_song.fm.file_uid)
         if db_song is not None:
             if fs_song != db_song:
@@ -236,7 +240,7 @@ class Jukebox:
             # song is not in the database, insert it
             return self.jukebox_db.insert_song(fs_song)
 
-    def store_song_playlist(self, file_name, file_contents):
+    def store_song_playlist(self, file_name: str, file_contents: str) -> bool:
         pl = json.loads(file_contents)
         if 'name' in pl.keys():
             pl_name = pl['name']
@@ -253,7 +257,7 @@ class Jukebox:
                                       self.jukebox_options.encryption_key,
                                       self.jukebox_options.encryption_iv)
 
-    def container_suffix(self):
+    def container_suffix(self) -> str:
         suffix = ""
         if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
             suffix += "-ez"
@@ -263,7 +267,7 @@ class Jukebox:
             suffix += "-z"
         return suffix
 
-    def object_file_suffix(self):
+    def object_file_suffix(self) -> str:
         suffix = ""
         if self.jukebox_options.use_encryption and self.jukebox_options.use_compression:
             suffix = ".egz"
@@ -273,7 +277,7 @@ class Jukebox:
             suffix = ".gz"
         return suffix
 
-    def container_for_song(self, song_uid):
+    def container_for_song(self, song_uid: str) -> typing.Optional[str]:
         if song_uid is None or len(song_uid) == 0:
             return None
         container_suffix = "-artist-songs" + self.container_suffix()
@@ -294,7 +298,7 @@ class Jukebox:
             num_entries = float(len(dir_listing))
             progressbar_chars = 0.0
             progressbar_width = 40
-            progresschars_per_iteration = progressbar_width / num_entries
+            progress_chars_per_iteration = progressbar_width / num_entries
             progressbar_char = '#'
             bar_chars = 0
 
@@ -404,7 +408,7 @@ class Jukebox:
                                         file_import_count += 1
 
                 if not self.debug_print:
-                    progressbar_chars += progresschars_per_iteration
+                    progressbar_chars += progress_chars_per_iteration
                     if int(progressbar_chars) > bar_chars:
                         num_new_chars = int(progressbar_chars) - bar_chars
                         if num_new_chars > 0:
@@ -432,10 +436,10 @@ class Jukebox:
                 cumulative_upload_kb = cumulative_upload_bytes / 1000.0
                 print("average upload throughput = %s KB/sec" % (int(cumulative_upload_kb / cumulative_upload_time)))
 
-    def song_path_in_playlist(self, song):
+    def song_path_in_playlist(self, song: song_metadata.SongMetadata) -> str:
         return os.path.join(self.song_play_dir, song.fm.file_uid)
 
-    def check_file_integrity(self, song):
+    def check_file_integrity(self, song: song_metadata.SongMetadata) -> bool:
         file_integrity_passed = True
 
         if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
@@ -444,14 +448,15 @@ class Jukebox:
                 if self.debug_print:
                     print("checking integrity for %s" % song.fm.file_uid)
 
-                playlist_md5 = utils.md5_for_file(file_path)
-                if playlist_md5 == song.md5:
-                    if self.debug_print:
-                        print("integrity check SUCCESS")
-                    file_integrity_passed = True
-                else:
-                    print("file integrity check failed: %s" % song.fm.file_uid)
-                    file_integrity_passed = False
+                if song.fm is not None:
+                    playlist_md5 = utils.md5_for_file(file_path)
+                    if playlist_md5 == song.fm.md5_hash:
+                        if self.debug_print:
+                            print("integrity check SUCCESS")
+                        file_integrity_passed = True
+                    else:
+                        print("file integrity check failed: %s" % song.fm.file_uid)
+                        file_integrity_passed = False
             else:
                 # file doesn't exist
                 print("file doesn't exist")
@@ -475,7 +480,7 @@ class Jukebox:
             self.cumulative_download_bytes = 0
             self.cumulative_download_time = 0
 
-    def download_song(self, song):
+    def download_song(self, song: song_metadata.SongMetadata) -> bool:
         if self.exit_requested:
             return False
 
@@ -501,7 +506,7 @@ class Jukebox:
                     if self.debug_print:
                         print("verifying data integrity")
 
-                    if song_bytes_retrieved != song.stored_file_size:
+                    if song_bytes_retrieved != song.fm.stored_file_size:
                         print("error: data integrity check failed for '%s'" % file_path)
                         return False
 
@@ -541,7 +546,7 @@ class Jukebox:
 
         return False
 
-    def play_song(self, song_file_path):
+    def play_song(self, song_file_path: str):
         if os.path.exists(song_file_path):
             print("playing %s" % song_file_path)
 
@@ -614,7 +619,7 @@ class Jukebox:
                 download_thread = song_downloader.SongDownloader(self, dl_songs)
                 download_thread.start()
 
-    def play_songs(self, shuffle=False, artist=None, album=None):
+    def play_songs(self, shuffle: bool = False, artist: str = "", album: str = ""):
         self.song_list = self.jukebox_db.retrieve_songs(artist, album)
         if self.song_list is not None:
             self.number_songs = len(self.song_list)
@@ -642,17 +647,17 @@ class Jukebox:
                         pass
 
             self.song_index = 0
-            self.install_signal_handlers()
+            install_signal_handlers()
 
             if sys.platform == "darwin":
                 self.audio_player_command_args = ["afplay"]
-                #self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
+                # self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
             elif os.name == "posix":
                 self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
-                #self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
+                # self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
             elif sys.platform == "win32":
                 # we really need command-line support for /play and /close arguments. unfortunately,
-                # this support used to be available in the built-in windows media player, but is
+                # this support used to be available in the built-in Windows Media Player, but is
                 # no longer present.
                 # self.audio_player_command_args = ["C:\Program Files\Windows Media Player\wmplayer.exe"]
                 self.audio_player_command_args = ["C:\\Program Files\\MPC-HC\\mpc-hc64.exe",
@@ -712,7 +717,7 @@ class Jukebox:
         if self.jukebox_db is not None:
             self.jukebox_db.show_albums()
 
-    def read_file_contents(self, file_path, allow_encryption=True):
+    def read_file_contents(self, file_path: str, allow_encryption: bool = True) -> Tuple[bool, str, int]:
         file_read = False
         file_contents = None
         pad_chars = 0
@@ -750,7 +755,7 @@ class Jukebox:
 
         return file_read, file_contents, pad_chars
 
-    def upload_metadata_db(self):
+    def upload_metadata_db(self) -> bool:
         metadata_db_upload = False
         if not self.storage_system.has_container(self.metadata_container):
             have_metadata_container = self.storage_system.create_container(self.metadata_container)
@@ -833,9 +838,9 @@ class Jukebox:
     def play_playlist(self, playlist):
         print("TODO: implement jukebox.py:play_playlist")
 
-    def delete_song(self, song_uid, upload_metadata=True):
+    def delete_song(self, song_uid: str, upload_metadata: bool = True) -> bool:
         is_deleted = False
-        if song_uid is not None and len(song_uid) > 0:
+        if len(song_uid) > 0:
             db_deleted = self.jukebox_db.delete_song(song_uid)
             container = self.container_for_song(song_uid)
             ss_deleted = False
@@ -847,9 +852,9 @@ class Jukebox:
 
         return is_deleted
 
-    def delete_artist(self, artist):
+    def delete_artist(self, artist: str) -> bool:
         is_deleted = False
-        if artist is not None and len(artist) > 0:
+        if len(artist) > 0:
             song_list = self.jukebox_db.retrieve_songs(artist)
             if song_list is not None:
                 if len(song_list) == 0:
@@ -869,20 +874,17 @@ class Jukebox:
         return is_deleted
 
     def delete_album(self, album):
-        #TODO: implement delete_album
+        # TODO: implement delete_album
         return False
 
-    def delete_playlist(self, playlist_name):
+    def delete_playlist(self, playlist_name: str) -> bool:
         is_deleted = False
         object_name = self.jukebox_db.get_playlist(playlist_name)
         if object_name is not None and len(object_name) > 0:
-            object_deleted = False
             db_deleted = self.jukebox_db.delete_playlist(playlist_name)
             if db_deleted:
                 print("container='%s', object='%s'" % (self.playlist_container, object_name))
-                object_deleted = self.storage_system.delete_object(self.playlist_container,
-                                                                   object_name)
-                if object_deleted:
+                if self.storage_system.delete_object(self.playlist_container, object_name):
                     is_deleted = True
                 else:
                     print("error: object delete failed")

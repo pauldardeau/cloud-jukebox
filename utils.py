@@ -1,7 +1,7 @@
 import hashlib
 
 
-def md5_for_file(path_to_file):
+def md5_for_file(path_to_file: str) -> str:
     with open(path_to_file, mode='rb') as f:
         d = hashlib.md5()
         for buf in f.read(4096):

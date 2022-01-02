@@ -1,5 +1,9 @@
 import os.path
+
+from typing import List
+
 from storage_system import StorageSystem
+import typing
 
 _storage_system_azure_supported = False
 
@@ -15,7 +19,7 @@ def is_available():
 
 
 class AzureStorageSystem(StorageSystem):
-    def __init__(self, account_name, account_key, container_prefix, debug_mode=False):
+    def __init__(self, account_name: str, account_key: str, container_prefix: str, debug_mode: bool = False):
         StorageSystem.__init__(self, "Azure", debug_mode)
         self.account_name = account_name
         self.account_key = account_key
@@ -39,7 +43,7 @@ class AzureStorageSystem(StorageSystem):
             self.list_containers = None
             self.blob_service = None
 
-    def list_account_containers(self):
+    def list_account_containers(self) -> typing.Optional[List[str]]:
         if self.blob_service is not None:
             list_containers = self.blob_service.list_containers()
             list_container_names = []
@@ -50,7 +54,7 @@ class AzureStorageSystem(StorageSystem):
             return list_container_names
         return None
 
-    def create_container(self, container_name):
+    def create_container(self, container_name: str) -> bool:
         container_created = False
         if self.blob_service is not None:
             if self.blob_service.create_container(self.prefixed_container(container_name)):
@@ -58,7 +62,7 @@ class AzureStorageSystem(StorageSystem):
                 container_created = True
         return container_created
 
-    def delete_container(self, container_name):
+    def delete_container(self, container_name: str) -> bool:
         container_deleted = False
         if self.blob_service is not None:
             if self.blob_service.delete_container(self.prefixed_container(container_name)):
@@ -66,7 +70,7 @@ class AzureStorageSystem(StorageSystem):
                 container_deleted = True
         return container_deleted
 
-    def list_container_contents(self, container_name):
+    def list_container_contents(self, container_name: str) -> typing.Optional[List[str]]:
         if self.blob_service is not None:
             list_contents = []
             blobs = self.blob_service.list_blobs(self.prefixed_container(container_name))
@@ -77,12 +81,12 @@ class AzureStorageSystem(StorageSystem):
             return list_contents
         return None
 
-    def get_object_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name: str, object_name: str):
         if self.blob_service is not None and container_name is not None and object_name is not None:
             return self.blob_service.get_blob_properties(self.prefixed_container(container_name))
         return None
 
-    def put_object(self, container_name, object_name, file_contents, headers=None):
+    def put_object(self, container_name: str, object_name: str, file_contents, headers=None) -> bool:
         object_added = False
         if self.blob_service is not None and container_name is not None and \
                 object_name is not None and file_contents is not None:
@@ -103,7 +107,7 @@ class AzureStorageSystem(StorageSystem):
 
         return object_added
 
-    def delete_object(self, container_name, object_name):
+    def delete_object(self, container_name: str, object_name: str) -> bool:
         object_deleted = False
         if self.blob_service is not None and container_name is not None and object_name is not None:
             resp = self.blob_service.delete_blob(self.prefixed_container(container_name), object_name)
@@ -115,7 +119,7 @@ class AzureStorageSystem(StorageSystem):
 
         return object_deleted
 
-    def get_object(self, container_name, object_name, local_file_path):
+    def get_object(self, container_name: str, object_name: str, local_file_path: str) -> int:
         bytes_retrieved = 0
 
         if self.blob_service is not None and container_name is not None and \

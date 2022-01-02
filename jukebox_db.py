@@ -1,23 +1,28 @@
 import sqlite3
+import typing
+
+from typing import List
+
 import jukebox
+import song_metadata
 from song_metadata import SongMetadata
 from file_metadata import FileMetadata
 
 
 class JukeboxDB:
 
-    def __init__(self, metadata_db_file_path=None, debug_print=False):
+    def __init__(self, metadata_db_file_path: str = "", debug_print: bool = False):
         self.debug_print = debug_print
         self.db_connection = None
-        if metadata_db_file_path is not None and len(metadata_db_file_path) > 0:
+        if len(metadata_db_file_path) > 0:
             self.metadata_db_file_path = metadata_db_file_path
         else:
             self.metadata_db_file_path = 'jukebox_db.sqlite3'
 
-    def is_open(self):
+    def is_open(self) -> bool:
         return self.db_connection is not None
 
-    def open(self):
+    def open(self) -> bool:
         self.close()
         open_success = False
         self.db_connection = sqlite3.connect(self.metadata_db_file_path)
@@ -30,7 +35,7 @@ class JukeboxDB:
                 open_success = True
         return open_success
 
-    def close(self):
+    def close(self) -> bool:
         did_close = False
         if self.db_connection is not None:
             self.db_connection.close()
@@ -53,7 +58,7 @@ class JukeboxDB:
             self.db_connection.close()
             self.db_connection = None
 
-    def create_table(self, sql):
+    def create_table(self, sql: str) -> bool:
         try:
             table_created = self.db_connection.execute(sql)
             if not table_created:
@@ -64,7 +69,7 @@ class JukeboxDB:
             print('error creating table: ' + e.args[0])
             return False
 
-    def create_tables(self):
+    def create_tables(self) -> bool:
         if self.db_connection is not None:
             if self.debug_print:
                 print("creating tables")
@@ -124,7 +129,7 @@ class JukeboxDB:
 
         return False
 
-    def have_tables(self):
+    def have_tables(self) -> bool:
         have_tables_in_db = False
         if self.db_connection is not None:
             sql = "SELECT name " + \
@@ -138,35 +143,32 @@ class JukeboxDB:
 
         return have_tables_in_db
 
-    def id_for_artist(self, artist_name):
+    def id_for_artist(self, artist_name: str):
         pass
 
-    def id_for_album(self, artist_name, album_name):
+    def id_for_album(self, artist_name: str, album_name: str):
         pass
 
-    def insert_artist(self, artist_name):
+    def insert_artist(self, artist_name: str):
         pass
 
-    def insert_album(self, album_name, artist_id):
+    def insert_album(self, album_name: str, artist_id: str):
         pass
 
-    def albums_for_artist(self, artist_id):
+    def albums_for_artist(self, artist_id: str):
         pass
 
     def get_artists(self):
         pass
 
-    def songs_for_album(self, album_id):
-        pass
-
-    def songs_for_artist(self, artist_id):
+    def songs_for_album(self, album_id: str):
         pass
 
     def get_playlists(self):
         pass
 
-    def get_playlist(self, playlist_name):
-        pl_object = None
+    def get_playlist(self, playlist_name: str) -> typing.Optional[str]:
+        pl_object: typing.Optional[str] = None
         if playlist_name is not None and len(playlist_name) > 0:
             db_cursor = self.db_connection.cursor()
             sql = "SELECT playlist_uid FROM playlist WHERE playlist_name = ?"
@@ -176,8 +178,8 @@ class JukeboxDB:
                 break
         return pl_object
 
-    def songs_for_query(self, sql, query_args=None):
-        result_songs = []
+    def songs_for_query(self, sql: str, query_args=None) -> List[song_metadata.SongMetadata]:
+        result_songs: List[song_metadata.SongMetadata] = []
         db_cursor = self.db_connection.cursor()
         if query_args is not None:
             db_results = db_cursor.execute(sql, query_args)
@@ -203,7 +205,7 @@ class JukeboxDB:
             result_songs.append(song)
         return result_songs
 
-    def retrieve_song(self, file_name):
+    def retrieve_song(self, file_name: str):
         if self.db_connection is not None:
             sql = """SELECT song_uid,
                   file_time,
@@ -225,12 +227,10 @@ class JukeboxDB:
                 return song_results[0]
         return None
 
-    def insert_playlist(self, pl_uid, pl_name, pl_desc=None):
+    def insert_playlist(self, pl_uid: str, pl_name: str, pl_desc: str = "") -> bool:
         insert_success = False
 
         if self.db_connection is not None and \
-           pl_uid is not None and \
-           pl_name is not None and \
            len(pl_uid) > 0 and \
            len(pl_name) > 0:
             sql = "INSERT INTO playlist VALUES (?,?,?)"
@@ -245,7 +245,7 @@ class JukeboxDB:
 
         return insert_success
 
-    def delete_playlist(self, pl_name):
+    def delete_playlist(self, pl_name: str) -> bool:
         delete_success = False
 
         if self.db_connection is not None and \
@@ -263,7 +263,7 @@ class JukeboxDB:
 
         return delete_success
 
-    def insert_song(self, song):
+    def insert_song(self, song: song_metadata.SongMetadata) -> bool:
         insert_success = False
 
         if self.db_connection is not None and song is not None:
@@ -292,7 +292,7 @@ class JukeboxDB:
 
         return insert_success
 
-    def update_song(self, song):
+    def update_song(self, song: song_metadata.SongMetadata) -> bool:
         update_success = False
 
         if self.db_connection is not None and song is not None and song.fm.file_uid:
@@ -333,7 +333,7 @@ class JukeboxDB:
 
         return update_success
 
-    def store_song_metadata(self, song):
+    def store_song_metadata(self, song: song_metadata.SongMetadata) -> bool:
         db_song = self.retrieve_song(song.fm.file_uid)
         if db_song is not None:
             if song != db_song:
@@ -345,7 +345,7 @@ class JukeboxDB:
             return self.insert_song(song)
 
     @staticmethod
-    def sql_where_clause(using_encryption=False, using_compression=False):
+    def sql_where_clause(using_encryption: bool = False, using_compression: bool = False) -> str:
         if using_encryption:
             encryption = 1
         else:
@@ -365,7 +365,7 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def retrieve_songs(self, artist=None, album=None):
+    def retrieve_songs(self, artist: str = "", album: str = "") -> list:
         songs = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
@@ -383,17 +383,17 @@ class JukeboxDB:
                   object_name,
                   album_uid FROM song"""
             sql += self.sql_where_clause()
-            if artist is not None:
+            if len(artist) > 0:
                 sql += " AND artist_name='%s'" % artist
-            if album is not None:
+            if len(album) > 0:
                 encoded_artist = jukebox.Jukebox.encode_value(artist)
                 encoded_album = jukebox.Jukebox.encode_value(album)
                 sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
             songs = self.songs_for_query(sql)
         return songs
 
-    def songs_for_artist(self, artist_name):
-        songs = []
+    def songs_for_artist(self, artist_name: str) -> List[song_metadata.SongMetadata]:
+        songs: List[song_metadata.SongMetadata] = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
                   file_time,
@@ -445,7 +445,7 @@ class JukeboxDB:
                 genre_name = row[0]
                 print("%s" % genre_name)
 
-    def show_artist_albums(self, artist_name):
+    def show_artist_albums(self, artist_name: str):
         pass
 
     def show_albums(self):
@@ -471,7 +471,7 @@ class JukeboxDB:
                 pl_name = row[1]
                 print("%s - %s" % (pl_uid, pl_name))
 
-    def delete_song(self, song_uid):
+    def delete_song(self, song_uid: str) -> bool:
         was_deleted = False
         if self.db_connection is not None:
             if song_uid is not None and len(song_uid) > 0:

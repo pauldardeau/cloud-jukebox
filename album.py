@@ -1,7 +1,8 @@
 class Album(object):
-    def __init__(self, album_uid, album_name, artist_uid, genre_uid=None, album_description=None):
-        self.album_uid = album_uid
-        self.album_name = album_name
-        self.artist_uid = artist_uid
-        self.genre_uid = genre_uid
-        self.album_description = album_description
+    def __init__(self, album_uid: str, album_name: str, artist_uid: str, genre_uid: str = "",
+                 album_description: str = ""):
+        self.album_uid: str = album_uid
+        self.album_name: str = album_name
+        self.artist_uid: str = artist_uid
+        self.genre_uid: str = genre_uid
+        self.album_description: str = album_description

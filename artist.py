@@ -1,5 +1,5 @@
 class Artist(object):
-    def __init__(self, artist_uid, artist_name, artist_description=None):
-        self.artist_uid = artist_uid
-        self.artist_name = artist_name
-        self.artist_description = artist_description
+    def __init__(self, artist_uid: str, artist_name: str, artist_description: str = ""):
+        self.artist_uid: str = artist_uid
+        self.artist_name: str = artist_name
+        self.artist_description: str = artist_description

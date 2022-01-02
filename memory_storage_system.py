@@ -1,11 +1,14 @@
+from typing import List
+
 from storage_system import StorageSystem
+import typing
 
 
 class MemoryStorageSystem(StorageSystem):
 
-    def __init__(self, debug_mode=False):
+    def __init__(self, debug_mode: bool = False):
         StorageSystem.__init__(self, "Memory", debug_mode)
-        self.list_containers = []
+        self.list_containers: List[str] = []
         self.container_objects = {}
         self.container_headers = {}
 
@@ -15,10 +18,10 @@ class MemoryStorageSystem(StorageSystem):
     def __exit__(self, exception_type, exception_value, traceback):
         pass
 
-    def list_account_containers(self):
+    def list_account_containers(self) -> typing.Optional[List[str]]:
         return self.list_containers
 
-    def create_container(self, container_name):
+    def create_container(self, container_name: str) -> bool:
         container_created = False
         self.container_objects[container_name] = {}
         self.container_headers[container_name] = {}
@@ -27,7 +30,7 @@ class MemoryStorageSystem(StorageSystem):
             container_created = True
         return container_created
 
-    def delete_container(self, container_name):
+    def delete_container(self, container_name: str) -> bool:
         container_deleted = False
         if self.has_container(container_name):
             del self.container_objects[container_name]
@@ -36,21 +39,21 @@ class MemoryStorageSystem(StorageSystem):
             container_deleted = True
         return container_deleted
 
-    def list_container_contents(self, container_name):
+    def list_container_contents(self, container_name: str) -> typing.Optional[List[str]]:
         list_contents = []
         if container_name in self.container_objects:
             object_container = self.container_objects[container_name]
             list_contents = object_container.keys()
         return list_contents
 
-    def get_object_metadata(self, container_name, object_name):
+    def get_object_metadata(self, container_name: str, object_name: str):
         if container_name is not None and object_name is not None:
             if container_name in self.container_headers:
                 header_container = self.container_headers[container_name]
                 return header_container[object_name]
         return None
 
-    def put_object(self, container_name, object_name, file_contents, headers=None):
+    def put_object(self, container_name: str, object_name: str, file_contents: str, headers=None) -> bool:
         object_added = False
         if container_name is not None and \
                 object_name is not None and file_contents is not None:
@@ -63,7 +66,7 @@ class MemoryStorageSystem(StorageSystem):
             object_added = True
         return object_added
 
-    def delete_object(self, container_name, object_name):
+    def delete_object(self, container_name: str, object_name: str) -> bool:
         object_deleted = False
         if container_name is not None and object_name is not None:
             if self.has_container(container_name):
@@ -77,7 +80,7 @@ class MemoryStorageSystem(StorageSystem):
                     object_deleted = True
         return object_deleted
 
-    def get_object(self, container_name, object_name, local_file_path):
+    def get_object(self, container_name: str, object_name: str, local_file_path: str) -> int:
         bytes_retrieved = 0
         if container_name is not None and \
                 object_name is not None and local_file_path is not None:

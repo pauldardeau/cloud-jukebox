@@ -9,7 +9,7 @@ except ImportError:
     _encryption_support = False
 
 
-def is_available():
+def is_available() -> bool:
     return _encryption_support
 
 
@@ -53,7 +53,7 @@ class AESBlockEncryption:
                     # already the required length
                     pass
 
-    def encrypt(self, plain_text):
+    def encrypt(self, plain_text: str):
         # the string to encrypt must be a multiple of 16
         num_extra_chars = len(plain_text) % 16
         if num_extra_chars > 0:
@@ -64,7 +64,7 @@ class AESBlockEncryption:
         aes_cipher.key_size = self.keySizeBytes
         return aes_cipher.encrypt(padded_text)
 
-    def decrypt(self, cipher_text):
+    def decrypt(self, cipher_text) -> str:
         aes_cipher = AES.new(self.key, self.mode, self.iv)
         aes_cipher.key_size = self.keySizeBytes
         return aes_cipher.decrypt(cipher_text).rstrip()

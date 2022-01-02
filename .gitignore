@@ -1,3 +1,8 @@
+.DS_Store
+404.txt
+jukebox.pid
+song-play/
+uniq404.txt
 *.pyc
 *.mp3
 jukebox_db.sqlite3
