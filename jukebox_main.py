@@ -9,7 +9,7 @@ from jukebox import Jukebox
 import jukebox_options
 
 
-def connect_swift_system(credentials, prefix: str, in_debug_mode: bool = False):
+def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
     if not swift.is_available():
         print("error: swift is not supported on this system. please install swiftclient first.")
         sys.exit(1)
@@ -18,6 +18,8 @@ def connect_swift_system(credentials, prefix: str, in_debug_mode: bool = False):
     swift_account = ""
     swift_user = ""
     swift_password = ""
+    update_swift_user = ""
+    update_swift_password = ""
     if "swift_auth_host" in credentials:
         swift_auth_host = credentials["swift_auth_host"]
     if "swift_account" in credentials:
@@ -26,86 +28,132 @@ def connect_swift_system(credentials, prefix: str, in_debug_mode: bool = False):
         swift_user = credentials["swift_user"]
     if "swift_password" in credentials:
         swift_password = credentials["swift_password"]
+    if "update_swift_user" in credentials and "update_swift_password" in credentials:
+        update_swift_user = credentials["update_swift_user"]
+        update_swift_password = credentials["update_swift_password"]
 
     if in_debug_mode:
         print("swift_auth_host='%s'" % swift_auth_host)
         print("swift_account='%s'" % swift_account)
         print("swift_user='%s'" % swift_user)
         print("swift_password='%s'" % swift_password)
+        if len(update_swift_user) > 0 and len(update_swift_password) > 0:
+            print("update_swift_user='%s'" % update_swift_user)
+            print("update_swift_password='%s'" % update_swift_password)
 
     if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
         print("""error: no swift credentials given. please specify swift_account,
               swift_user, and swift_password in credentials""")
         sys.exit(1)
 
+    if for_udpate:
+        user = update_swift_user
+        password = update_swift_password
+    else:
+        user = swift_user
+        password = swift_password
+
     return swift.SwiftStorageSystem(swift_auth_host,
                                     swift_account,
-                                    swift_user,
-                                    swift_password,
+                                    user,
+                                    password,
                                     in_debug_mode)
 
 
-def connect_s3_system(credentials, prefix: str, in_debug_mode: bool = False):
+def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
     if not s3.is_available():
         print("error: s3 is not supported on this system. please install boto3 (s3 client) first.")
         sys.exit(1)
 
     aws_access_key = ""
     aws_secret_key = ""
+    update_aws_access_key = ""
+    update_aws_secret_key = ""
+
     if "aws_access_key" in credentials:
         aws_access_key = credentials["aws_access_key"]
     if "aws_secret_key" in credentials:
         aws_secret_key = credentials["aws_secret_key"]
 
+    if "update_aws_access_key" in credentials and "update_aws_secret_key" in credentials:
+        update_aws_access_key = credentials["update_aws_access_key"]
+        update_aws_secret_key = credentials["update_aws_secret_key"]
+
     if in_debug_mode:
         print("aws_access_key='%s'" % aws_access_key)
         print("aws_secret_key='%s'" % aws_secret_key)
+        if len(update_aws_access_key) > 0 and len(update_aws_secret_key) > 0:
+            print("update_aws_access_key='%s'" % update_aws_access_key)
+            print("update_aws_secret_key='%s'" % update_aws_secret_key)
 
     if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
         print("""error: no s3 credentials given. please specify aws_access_key
               and aws_secret_key in credentials file""")
         sys.exit(1)
     else:
-        return s3.S3StorageSystem(aws_access_key,
-                                  aws_secret_key,
+        if for_update:
+            access_key = update_aws_access_key
+            secret_key = update_aws_secret_key
+        else:
+            access_key = aws_access_key
+            secret_key = aws_secret_key
+
+        return s3.S3StorageSystem(access_key,
+                                  secret_key,
                                   prefix,
                                   in_debug_mode)
 
 
-def connect_azure_system(credentials, prefix: str, in_debug_mode: bool = False):
+def connect_azure_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
     if not azure.is_available():
         print("error: azure is not supported on this system. please install azure client first.")
         sys.exit(1)
 
     azure_account_name = ""
     azure_account_key = ""
+    update_azure_account_name = ""
+    update_azure_account_key = ""
     if "azure_account_name" in credentials:
         azure_account_name = credentials["azure_account_name"]
     if "azure_account_key" in credentials:
         azure_account_key = credentials["azure_account_key"]
 
+    if "update_azure_account_name" in credentials and "update_azure_account_key" in credentials:
+        update_azure_account_name = credentials["update_azure_account_name"]
+        update_azure_account_key = credentials["update_azure_account_key"]
+
     if in_debug_mode:
         print("azure_account_name='%s'" % azure_account_name)
         print("azure_account_key='%s'" % azure_account_key)
+        if len(update_azure_account_name) > 0 and len(update_azure_account_key) > 0:
+            print("update_azure_account_name='%s'" % update_azure_account_name)
+            print("update_azure_account_key='%s'" % update_azure_account_key)
 
     if len(azure_account_name) == 0 or len(azure_account_key) == 0:
         print("""error: no azure credentials given. please specify azure_account_name
               and azure_account_key in credentials file""")
         sys.exit(1)
     else:
-        return azure.AzureStorageSystem(azure_account_name,
-                                        azure_account_key,
+        if for_update:
+            account_name = update_azure_account_name
+            account_key = update_azure_account_key
+        else:
+            account_name = azure_account_name
+            account_key = azure_account_key
+        return azure.AzureStorageSystem(account_name,
+                                        account_key,
                                         prefix,
                                         in_debug_mode)
 
 
-def connect_storage_system(system_name: str, credentials, prefix: str, in_debug_mode: bool = False):
+def connect_storage_system(system_name: str, credentials, prefix: str,
+                           in_debug_mode: bool, for_update: bool):
     if system_name == "swift":
-        return connect_swift_system(credentials, prefix, in_debug_mode)
+        return connect_swift_system(credentials, prefix, in_debug_mode, for_update)
     elif system_name == "s3":
-        return connect_s3_system(credentials, prefix, in_debug_mode)
+        return connect_s3_system(credentials, prefix, in_debug_mode, for_update)
     elif system_name == "azure":
-        return connect_azure_system(credentials, prefix, in_debug_mode)
+        return connect_azure_system(credentials, prefix, in_debug_mode, for_update)
     else:
         return None
 
@@ -269,6 +317,9 @@ def main():
                          'delete-song', 'delete-album', 'delete-playlist',
                          'delete-artist', 'upload-metadata-db',
                          'import-album-art']
+        update_cmds = ['import-songs', 'import-playlists', 'delete-song',
+                       'delete-album', 'delete-playlist', 'delete-artist',
+                       'upload-metadata-db', 'import-album-art']
         all_cmds = help_cmds + non_help_cmds
 
         if command not in all_cmds:
@@ -287,10 +338,16 @@ def main():
                     else:
                         options.suppress_metadata_download = False
 
+                    if command in update_cmds:
+                        for_update = True
+                    else:
+                        for_update = False
+
                     with connect_storage_system(storage_type,
                                                 creds,
                                                 container_prefix,
-                                                debug_mode) as storage_system:
+                                                debug_mode,
+                                                for_update) as storage_system:
                         with Jukebox(options, storage_system) as jukebox:
                             if command == 'import-songs':
                                 jukebox.import_songs()

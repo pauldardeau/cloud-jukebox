@@ -1,4 +1,5 @@
 import os.path
+import sys
 
 from typing import List
 
@@ -11,6 +12,7 @@ _storage_system_s3_supported = False
 
 try:
     import boto3
+    import botocore
     _storage_system_s3_supported = True
 except ImportError:
     _storage_system_s3_supported = False
@@ -22,11 +24,14 @@ def is_available():
 
 class S3StorageSystem(StorageSystem):
 
-    def __init__(self, aws_access_key: str, aws_secret_key: str, container_prefix: str, debug_mode: bool = False):
+    def __init__(self, aws_access_key: str, aws_secret_key: str,
+                 container_prefix: str, debug_mode: bool = False):
         StorageSystem.__init__(self, "S3", debug_mode)
+        self.debug_mode = debug_mode
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
-        self.debug_mode = False
+        if self.debug_mode:
+            print("Using access_key='%s', secret_key='%s'" % (self.aws_access_key, self.aws_secret_key))
         if container_prefix is not None and len(container_prefix) > 0:
             if self.debug_mode:
                 print("using container_prefix='%s'" % container_prefix)
@@ -150,26 +155,42 @@ class S3StorageSystem(StorageSystem):
         return None
 
     def put_object(self, container_name: str, object_name: str, file_contents, headers=None) -> bool:
-        if self.debug_mode:
-            print("put_object: container='%s', object='%s'" % (container_name, object_name))
 
         object_added = False
 
         if self.conn is not None and container_name is not None and \
                 object_name is not None and file_contents is not None:
 
-            if not self.has_container(container_name):
-                self.create_container(container_name)
+            #if not self.has_container(container_name):
+            #    self.create_container(container_name)
 
-            # try:
-                # TODO: implement put_object
-                # bucket = self.conn.get_bucket(self.prefixed_container(container_name))
-                # object_key = Key(bucket)
-                # object_key.key = object_name
-                # object_key.set_contents_from_string(file_contents)
-                # object_added = True
-            # except boto.exception.S3ResponseError:
-            #    pass
+            try:
+                bucket = container_name
+                result = self.conn.put_object(Body=file_contents, Bucket=bucket, Key=object_name)
+                if "HTTPStatusCode" in result:
+                    status_code = result["HTTPStatusCode"]
+                    if status_code == 200:
+                        object_added = True
+                else:
+                    if "ResponseMetadata" in result:
+                        resp_meta = result["ResponseMetadata"]
+                        if "HTTPStatusCode" in resp_meta:
+                            status_code = resp_meta["HTTPStatusCode"]
+                            if status_code == 200:
+                                object_added = True
+                    else:
+                        print(repr(result))
+            except AttributeError as ae:
+                print(repr(ae))
+            except NameError as ne:
+                print(repr(ne))
+            except KeyError as ke:
+                print(repr(ke))
+            except botocore.exceptions.ClientError as ce:
+                print(repr(ce))
+            except:
+                print("Exception ", sys.exc_info()[0], "occurred.")
+                pass
 
         return object_added
 
@@ -182,9 +203,6 @@ class S3StorageSystem(StorageSystem):
         if self.conn is not None and container_name is not None and object_name is not None:
             # try:
                 self.conn.delete_object(container_name, object_name)
-                # bucket = self.conn.get_bucket(self.prefixed_container(container_name))
-                # object_key = bucket.get_key(object_name)
-                # object_key.delete()
                 object_deleted = True
             # except boto.exception.S3ResponseError:
             #    pass
@@ -204,9 +222,6 @@ class S3StorageSystem(StorageSystem):
 
             # try:
                 self.conn.download_file(container_name, object_name, local_file_path)
-                # bucket = self.conn.get_bucket(self.prefixed_container(container_name))
-                # object_key = bucket.get_key(object_name)
-                # object_key.get_contents_to_filename(local_file_path)
                 if os.path.exists(local_file_path):
                     bytes_retrieved = os.path.getsize(local_file_path)
             # except (Exception, boto.exception.S3ResponseError):

@@ -351,7 +351,7 @@ class Jukebox:
                             file_contents = None
 
                             try:
-                                with open(full_path, 'r') as content_file:
+                                with open(full_path, 'rb') as content_file:
                                     file_contents = content_file.read()
                                 file_read = True
                             except IOError:
@@ -403,10 +403,15 @@ class Jukebox:
                                         # the metadata in the local database. we need to delete the song
                                         # from the storage system since we won't have any way to access it
                                         # since we can't store the song metadata locally.
+                                        print("unable to store metadata, deleting obj '%s'" % fs_song.fm.object_name)
+                                              
                                         self.storage_system.delete_object(fs_song.fm.container_name,
                                                                           fs_song.fm.object_name)
                                     else:
                                         file_import_count += 1
+                                else:
+                                    print("error: unable to upload '%s' to '%s'" % (fs_song.fm.object_name,
+                                                                                    fs_song.fm.container_name))
 
                 if not self.debug_print:
                     progressbar_chars += progress_chars_per_iteration
@@ -772,7 +777,7 @@ class Jukebox:
             self.jukebox_db = None
 
             db_file_contents = ''
-            with open(self.get_metadata_db_file_path(), 'r') as db_file:
+            with open(self.get_metadata_db_file_path(), 'rb') as db_file:
                 db_file_contents = db_file.read()
 
             metadata_db_upload = self.storage_system.put_object(self.metadata_container,

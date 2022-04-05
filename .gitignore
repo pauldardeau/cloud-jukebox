@@ -2,8 +2,13 @@
 404.txt
 jukebox.pid
 song-play/
+album-import/
+playlist-import/
+song-import/
 uniq404.txt
 *.pyc
 *.mp3
 jukebox_db.sqlite3
 .idea/
+s3_creds.txt
+swift_creds.txt
