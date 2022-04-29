@@ -383,8 +383,8 @@ class JukeboxDB:
                   object_name,
                   album_uid FROM song"""
             sql += self.sql_where_clause()
-            if len(artist) > 0:
-                sql += " AND artist_name='%s'" % artist
+            #if len(artist) > 0:
+            #    sql += " AND artist_name='%s'" % artist
             if len(album) > 0:
                 encoded_artist = jukebox.Jukebox.encode_value(artist)
                 encoded_album = jukebox.Jukebox.encode_value(album)

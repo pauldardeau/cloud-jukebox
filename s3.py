@@ -202,7 +202,7 @@ class S3StorageSystem(StorageSystem):
 
         if self.conn is not None and container_name is not None and object_name is not None:
             # try:
-                self.conn.delete_object(container_name, object_name)
+                self.conn.delete_object(Bucket=container_name, Key=object_name)
                 object_deleted = True
             # except boto.exception.S3ResponseError:
             #    pass

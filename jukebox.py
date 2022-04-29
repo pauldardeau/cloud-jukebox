@@ -881,7 +881,31 @@ class Jukebox:
         return is_deleted
 
     def delete_album(self, album):
-        # TODO: implement delete_album
+        pos_double_dash = album.find("--")
+        if pos_double_dash > -1:
+            artist = album[0:pos_double_dash]
+            album_name = album[pos_double_dash+2:]
+            list_album_songs = self.jukebox_db.retrieve_songs(artist, album_name)
+            if list_album_songs is not None and len(list_album_songs) > 0:
+                num_songs_deleted = 0
+                for song in list_album_songs:
+                    print("%s %s" % (song.fm.container_name, song.fm.object_name))
+                    # delete each song audio file
+                    if self.storage_system.delete_object(song.fm.container_name, song.fm.object_name):
+                        num_songs_deleted += 1
+                        # delete song metadata
+                        self.jukebox_db.delete_song(song.fm.object_name)
+                    else:
+                        print("error: unable to delete song %s" % song.fm.object_name)
+                        #TODO: delete song metadata if we got 404
+                if num_songs_deleted > 0:
+                    # upload metadata db
+                    self.upload_metadata_db()
+                    return True
+            else:
+                print("no songs found for artist='%s' album name='%s'" % (artist, album_name))
+        else:
+            print("specify album with 'the-artist--the-song-name' format")
         return False
 
     def delete_playlist(self, playlist_name: str) -> bool:
