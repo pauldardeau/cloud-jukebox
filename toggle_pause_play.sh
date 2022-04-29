@@ -1,2 +1,2 @@
 #!/bin/sh
-python toggle_pause_play.py
+python3 toggle_pause_play.py

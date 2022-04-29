@@ -1,2 +1,2 @@
 #!/bin/sh
-python song_advance.py
+python3 song_advance.py
