@@ -659,7 +659,7 @@ class Jukebox:
                 self.audio_player_command_args = ["afplay"]
                 # self.audio_player_command_args.extend(["-t", str(self.song_play_length_seconds)])
             elif os.name == "posix":
-                self.audio_player_command_args = ["mplayer", "-nolirc", "-really-quiet"]
+                self.audio_player_command_args = ["mplayer", "-novideo", "-nolirc", "-really-quiet"]
                 # self.audio_player_command_args.extend(["-endpos", str(self.song_play_length_seconds)])
             elif sys.platform == "win32":
                 # we really need command-line support for /play and /close arguments. unfortunately,
