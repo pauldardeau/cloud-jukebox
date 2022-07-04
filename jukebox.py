@@ -844,11 +844,8 @@ class Jukebox:
             self.jukebox_db.show_playlists()
 
     def show_playlist(self, playlist):
-        print("TODO: implement jukebox.py:show_playlist")
-
-    def play_playlist(self, playlist):
         bucket_name = "cj-playlists"
-        object_name = "%s.json" % playlist
+        object_name = "%s.json" % Jukebox.encode_value(playlist)
         download_file = object_name
         if self.storage_system.get_object(bucket_name,
                                           object_name,
@@ -880,6 +877,82 @@ class Jukebox:
                                 song_name = song_name.replace("'", "")
                             song = Jukebox.encode_value(song_name)
                             base_object_name = "%s--%s--%s" % (artist, album, song)
+                            print(base_object_name)
+        else:
+            print("error: unable to retrieve %s" % object_name)
+
+    def play_playlist(self, playlist):
+        bucket_name = "cj-playlists"
+        object_name = "%s.json" % Jukebox.encode_value(playlist)
+        download_file = object_name
+        if self.storage_system.get_object(bucket_name,
+                                          object_name,
+                                          download_file) > 0:
+            try:
+                with open(download_file, 'rb') as content_file:
+                    file_contents = content_file.read()
+                file_read = True
+            except IOError:
+                print("error: unable to read file %s" % full_path)
+                file_read = False
+            if file_read:
+                pl = json.loads(file_contents)
+                if pl != None:
+                    if "songs" in pl:
+                        song_list = []
+                        list_song_dicts = pl["songs"]
+                        for song_dict in list_song_dicts:
+                            artist_name = song_dict["artist"]
+                            if "'" in artist_name:
+                                artist_name = artist_name.replace("'", "")
+                            artist = Jukebox.encode_value(artist_name)
+                            album_name = song_dict["album"]
+                            if "'" in album_name:
+                                album_name = album_name.replace("'", "")
+                            album = Jukebox.encode_value(album_name)
+                            song_name = song_dict["song"]
+                            if "'" in song_name:
+                                song_name = song_name.replace("'", "")
+                            song = Jukebox.encode_value(song_name)
+                            base_object_name = "%s--%s--%s" % (artist, album, song)
+                            ext_list = [".flac", ".m4a", ".mp3"]
+                            for ext in ext_list:
+                                object_name = base_object_name + ext
+                                db_song = self.jukebox_db.retrieve_song(object_name)
+                                if db_song is not None:
+                                    song_list.append(db_song)
+                                    break
+                            else:
+                                print("No song file for %s" % base_object_name)
+                        self.play_song_list(song_list, False)
+        else:
+            print("error: unable to retrieve %s" % object_name)
+
+    def play_album(self, artist, album):
+        bucket_name = "cj-albums"
+        object_name = "%s--%s.json" % (Jukebox.encode_value(artist), Jukebox.encode_value(album))
+        download_file = object_name
+        if self.storage_system.get_object(bucket_name,
+                                          object_name,
+                                          download_file) > 0:
+            try:
+                with open(download_file, 'rb') as content_file:
+                    file_contents = content_file.read()
+                file_read = True
+            except IOError:
+                print("error: unable to read file %s" % full_path)
+                file_read = False
+            if file_read:
+                pl = json.loads(file_contents)
+                if pl != None:
+                    if "tracks" in pl:
+                        song_list = []
+                        list_song_dicts = pl["tracks"]
+                        for song_dict in list_song_dicts:
+                            base_object_name = song_dict["object"]
+                            pos_dot = base_object_name.find(".")
+                            if pos_dot > 0:
+                                base_object_name = base_object_name[0:pos_dot]
                             ext_list = [".flac", ".m4a", ".mp3"]
                             for ext in ext_list:
                                 object_name = base_object_name + ext
