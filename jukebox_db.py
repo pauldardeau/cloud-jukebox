@@ -385,10 +385,13 @@ class JukeboxDB:
             sql += self.sql_where_clause()
             #if len(artist) > 0:
             #    sql += " AND artist_name='%s'" % artist
-            if len(album) > 0:
+            if len(artist) > 0:
                 encoded_artist = jukebox.Jukebox.encode_value(artist)
-                encoded_album = jukebox.Jukebox.encode_value(album)
-                sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
+                if len(album) > 0:
+                    encoded_album = jukebox.Jukebox.encode_value(album)
+                    sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
+                else:
+                    sql += " AND object_name LIKE '%s--%%'" % encoded_artist
             songs = self.songs_for_query(sql)
         return songs
 
