@@ -1,2 +1,2 @@
 #!/bin/sh
-python jukebox_main.py import-playlists
+python3 jukebox_main.py import-playlists

@@ -178,6 +178,7 @@ def show_usage():
     print('\tplay               - start playing songs')
     print('\tshuffle-play       - play songs randomly')
     print('\tplay-playlist      - play specified playlist')
+    print('\tplay-album         - play specified album')
     print('\tretrieve-catalog   - retrieve copy of music catalog')
     print('\tupload-metadata-db - upload SQLite metadata')
     print('\tusage              - show this help message')
@@ -316,7 +317,7 @@ def main():
                          'list-playlists', 'show-playlist', 'play-playlist',
                          'delete-song', 'delete-album', 'delete-playlist',
                          'delete-artist', 'upload-metadata-db',
-                         'import-album-art']
+                         'import-album-art', 'play-album']
         update_cmds = ['import-songs', 'import-playlists', 'delete-song',
                        'delete-album', 'delete-playlist', 'delete-artist',
                        'upload-metadata-db', 'import-album-art']
@@ -383,6 +384,11 @@ def main():
                                 else:
                                     print("error: playlist must be specified using --playlist option")
                                     sys.exit(1)
+                            elif command == 'play-album':
+                                if album is not None and artist is not None:
+                                    jukebox.play_album(artist, album)
+                                else:
+                                    print("error: artist and album must be specified using --artist and --album options")
                             elif command == 'retrieve-catalog':
                                 pass
                             elif command == 'delete-song':

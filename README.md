@@ -27,7 +27,7 @@ The cloud jukebox must have a storage system for data storage. Either **Swift**,
 * swiftclient  `pip install python-swiftclient`
 
 #### Amazon S3 Dependencies
-* boto  `pip install boto`
+* boto  `pip install boto3`
 
 #### Microsoft Azure Dependencies
 ???
