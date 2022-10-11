@@ -42,6 +42,7 @@
 # ******************************************************************************
 
 import datetime
+import logging
 import os
 import os.path
 
@@ -117,9 +118,9 @@ class Jukebox:
             self.debug_print = True
 
         if self.debug_print:
-            print("self.current_dir = '%s'" % self.current_dir)
-            print("self.song_import_dir = '%s'" % self.song_import_dir)
-            print("self.song_play_dir = '%s'" % self.song_play_dir)
+            logging.debug("self.current_dir = '%s'" % self.current_dir)
+            logging.debug("self.song_import_dir = '%s'" % self.song_import_dir)
+            logging.debug("self.song_play_dir = '%s'" % self.song_play_dir)
 
     def __enter__(self):
         # look for stored metadata in the storage system
@@ -138,26 +139,21 @@ class Jukebox:
                 if self.storage_system.get_object(self.metadata_container, self.metadata_db_file, download_file) > 0:
                     # have an existing metadata DB file?
                     if os.path.exists(metadata_db_file_path):
-                        if self.debug_print:
-                            print("deleting existing metadata DB file")
+                        logging.debug("deleting existing metadata DB file")
                         os.remove(metadata_db_file_path)
                     # rename downloaded file
-                    if self.debug_print:
-                        print("renaming '%s' to '%s'" % (download_file, metadata_db_file_path))
+                    logging.debug("renaming '%s' to '%s'" % (download_file, metadata_db_file_path))
                     os.rename(download_file, metadata_db_file_path)
                 else:
-                    if self.debug_print:
-                        print("error: unable to retrieve metadata DB file")
+                    logging.error("unable to retrieve metadata DB file")
             else:
-                if self.debug_print:
-                    print("no metadata DB file in metadata container")
+                logging.error("no metadata DB file in metadata container")
         else:
-            if self.debug_print:
-                print("no metadata container in storage system")
+            logging.error("no metadata container in storage system")
 
         self.jukebox_db = jukebox_db.JukeboxDB(self.get_metadata_db_file_path())
         if not self.jukebox_db.open():
-            print("unable to connect to database")
+            logging.error("unable to connect to database")
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -355,28 +351,25 @@ class Jukebox:
                                     file_contents = content_file.read()
                                 file_read = True
                             except IOError:
-                                print("error: unable to read file %s" % full_path)
+                                logging.error("unable to read file %s" % full_path)
 
                             if file_read and file_contents is not None:
                                 if file_contents:
                                     # for general purposes, it might be useful or helpful to have
                                     # a minimum size for compressing
                                     if self.jukebox_options.use_compression:
-                                        if self.debug_print:
-                                            print("compressing file")
+                                        logging.debug("compressing file")
 
                                         file_bytes = bytes(file_contents, 'utf-8')
                                         file_contents = zlib.compress(file_bytes, 9)
 
                                     if self.jukebox_options.use_encryption:
-                                        if self.debug_print:
-                                            print("encrypting file")
+                                        logging.debug("encrypting file")
 
                                         # the length of the data to encrypt must be a multiple of 16
                                         num_extra_chars = len(file_contents) % 16
                                         if num_extra_chars > 0:
-                                            if self.debug_print:
-                                                print("padding file for encryption")
+                                            logging.debug("padding file for encryption")
                                             num_pad_chars = 16 - num_extra_chars
                                             file_contents += "".ljust(num_pad_chars, ' ')
                                             fs_song.fm.pad_char_count = num_pad_chars
@@ -403,14 +396,14 @@ class Jukebox:
                                         # the metadata in the local database. we need to delete the song
                                         # from the storage system since we won't have any way to access it
                                         # since we can't store the song metadata locally.
-                                        print("unable to store metadata, deleting obj '%s'" % fs_song.fm.object_name)
+                                        logging.error("unable to store metadata, deleting obj '%s'" % fs_song.fm.object_name)
                                               
                                         self.storage_system.delete_object(fs_song.fm.container_name,
                                                                           fs_song.fm.object_name)
                                     else:
                                         file_import_count += 1
                                 else:
-                                    print("error: unable to upload '%s' to '%s'" % (fs_song.fm.object_name,
+                                    logging.error("unable to upload '%s' to '%s'" % (fs_song.fm.object_name,
                                                                                     fs_song.fm.container_name))
 
                 if not self.debug_print:
@@ -451,25 +444,22 @@ class Jukebox:
         if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
             file_path = self.song_path_in_playlist(song)
             if os.path.exists(file_path):
-                if self.debug_print:
-                    print("checking integrity for %s" % song.fm.file_uid)
+                logging.debug("checking integrity for %s" % song.fm.file_uid)
 
                 if song.fm is not None:
                     playlist_md5 = utils.md5_for_file(file_path)
                     if playlist_md5 == song.fm.md5_hash:
-                        if self.debug_print:
-                            print("integrity check SUCCESS")
+                        logging.debug("integrity check SUCCESS")
                         file_integrity_passed = True
                     else:
-                        print("file integrity check failed: %s" % song.fm.file_uid)
+                        logging.error("file integrity check failed: %s" % song.fm.file_uid)
                         file_integrity_passed = False
             else:
                 # file doesn't exist
-                print("file doesn't exist")
+                logging.error("file doesn't exist")
                 file_integrity_passed = False
         else:
-            if self.debug_print:
-                print("file integrity bypassed, no jukebox options or check integrity not turned on")
+            logging.debug("file integrity bypassed, no jukebox options or check integrity not turned on")
 
         return file_integrity_passed
 
@@ -509,11 +499,10 @@ class Jukebox:
                 # are we checking data integrity?
                 # if so, verify that the storage system retrieved the same length that has been stored
                 if self.jukebox_options is not None and self.jukebox_options.check_data_integrity:
-                    if self.debug_print:
-                        print("verifying data integrity")
+                    logging.debug("verifying data integrity")
 
                     if song_bytes_retrieved != song.fm.stored_file_size:
-                        print("error: data integrity check failed for '%s'" % file_path)
+                        logging.error("data integrity check failed for '%s'" % file_path)
                         return False
 
                 # is it encrypted? if so, unencrypt it
@@ -525,7 +514,7 @@ class Jukebox:
                         with open(file_path, 'rb') as content_file:
                             file_contents = content_file.read()
                     except IOError:
-                        print("error: unable to read file %s" % file_path)
+                        logging.error("unable to read file %s" % file_path)
                         return False
 
                     if encrypted:
@@ -539,7 +528,7 @@ class Jukebox:
                         with open(file_path, 'wb') as content_file:
                             content_file.write(file_contents)
                     except IOError:
-                        print("error: unable to write unencrypted/uncompressed file '%s'" % file_path)
+                        logging.error("unable to write unencrypted/uncompressed file '%s'" % file_path)
                         return False
 
                 if self.check_file_integrity(song):
@@ -552,9 +541,10 @@ class Jukebox:
 
         return False
 
-    def play_song(self, song_file_path: str):
+    def play_song(self, song: song_metadata.SongMetadata):
+        song_file_path = self.song_path_in_playlist(song)
         if os.path.exists(song_file_path):
-            print("playing %s" % song_file_path)
+            print("playing %s" % song.fm.file_uid)
 
             if self.audio_player_command_args:
                 cmd_args = self.audio_player_command_args[:]
@@ -588,7 +578,7 @@ class Jukebox:
                 # delete the song file from the play list directory
                 os.remove(song_file_path)
         else:
-            print("song file doesn't exist: '%s'" % song_file_path)
+            logging.info("song file doesn't exist: '%s'" % song_file_path)
             with open("404.txt", "a+") as f:
                 f.write("%s\n" % song_file_path)
 
@@ -640,13 +630,11 @@ class Jukebox:
 
             # does play list directory exist?
             if not os.path.exists(self.song_play_dir):
-                if self.debug_print:
-                    print("song-play directory does not exist, creating it")
+                logging.debug("song-play directory does not exist, creating it")
                 os.makedirs(self.song_play_dir)
             else:
                 # play list directory exists, delete any files in it
-                if self.debug_print:
-                    print("deleting existing files in song-play directory")
+                logging.debug("deleting existing files in song-play directory")
 
                 for theFile in os.listdir(self.song_play_dir):
                     file_path = os.path.join(self.song_play_dir, theFile)
@@ -689,7 +677,7 @@ class Jukebox:
                         if not self.exit_requested:
                             if not self.is_paused:
                                 self.download_songs()
-                                self.play_song(self.song_path_in_playlist(self.song_list[self.song_index]))
+                                self.play_song(self.song_list[self.song_index])
                             if not self.is_paused:
                                 self.song_index += 1
                                 if self.song_index >= self.number_songs:
@@ -737,28 +725,25 @@ class Jukebox:
                 file_contents = content_file.read()
                 file_read = True
         except IOError:
-            print("error: unable to read file %s" % file_path)
+            logging.error("unable to read file %s" % file_path)
 
         if file_read and file_contents is not None:
             if file_contents:
                 # for general purposes, it might be useful or helpful to have
                 # a minimum size for compressing
                 if self.jukebox_options.use_compression:
-                    if self.debug_print:
-                        print("compressing file")
+                    logging.debug("compressing file")
 
                     file_bytes = bytes(file_contents, 'utf-8')
                     file_contents = zlib.compress(file_bytes, 9)
 
                 if allow_encryption and self.jukebox_options.use_encryption:
-                    if self.debug_print:
-                        print("encrypting file")
+                    logging.debug("encrypting file")
 
                     # the length of the data to encrypt must be a multiple of 16
                     num_extra_chars = len(file_contents) % 16
                     if num_extra_chars > 0:
-                        if self.debug_print:
-                            print("padding file for encryption")
+                        logging.debug("padding file for encryption")
                         pad_chars = 16 - num_extra_chars
                         file_contents += "".ljust(pad_chars, ' ')
 
@@ -774,8 +759,7 @@ class Jukebox:
             have_metadata_container = True
 
         if have_metadata_container:
-            if self.debug_print:
-                print("uploading metadata db file to storage system")
+            logging.debug("uploading metadata db file to storage system")
 
             self.jukebox_db.close()
             self.jukebox_db = None
@@ -788,11 +772,10 @@ class Jukebox:
                                                                 self.metadata_db_file,
                                                                 db_file_contents)
 
-            if self.debug_print:
-                if metadata_db_upload:
-                    print("metadata db file uploaded")
-                else:
-                    print("unable to upload metadata db file")
+            if metadata_db_upload:
+                logging.debug("metadata db file uploaded")
+            else:
+                logging.error("unable to upload metadata db file")
 
         return metadata_db_upload
 
@@ -810,7 +793,7 @@ class Jukebox:
                 have_container = True
 
             if not have_container:
-                print("error: unable to create container for playlists. unable to import")
+                logging.error("unable to create container for playlists. unable to import")
                 return
 
             for listing_entry in dir_listing:
@@ -823,13 +806,13 @@ class Jukebox:
                         if self.storage_system.put_object(self.playlist_container,
                                                           object_name,
                                                           file_contents):
-                            print("put of playlist succeeded")
+                            logging.debug("put of playlist succeeded")
                             if not self.store_song_playlist(object_name, file_contents):
-                                print("storing of playlist to db failed")
+                                logging.error("storing of playlist to db failed")
                                 self.storage_system.delete_object(self.playlist_container,
                                                                   object_name)
                             else:
-                                print("storing of playlist succeeded")
+                                logging.debug("storing of playlist succeeded")
                                 file_import_count += 1
 
             if file_import_count > 0:
@@ -855,7 +838,7 @@ class Jukebox:
                     file_contents = content_file.read()
                 file_read = True
             except IOError:
-                print("error: unable to read file %s" % full_path)
+                logging.error("unable to read file %s" % full_path)
                 file_read = False
             if file_read:
                 pl = json.loads(file_contents)
@@ -879,7 +862,7 @@ class Jukebox:
                             base_object_name = "%s--%s--%s" % (artist, album, song)
                             print(base_object_name)
         else:
-            print("error: unable to retrieve %s" % object_name)
+            logging.error("unable to retrieve %s" % object_name)
 
     def play_playlist(self, playlist):
         bucket_name = "cj-playlists"
@@ -893,7 +876,7 @@ class Jukebox:
                     file_contents = content_file.read()
                 file_read = True
             except IOError:
-                print("error: unable to read file %s" % full_path)
+                logging.error("unable to read file %s" % full_path)
                 file_read = False
             if file_read:
                 pl = json.loads(file_contents)
@@ -923,10 +906,10 @@ class Jukebox:
                                     song_list.append(db_song)
                                     break
                             else:
-                                print("No song file for %s" % base_object_name)
+                                logging.error("No song file for %s" % base_object_name)
                         self.play_song_list(song_list, False)
         else:
-            print("error: unable to retrieve %s" % object_name)
+            logging.error("unable to retrieve %s" % object_name)
 
     def play_album(self, artist, album):
         bucket_name = "cj-albums"
@@ -940,7 +923,7 @@ class Jukebox:
                     file_contents = content_file.read()
                 file_read = True
             except IOError:
-                print("error: unable to read file %s" % full_path)
+                logging.error("unable to read file %s" % full_path)
                 file_read = False
             if file_read:
                 pl = json.loads(file_contents)
@@ -949,6 +932,9 @@ class Jukebox:
                         song_list = []
                         list_song_dicts = pl["tracks"]
                         for song_dict in list_song_dicts:
+                            if not "object" in song_dict:
+                                logging.error("missing 'object' in %s" % repr(song_dict))
+                                continue
                             base_object_name = song_dict["object"]
                             pos_dot = base_object_name.find(".")
                             if pos_dot > 0:
@@ -961,10 +947,10 @@ class Jukebox:
                                     song_list.append(db_song)
                                     break
                             else:
-                                print("No song file for %s" % base_object_name)
+                                logging.error("No song file for %s" % base_object_name)
                         self.play_song_list(song_list, False)
         else:
-            print("error: unable to retrieve %s" % object_name)
+            logging.error("unable to retrieve %s" % object_name)
 
     def delete_song(self, song_uid: str, upload_metadata: bool = True) -> bool:
         is_deleted = False
@@ -991,7 +977,7 @@ class Jukebox:
                 else:
                     for song in song_list:
                         if not self.delete_song(song.fm.object_name, False):
-                            print("error deleting song '%s'" % song.fm.object_name)
+                            logging.error("deleting song '%s'" % song.fm.object_name)
                             sys.exit(1)
                     self.upload_metadata_db()
                     is_deleted = True
@@ -1017,7 +1003,7 @@ class Jukebox:
                         # delete song metadata
                         self.jukebox_db.delete_song(song.fm.object_name)
                     else:
-                        print("error: unable to delete song %s" % song.fm.object_name)
+                        logging.error("unable to delete song %s" % song.fm.object_name)
                         #TODO: delete song metadata if we got 404
                 if num_songs_deleted > 0:
                     # upload metadata db
@@ -1039,15 +1025,15 @@ class Jukebox:
                 if self.storage_system.delete_object(self.playlist_container, object_name):
                     is_deleted = True
                 else:
-                    print("error: object delete failed")
+                    logging.error("object delete failed")
             else:
-                print("error: database delete failed")
+                logging.error("database delete failed")
             if is_deleted:
                 self.upload_metadata_db()
             else:
-                print("delete of playlist failed")
+                logging.error("delete of playlist failed")
         else:
-            print("invalid playlist name")
+            logging.error("invalid playlist name")
 
         return is_deleted
 
@@ -1056,7 +1042,7 @@ class Jukebox:
             file_import_count = 0
             dir_listing = os.listdir(self.album_art_import_dir)
             if len(dir_listing) == 0:
-                print("no album art found")
+                logging.info("no album art found")
                 return
 
             if not self.storage_system.has_container(self.album_art_container):
@@ -1065,7 +1051,7 @@ class Jukebox:
                 have_container = True
 
             if not have_container:
-                print("error: unable to create container for album art. unable to import")
+                logging.error("unable to create container for album art. unable to import")
                 return
 
             for listing_entry in dir_listing:
