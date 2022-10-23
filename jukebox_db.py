@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 import typing
 
@@ -30,7 +31,7 @@ class JukeboxDB:
             if not self.have_tables():
                 open_success = self.create_tables()
                 if not open_success:
-                    print('error: unable to create all tables')
+                    logging.error('unable to create all tables')
             else:
                 open_success = True
         return open_success
@@ -47,10 +48,9 @@ class JukeboxDB:
         # look for stored metadata in the storage system
         self.db_connection = sqlite3.connect(self.metadata_db_file_path)
         if self.db_connection is not None:
-            if self.debug_print:
-                print("have db connection")
+            logging.debug("have db connection")
         else:
-            print("unable to connect to database")
+            logging.error("unable to connect to database")
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -62,17 +62,16 @@ class JukeboxDB:
         try:
             table_created = self.db_connection.execute(sql)
             if not table_created:
-                print('creation of table failed')
-                print('%s' % sql)
+                logging.error('creation of table failed')
+                logging.debug('%s' % sql)
             return table_created
         except sqlite3.Error as e:
-            print('error creating table: ' + e.args[0])
+            logging.error('error creating table: ' + e.args[0])
             return False
 
     def create_tables(self) -> bool:
         if self.db_connection is not None:
-            if self.debug_print:
-                print("creating tables")
+            logging.debug("creating tables")
 
             create_genre_table = "CREATE TABLE genre (" + \
                                  "genre_uid TEXT UNIQUE NOT NULL," + \
@@ -125,7 +124,7 @@ class JukeboxDB:
                        self.create_table(create_playlist_table) and \
                        self.create_table(create_playlist_song_table)
             except sqlite3.Error as e:
-                print('error creating table: ' + e.args[0])
+                logging.error('error creating table: ' + e.args[0])
 
         return False
 
@@ -241,7 +240,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
-                print("error inserting playlist: " + e.args[0])
+                logging.error("error inserting playlist: " + e.args[0])
 
         return insert_success
 
@@ -259,7 +258,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 delete_success = True
             except sqlite3.Error as e:
-                print("error deleting playlist: " + e.args[0])
+                logging.error("error deleting playlist: " + e.args[0])
 
         return delete_success
 
@@ -288,7 +287,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 insert_success = True
             except sqlite3.Error as e:
-                print("error inserting song: " + e.args[0])
+                logging.error("error inserting song: " + e.args[0])
 
         return insert_success
 
@@ -329,7 +328,7 @@ class JukeboxDB:
                 self.db_connection.commit()
                 update_success = True
             except sqlite3.Error as e:
-                print("error updating song: " + e.args[0])
+                logging.error("error updating song: " + e.args[0])
 
         return update_success
 
@@ -383,15 +382,21 @@ class JukeboxDB:
                   object_name,
                   album_uid FROM song"""
             sql += self.sql_where_clause()
-            #if len(artist) > 0:
-            #    sql += " AND artist_name='%s'" % artist
             if len(artist) > 0:
                 encoded_artist = jukebox.Jukebox.encode_value(artist)
                 if len(album) > 0:
                     encoded_album = jukebox.Jukebox.encode_value(album)
-                    sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
+                    added_clause = " AND song_uid LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
                 else:
-                    sql += " AND object_name LIKE '%s--%%'" % encoded_artist
+                    added_clause = " AND song_uid LIKE '%s--%%'" % encoded_artist
+                sql += added_clause
+
+            #if len(artist) > 0:
+            #    sql += " AND artist_name='%s'" % artist
+            #if len(album) > 0:
+            #    encoded_artist = jukebox.Jukebox.encode_value(artist)
+            #    encoded_album = jukebox.Jukebox.encode_value(album)
+            #    sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
             songs = self.songs_for_query(sql)
         return songs
 
@@ -485,6 +490,6 @@ class JukeboxDB:
                     self.db_connection.commit()
                     was_deleted = True
                 except sqlite3.Error as e:
-                    print("error deleting song: " + e.args[0])
+                    logging.error("error deleting song: " + e.args[0])
 
         return was_deleted
