@@ -364,7 +364,7 @@ class JukeboxDB:
         where_clause += str(compression)
         return where_clause
 
-    def retrieve_songs(self, artist: str = "", album: str = "") -> list:
+    def retrieve_songs(self, artist: str = "", album: str = "", file_format: str = "") -> list:
         songs = []
         if self.db_connection is not None:
             sql = """SELECT song_uid,
@@ -386,17 +386,20 @@ class JukeboxDB:
                 encoded_artist = jukebox.Jukebox.encode_value(artist)
                 if len(album) > 0:
                     encoded_album = jukebox.Jukebox.encode_value(album)
-                    added_clause = " AND song_uid LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
+                    if len(file_format) > 0:
+                        added_clause = " AND song_uid LIKE '%s--%s%%.%s'" % (encoded_artist, encoded_album, file_format)
+                    else:
+                        added_clause = " AND song_uid LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
                 else:
-                    added_clause = " AND song_uid LIKE '%s--%%'" % encoded_artist
+                    if len(file_format) > 0:
+                        added_clause = " AND song_uid LIKE '%s--%%.%s'" % (encoded_artist, file_format)
+                    else:
+                        added_clause = " AND song_uid LIKE '%s--%%'" % encoded_artist
                 sql += added_clause
+            else:
+                if len(file_format) > 0:
+                    sql += " AND song_uid LIKE '%%.%s'" % file_format
 
-            #if len(artist) > 0:
-            #    sql += " AND artist_name='%s'" % artist
-            #if len(album) > 0:
-            #    encoded_artist = jukebox.Jukebox.encode_value(artist)
-            #    encoded_album = jukebox.Jukebox.encode_value(album)
-            #    sql += " AND object_name LIKE '%s--%s%%'" % (encoded_artist, encoded_album)
             songs = self.songs_for_query(sql)
         return songs
 

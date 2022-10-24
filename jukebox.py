@@ -615,8 +615,8 @@ class Jukebox:
                 download_thread = song_downloader.SongDownloader(self, dl_songs)
                 download_thread.start()
 
-    def play_songs(self, shuffle: bool = False, artist: str = "", album: str = ""):
-        song_list = self.jukebox_db.retrieve_songs(artist, album)
+    def play_songs(self, shuffle: bool = False, artist: str = "", album: str = "", file_format: str = ""):
+        song_list = self.jukebox_db.retrieve_songs(artist, album, file_format)
         self.play_song_list(song_list, shuffle)
 
     def play_song_list(self, song_list, shuffle):

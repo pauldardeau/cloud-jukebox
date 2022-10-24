@@ -193,6 +193,7 @@ def main():
     playlist = None
     song = ""
     album = ""
+    file_format = ""
 
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
@@ -207,6 +208,7 @@ def main():
     opt_parser.add_argument("--playlist", type=str, help="limit operations to specified playlist")
     opt_parser.add_argument("--song", type=str, help="limit operations to specified song")
     opt_parser.add_argument("--album", type=str, help="limit operations to specified album")
+    opt_parser.add_argument("--format", type=str, help="restrict play to specified audio file format")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     if args is None:
@@ -280,6 +282,16 @@ def main():
 
     if args.album is not None:
         album = args.album
+
+    if args.format is not None:
+        file_format = args.format
+        if file_format.startswith("."):
+            file_format = file_format[1:]
+        valid_file_formats = ["mp3", "m4a", "flac"]
+        if file_format not in valid_file_formats:
+            print("error: invalid file format '%s'" % file_format)
+            print("valid file formats: %s" % valid_file_formats.join(","))
+            sys.exit(1)
 
     if args.command:
         if debug_mode:
@@ -356,10 +368,10 @@ def main():
                                 jukebox.import_playlists()
                             elif command == 'play':
                                 shuffle = False
-                                jukebox.play_songs(shuffle, artist, album)
+                                jukebox.play_songs(shuffle, artist, album, file_format)
                             elif command == 'shuffle-play':
                                 shuffle = True
-                                jukebox.play_songs(shuffle, artist, album)
+                                jukebox.play_songs(shuffle, artist, album, file_format)
                             elif command == 'list-songs':
                                 jukebox.show_listings()
                             elif command == 'list-artists':
