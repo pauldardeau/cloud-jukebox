@@ -2,7 +2,6 @@ import unittest
 
 from jukebox import Jukebox
 from jukebox_options import JukeboxOptions
-from memory_storage_system import MemoryStorageSystem
 from song_metadata import SongMetadata
 
 
@@ -10,7 +9,7 @@ class TestJukebox(unittest.TestCase):
 
     def setUp(self):
         self.jb_options = JukeboxOptions()
-        self.ss = MemoryStorageSystem()
+        self.ss = None
         self.jb = Jukebox(self.jb_options, self.ss)
         song_metadata = SongMetadata()
         self.jb.add_song(song_metadata, '')

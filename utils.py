@@ -2,6 +2,7 @@ import hashlib
 import os
 import os.path
 import pathlib
+import typing
 from typing import List, Tuple
 
 def md5_for_file(path_to_file: str) -> str:
@@ -85,5 +86,40 @@ def get_current_directory() -> str:
 def get_process_id() -> int:
     return os.getpid()
 
-def create_directory(dir_path: str):
+def create_directory(dir_path: str) -> bool:
     os.makedirs(dir_path)
+    return directory_exists(dir_path)
+
+def delete_directory(dir_path: str) -> bool:
+    os.rmdir(dir_path)
+    return not directory_exists(dir_path)
+
+def file_write_all_bytes(file_path: str, file_contents: list[bytes]) -> bool:
+    try:
+        with open(file_path, "wb") as f:
+            f.write(file_contents)
+            return True
+    except:
+        return False
+
+def file_write_all_text(file_path: str, file_contents: str) -> bool:
+    try:
+        with open(file_path, "w") as f:
+            f.write(file_contents)
+            return True
+    except:
+        return False
+
+def file_read_all_bytes(file_path: str) -> typing.Optional[list[bytes]]:
+    try:
+        with open(file_path, "r") as f:
+            return f.read()
+    except:
+        return None
+
+def file_read_all_text(file_path: str) -> typing.Optional[str]:
+    try:
+        with open(file_path, "r") as f:
+            return f.read()
+    except:
+        return None

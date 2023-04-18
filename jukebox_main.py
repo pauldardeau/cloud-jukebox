@@ -1,5 +1,6 @@
 import argparse
 import os
+import fs_storage_system
 import s3
 import swift
 import sys
@@ -46,6 +47,11 @@ CMD_SHOW_PLAYLIST      = "show-playlist"
 CMD_SHUFFLE_PLAY       = "shuffle-play"
 CMD_UPLOAD_METADATA_DB = "upload-metadata-db"
 CMD_USAGE              = "usage"
+
+SS_FS    = "fs"
+SS_S3    = "s3"
+SS_SWIFT = "swift"
+
 
 def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
     if not swift.is_available():
@@ -144,10 +150,15 @@ def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update:
 
 def connect_storage_system(system_name: str, credentials, prefix: str,
                            in_debug_mode: bool, for_update: bool):
-    if system_name == "swift":
+    if system_name == SS_SWIFT:
         return connect_swift_system(credentials, prefix, in_debug_mode, for_update)
-    elif system_name == "s3":
+    elif system_name == SS_S3:
         return connect_s3_system(credentials, prefix, in_debug_mode, for_update)
+    elif system_name == SS_FS:
+        if "root_dir" in credentials:
+            root_dir = credentials["root_dir"]
+            if root_dir is not None and len(root_dir) > 0:
+                return fs_storage_system.FSStorageSystem(root_dir, in_debug_mode)
     else:
         return None
 
@@ -190,7 +201,7 @@ def init_storage_system(storage_sys):
 
 def main():
     debug_mode = False
-    storage_type = "swift"
+    storage_type = SS_SWIFT
     artist = ""
     playlist = None
     song = ""
@@ -201,7 +212,7 @@ def main():
     opt_parser.add_argument("--" + ARG_DEBUG, action="store_true", help="run in debug mode")
     opt_parser.add_argument("--" + ARG_FILE_CACHE_COUNT, type=int, help="number of songs to buffer in cache")
     opt_parser.add_argument("--" + ARG_INTEGRITY_CHECKS, action="store_true", help="check file integrity after download")
-    opt_parser.add_argument("--" + ARG_STORAGE, help="storage system type (s3, swift)")
+    opt_parser.add_argument("--" + ARG_STORAGE, help="storage system type (%s, %s, %s)" % (SS_S3, SS_SWIFT, SS_FS))
     opt_parser.add_argument("--" + ARG_ARTIST, type=str, help="limit operations to specified artist")
     opt_parser.add_argument("--" + ARG_PLAYLIST, type=str, help="limit operations to specified playlist")
     opt_parser.add_argument("--" + ARG_SONG, type=str, help="limit operations to specified song")
@@ -229,7 +240,7 @@ def main():
         options.check_data_integrity = True
 
     if args.storage is not None:
-        supported_systems = ("swift", "s3")
+        supported_systems = (SS_SWIFT, SS_S3, SS_FS)
         if args.storage not in supported_systems:
             print("error: invalid storage type '%s'" % args.storage)
             print("supported systems are: %s" % str(supported_systems))
