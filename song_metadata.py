@@ -4,6 +4,12 @@ import file_metadata
 import typing
 
 
+PROP_ALBUM_UID   = "album_uid"
+PROP_ARTIST_NAME = "artist_name"
+PROP_ARTIST_UID  = "artist_uid"
+PROP_FM          = "fm"
+PROP_SONG_NAME   = "song_name"
+
 class SongMetadata:
 
     def __init__(self):
@@ -24,19 +30,19 @@ class SongMetadata:
         if dictionary is not None:
             self.fm = file_metadata.FileMetadata()
             self.fm.from_dictionary(dictionary, prefix)
-            if prefix + "artist_uid" in dictionary:
-                self.artist_uid = dictionary[prefix + "artist_uid"]
-            if prefix + "artist_name" in dictionary:
-                self.artist_name = dictionary[prefix + "artist_name"]
-            if prefix + "album_uid" in dictionary:
-                self.album_uid = dictionary[prefix + "album_uid"]
-            if prefix + "song_name" in dictionary:
-                self.song_name = dictionary[prefix + "song_name"]
+            if prefix + PROP_ARTIST_UID in dictionary:
+                self.artist_uid = dictionary[prefix + PROP_ARTIST_UID]
+            if prefix + PROP_ARTIST_NAME in dictionary:
+                self.artist_name = dictionary[prefix + PROP_ARTIST_NAME]
+            if prefix + PROP_ALBUM_UID in dictionary:
+                self.album_uid = dictionary[prefix + PROP_ALBUM_UID]
+            if prefix + PROP_SONG_NAME in dictionary:
+                self.song_name = dictionary[prefix + PROP_SONG_NAME]
 
     def to_dictionary(self, prefix: str = "") -> Dict[str, object]:
-        d = {prefix + "fm": self.fm.to_dictionary(prefix),
-             prefix + "artist_uid": self.artist_uid,
-             prefix + "artist_name": self.artist_name,
-             prefix + "album_uid": self.album_uid,
-             prefix + "song_name": self.song_name}
+        d = {prefix + PROP_FM: self.fm.to_dictionary(prefix),
+             prefix + PROP_ARTIST_UID: self.artist_uid,
+             prefix + PROP_ARTIST_NAME: self.artist_name,
+             prefix + PROP_ALBUM_UID: self.album_uid,
+             prefix + PROP_SONG_NAME: self.song_name}
         return d

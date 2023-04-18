@@ -12,4 +12,3 @@ jukebox_db.sqlite3
 .idea/
 s3_creds.txt
 swift_creds.txt
-azure_creds.txt

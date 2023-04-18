@@ -2,12 +2,50 @@ import argparse
 import os
 import s3
 import swift
-import azure
 import sys
 import requests
-from jukebox import Jukebox
+import jukebox as jb
 import jukebox_options
 
+
+ARG_DEBUG             = "debug"
+ARG_FILE_CACHE_COUNT  = "file-cache-count"
+ARG_INTEGRITY_CHECKS  = "integrity-checks"
+ARG_STORAGE           = "storage"
+ARG_ARTIST            = "artist"
+ARG_PLAYLIST          = "playlist"
+ARG_SONG              = "song"
+ARG_ALBUM             = "album"
+ARG_COMMAND           = "command"
+ARG_FORMAT            = "format"
+
+CMD_DELETE_ALBUM       = "delete-album"
+CMD_DELETE_ARTIST      = "delete-artist"
+CMD_DELETE_PLAYLIST    = "delete-playlist"
+CMD_DELETE_SONG        = "delete-song"
+CMD_EXPORT_ALBUM       = "export-album"
+CMD_EXPORT_PLAYLIST    = "export-playlist"
+CMD_HELP               = "help"
+CMD_IMPORT_ALBUM       = "import-album"
+CMD_IMPORT_ALBUM_ART   = "import-album-art"
+CMD_IMPORT_PLAYLISTS   = "import-playlists"
+CMD_IMPORT_SONGS       = "import-songs"
+CMD_INIT_STORAGE       = "init-storage"
+CMD_LIST_ALBUMS        = "list-albums"
+CMD_LIST_ARTISTS       = "list-artists"
+CMD_LIST_CONTAINERS    = "list-containers"
+CMD_LIST_GENRES        = "list-genres"
+CMD_LIST_PLAYLISTS     = "list-playlists"
+CMD_LIST_SONGS         = "list-songs"
+CMD_PLAY               = "play"
+CMD_PLAY_ALBUM         = "play-album"
+CMD_PLAY_PLAYLIST      = "play-playlist"
+CMD_RETRIEVE_CATALOG   = "retrieve-catalog"
+CMD_SHOW_ALBUM         = "show-album"
+CMD_SHOW_PLAYLIST      = "show-playlist"
+CMD_SHUFFLE_PLAY       = "shuffle-play"
+CMD_UPLOAD_METADATA_DB = "upload-metadata-db"
+CMD_USAGE              = "usage"
 
 def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
     if not swift.is_available():
@@ -46,7 +84,7 @@ def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_upda
               swift_user, and swift_password in credentials""")
         sys.exit(1)
 
-    if for_udpate:
+    if for_update:
         user = update_swift_user
         password = update_swift_password
     else:
@@ -104,56 +142,12 @@ def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update:
                                   in_debug_mode)
 
 
-def connect_azure_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
-    if not azure.is_available():
-        print("error: azure is not supported on this system. please install azure client first.")
-        sys.exit(1)
-
-    azure_account_name = ""
-    azure_account_key = ""
-    update_azure_account_name = ""
-    update_azure_account_key = ""
-    if "azure_account_name" in credentials:
-        azure_account_name = credentials["azure_account_name"]
-    if "azure_account_key" in credentials:
-        azure_account_key = credentials["azure_account_key"]
-
-    if "update_azure_account_name" in credentials and "update_azure_account_key" in credentials:
-        update_azure_account_name = credentials["update_azure_account_name"]
-        update_azure_account_key = credentials["update_azure_account_key"]
-
-    if in_debug_mode:
-        print("azure_account_name='%s'" % azure_account_name)
-        print("azure_account_key='%s'" % azure_account_key)
-        if len(update_azure_account_name) > 0 and len(update_azure_account_key) > 0:
-            print("update_azure_account_name='%s'" % update_azure_account_name)
-            print("update_azure_account_key='%s'" % update_azure_account_key)
-
-    if len(azure_account_name) == 0 or len(azure_account_key) == 0:
-        print("""error: no azure credentials given. please specify azure_account_name
-              and azure_account_key in credentials file""")
-        sys.exit(1)
-    else:
-        if for_update:
-            account_name = update_azure_account_name
-            account_key = update_azure_account_key
-        else:
-            account_name = azure_account_name
-            account_key = azure_account_key
-        return azure.AzureStorageSystem(account_name,
-                                        account_key,
-                                        prefix,
-                                        in_debug_mode)
-
-
 def connect_storage_system(system_name: str, credentials, prefix: str,
                            in_debug_mode: bool, for_update: bool):
     if system_name == "swift":
         return connect_swift_system(credentials, prefix, in_debug_mode, for_update)
     elif system_name == "s3":
         return connect_s3_system(credentials, prefix, in_debug_mode, for_update)
-    elif system_name == "azure":
-        return connect_azure_system(credentials, prefix, in_debug_mode, for_update)
     else:
         return None
 
@@ -181,34 +175,38 @@ def show_usage():
     print('\tplay-album         - play specified album')
     print('\tretrieve-catalog   - retrieve copy of music catalog')
     print('\tupload-metadata-db - upload SQLite metadata')
+    print('\tinit-storage       - initialize storage system')
     print('\tusage              - show this help message')
     print('')
 
+def init_storage_system(storage_sys):
+    if jb.initialize_storage_system(storage_sys):
+        print("storage system successfully initialized")
+        success = True
+    else:
+        print("error: unable to initialize storage system")
+        success = False
+    return success
 
 def main():
     debug_mode = False
     storage_type = "swift"
     artist = ""
-    shuffle = False
     playlist = None
     song = ""
     album = ""
     file_format = ""
 
     opt_parser = argparse.ArgumentParser()
-    opt_parser.add_argument("--debug", action="store_true", help="run in debug mode")
-    opt_parser.add_argument("--file-cache-count", type=int, help="number of songs to buffer in cache")
-    opt_parser.add_argument("--integrity-checks", action="store_true", help="check file integrity after download")
-    opt_parser.add_argument("--compress", action="store_true", help="use gzip compression")
-    opt_parser.add_argument("--encrypt", action="store_true", help="encrypt file contents")
-    opt_parser.add_argument("--key", help="encryption key")
-    opt_parser.add_argument("--keyfile", help="path to file containing encryption key")
-    opt_parser.add_argument("--storage", help="storage system type (s3, swift, azure)")
-    opt_parser.add_argument("--artist", type=str, help="limit operations to specified artist")
-    opt_parser.add_argument("--playlist", type=str, help="limit operations to specified playlist")
-    opt_parser.add_argument("--song", type=str, help="limit operations to specified song")
-    opt_parser.add_argument("--album", type=str, help="limit operations to specified album")
-    opt_parser.add_argument("--format", type=str, help="restrict play to specified audio file format")
+    opt_parser.add_argument("--" + ARG_DEBUG, action="store_true", help="run in debug mode")
+    opt_parser.add_argument("--" + ARG_FILE_CACHE_COUNT, type=int, help="number of songs to buffer in cache")
+    opt_parser.add_argument("--" + ARG_INTEGRITY_CHECKS, action="store_true", help="check file integrity after download")
+    opt_parser.add_argument("--" + ARG_STORAGE, help="storage system type (s3, swift)")
+    opt_parser.add_argument("--" + ARG_ARTIST, type=str, help="limit operations to specified artist")
+    opt_parser.add_argument("--" + ARG_PLAYLIST, type=str, help="limit operations to specified playlist")
+    opt_parser.add_argument("--" + ARG_SONG, type=str, help="limit operations to specified song")
+    opt_parser.add_argument("--" + ARG_ALBUM, type=str, help="limit operations to specified album")
+    opt_parser.add_argument("--" + ARG_FORMAT, type=str, help="restrict play to specified audio file format")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     if args is None:
@@ -230,38 +228,8 @@ def main():
             print("setting integrity checks on")
         options.check_data_integrity = True
 
-    if args.compress:
-        if debug_mode:
-            print("setting compression on")
-        options.use_compression = True
-
-    if args.encrypt:
-        if debug_mode:
-            print("setting encryption on")
-        options.use_encryption = True
-
-    if args.key:
-        if debug_mode:
-            print("setting encryption key='%s'" % args.key)
-        options.encryption_key = args.key
-
-    if args.keyfile is not None:
-        if debug_mode:
-            print("reading encryption key file='%s'" % args.keyfile)
-
-        try:
-            with open(args.keyfile, 'rt') as key_file:
-                options.encryption_key = key_file.read().strip()
-        except IOError:
-            print("error: unable to read key file '%s'" % args.keyfile)
-            sys.exit(1)
-
-        if options.encryption_key is None or len(options.encryption_key) == 0:
-            print("error: no key found in file '%s'" % args.keyfile)
-            sys.exit(1)
-
     if args.storage is not None:
-        supported_systems = ("swift", "s3", "azure")
+        supported_systems = ("swift", "s3")
         if args.storage not in supported_systems:
             print("error: invalid storage type '%s'" % args.storage)
             print("supported systems are: %s" % str(supported_systems))
@@ -290,14 +258,14 @@ def main():
         valid_file_formats = ["mp3", "m4a", "flac"]
         if file_format not in valid_file_formats:
             print("error: invalid file format '%s'" % file_format)
-            print("valid file formats: %s" % valid_file_formats.join(","))
+            print("valid file formats: %s" % ",".join(valid_file_formats))
             sys.exit(1)
 
     if args.command:
         if debug_mode:
             print("using storage system type '%s'" % storage_type)
 
-        container_prefix = "com.swampbits.jukebox."
+        container_prefix = ""
         creds_file = storage_type + "_creds.txt"
         creds = {}
         creds_file_path = os.path.join(os.getcwd(), creds_file)
@@ -318,8 +286,6 @@ def main():
         else:
             print("no creds file (%s)" % creds_file_path)
 
-        options.encryption_iv = "sw4mpb1ts.juk3b0x"
-
         command = args.command
 
         help_cmds = ['help', 'usage']
@@ -332,7 +298,7 @@ def main():
                          'import-album-art', 'play-album']
         update_cmds = ['import-songs', 'import-playlists', 'delete-song',
                        'delete-album', 'delete-playlist', 'delete-artist',
-                       'upload-metadata-db', 'import-album-art']
+                       'upload-metadata-db', 'import-album-art', 'init-storage']
         all_cmds = help_cmds + non_help_cmds
 
         if command not in all_cmds:
@@ -361,7 +327,12 @@ def main():
                                                 container_prefix,
                                                 debug_mode,
                                                 for_update) as storage_system:
-                        with Jukebox(options, storage_system) as jukebox:
+                        if command == 'init-storage':
+                            if init_storage_system(storage_system):
+                                sys.exit(0)
+                            else:
+                                sys.exit(1)
+                        with jb.Jukebox(options, storage_system) as jukebox:
                             if command == 'import-songs':
                                 jukebox.import_songs()
                             elif command == 'import-playlists':

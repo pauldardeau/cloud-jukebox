@@ -1,5 +1,16 @@
 from typing import Dict
 
+COMPRESSED       = "compressed"
+CONTAINER_NAME   = "container_name"
+ENCRYPTED        = "encrypted"
+FILE_NAME        = "file_name"
+FILE_TIME        = "file_time"
+FILE_UID         = "file_uid"
+MD5_HASH         = "md5_hash"
+OBJECT_NAME      = "object_name"
+ORIGIN_FILE_SIZE = "origin_file_size"
+PAD_CHAR_COUNT   = "pad_char_count"
+STORED_FILE_SIZE = "stored_file_size"
 
 class FileMetadata(object):
 
@@ -31,39 +42,39 @@ class FileMetadata(object):
 
     def from_dictionary(self, dictionary: Dict[str, object], prefix: str = ""):
         if dictionary is not None:
-            if prefix + "file_uid" in dictionary:
-                self.file_uid = dictionary[prefix + "file_uid"]
-            if prefix + "file_name" in dictionary:
-                self.file_name = dictionary[prefix + "file_name"]
-            if prefix + "origin_file_size" in dictionary:
-                self.origin_file_size = dictionary[prefix + "origin_file_size"]
-            if prefix + "stored_file_size" in dictionary:
-                self.stored_file_size = dictionary[prefix + "stored_file_size"]
-            if prefix + "pad_char_count" in dictionary:
-                self.pad_char_count = dictionary[prefix + "pad_char_count"]
-            if prefix + "file_time" in dictionary:
-                self.file_time = dictionary[prefix + "file_time"]
-            if prefix + "md5_hash" in dictionary:
-                self.md5_hash = dictionary[prefix + "md5_hash"]
-            if prefix + "compressed" in dictionary:
-                self.compressed = dictionary[prefix + "compressed"]
-            if prefix + "encrypted" in dictionary:
-                self.encrypted = dictionary[prefix + "encrypted"]
-            if prefix + "container_name" in dictionary:
-                self.container_name = dictionary[prefix + "container_name"]
-            if prefix + "object_name" in dictionary:
-                self.object_name = dictionary[prefix + "object_name"]
+            if prefix + FILE_UID in dictionary:
+                self.file_uid = dictionary[prefix + FILE_UID]
+            if prefix + FILE_NAME in dictionary:
+                self.file_name = dictionary[prefix + FILE_NAME]
+            if prefix + ORIGIN_FILE_SIZE in dictionary:
+                self.origin_file_size = dictionary[prefix + ORIGIN_FILE_SIZE]
+            if prefix + STORED_FILE_SIZE in dictionary:
+                self.stored_file_size = dictionary[prefix + STORED_FILE_SIZE]
+            if prefix + PAD_CHAR_COUNT in dictionary:
+                self.pad_char_count = dictionary[prefix + PAD_CHAR_COUNT]
+            if prefix + FILE_TIME in dictionary:
+                self.file_time = dictionary[prefix + FILE_TIME]
+            if prefix + MD5_HASH in dictionary:
+                self.md5_hash = dictionary[prefix + MD5_HASH]
+            if prefix + COMPRESSED in dictionary:
+                self.compressed = dictionary[prefix + COMPRESSED]
+            if prefix + ENCRYPTED in dictionary:
+                self.encrypted = dictionary[prefix + ENCRYPTED]
+            if prefix + CONTAINER_NAME in dictionary:
+                self.container_name = dictionary[prefix + CONTAINER_NAME]
+            if prefix + OBJECT_NAME in dictionary:
+                self.object_name = dictionary[prefix + OBJECT_NAME]
 
     def to_dictionary(self, prefix: str = "") -> Dict[str, object]:
-        d = {prefix + "file_uid": self.file_uid,
-             prefix + "file_name": self.file_name,
-             prefix + "origin_file_size": self.origin_file_size,
-             prefix + "stored_file_size": self.stored_file_size,
-             prefix + "pad_char_count": self.pad_char_count,
-             prefix + "file_time": self.file_time,
-             prefix + "md5_hash": self.md5_hash,
-             prefix + "compressed": self.compressed,
-             prefix + "encrypted": self.encrypted,
-             prefix + "container_name": self.container_name,
-             prefix + "object_name": self.object_name}
+        d = {prefix + FILE_UID: self.file_uid,
+             prefix + FILE_NAME: self.file_name,
+             prefix + ORIGIN_FILE_SIZE: self.origin_file_size,
+             prefix + STORED_FILE_SIZE: self.stored_file_size,
+             prefix + PAD_CHAR_COUNT: self.pad_char_count,
+             prefix + FILE_TIME: self.file_time,
+             prefix + MD5_HASH: self.md5_hash,
+             prefix + COMPRESSED: self.compressed,
+             prefix + ENCRYPTED: self.encrypted,
+             prefix + CONTAINER_NAME: self.container_name,
+             prefix + OBJECT_NAME: self.object_name}
         return d
