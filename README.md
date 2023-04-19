@@ -15,18 +15,19 @@ programming language (nor any other kind of Swift).
 Overview
 --------
 This repo is python code that implements a music player where the songs are stored
-in the cloud. Currently, the songs may be stored in either **OpenStack Swift**
-(https://wiki.openstack.org/wiki/Swift) or **AWS S3**. Although the implementation
-is centered around audio files, most of the code and functionality could easily
-be used for storing any kind of file.
+in the cloud (in an object storage system). Currently, the songs may be stored in
+either **OpenStack Swift** (https://wiki.openstack.org/wiki/Swift) or **AWS S3**
+(or an S3-compliant system). Although the implementation is centered around audio
+files, most of the code and functionality could easily be used for storing any
+kind of file.
 
 Dependencies/Prerequisites
 --------------------------
 ### Storage
 The cloud jukebox must have a storage system for data storage. Either **OpenStack Swift**
-or **AWS S3** can be used. For those who might want to experiment without having an
-account in a real cloud-based object storage system, there's also a filesystem storage
-system ('fs').
+or **AWS S3** (or S3-compliant) can be used. For those who might want to experiment
+without having an account in a real cloud-based object storage system, there's also
+a filesystem storage system ('fs').
 
 #### Swift Dependencies
 * swiftclient  `pip install python-swiftclient`
