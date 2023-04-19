@@ -4,7 +4,7 @@ import typing
 
 from typing import List
 
-import jukebox
+import jb_utils
 import song_metadata
 from song_metadata import SongMetadata
 from file_metadata import FileMetadata
@@ -383,9 +383,9 @@ class JukeboxDB:
                   album_uid FROM song"""
             sql += self.sql_where_clause()
             if len(artist) > 0:
-                encoded_artist = jukebox.Jukebox.encode_value(artist)
+                encoded_artist = jb_utils.encode_value(artist)
                 if len(album) > 0:
-                    encoded_album = jukebox.Jukebox.encode_value(album)
+                    encoded_album = jb_utils.encode_value(album)
                     if len(file_format) > 0:
                         added_clause = " AND song_uid LIKE '%s--%s%%.%s'" % (encoded_artist, encoded_album, file_format)
                     else:

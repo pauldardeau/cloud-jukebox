@@ -58,6 +58,7 @@ import storage_system
 import utils
 import json
 import typing
+import jb_utils
 
 if utils.os_is_posix():
     import signal
@@ -193,14 +194,6 @@ class Jukebox:
     def get_metadata_db_file_path(self) -> str:
         return utils.path_join(self.current_dir, self.metadata_db_file)
 
-    @staticmethod
-    def decode_value(encoded_value: str) -> str:
-        return encoded_value.replace('-', ' ')
-
-    @staticmethod
-    def encode_value(value: str) -> str:
-        return value.replace(' ', '-')
-
     def components_from_file_name(self, file_name: str):  # -> typing.Optional[List[str, str, str]]:
         if len(file_name) == 0:
             return None
@@ -211,9 +204,9 @@ class Jukebox:
             base_file_name = file_name
         components = base_file_name.split('--')
         if len(components) == 3:
-            return [self.decode_value(components[0]),
-                    self.decode_value(components[1]),
-                    self.decode_value(components[2])]
+            return [jb_utils.decode_value(components[0]),
+                    jb_utils.decode_value(components[1]),
+                    jb_utils.decode_value(components[2])]
         else:
             return None
 
@@ -743,7 +736,7 @@ class Jukebox:
             self.jukebox_db.show_playlists()
 
     def show_playlist(self, playlist):
-        object_name = "%s.json" % Jukebox.encode_value(playlist)
+        object_name = "%s.json" % jb_utils.encode_value(playlist)
         download_file = object_name
         if self.storage_system.get_object(self.playlist_container,
                                           object_name,
@@ -761,25 +754,23 @@ class Jukebox:
                     if "songs" in pl:
                         list_song_dicts = pl["songs"]
                         for song_dict in list_song_dicts:
-                            artist_name = song_dict["artist"]
-                            if "'" in artist_name:
-                                artist_name = artist_name.replace("'", "")
-                            artist = Jukebox.encode_value(artist_name)
-                            album_name = song_dict["album"]
-                            if "'" in album_name:
-                                album_name = album_name.replace("'", "")
-                            album = Jukebox.encode_value(album_name)
-                            song_name = song_dict["song"]
-                            if "'" in song_name:
-                                song_name = song_name.replace("'", "")
-                            song = Jukebox.encode_value(song_name)
-                            base_object_name = "%s--%s--%s" % (artist, album, song)
-                            print(base_object_name)
+                            if "artist" in song_dict and "album" in song_dict and "song" in song_dict:
+                                artist = song_dict["artist"]
+                                album = song_dict["album"]
+                                song = song_dict["song"]
+                                base_object_name = jb_utils.encode_artist_album_song(artist, album, song)
+                                print(base_object_name)
+                            else:
+                                print("error: song entry is missing 'artist', 'album', or 'song' element")
+                    else:
+                        print("error: playlist json file missing 'songs' element")
+                else:
+                    print("error: unable to parse playlist json file")
         else:
             logging.error("unable to retrieve %s" % object_name)
 
     def play_playlist(self, playlist):
-        object_name = "%s.json" % Jukebox.encode_value(playlist)
+        object_name = "%s.json" % jb_utils.encode_value(playlist)
         download_file = object_name
         if self.storage_system.get_object(self.playlist_container,
                                           object_name,
@@ -798,35 +789,37 @@ class Jukebox:
                         song_list = []
                         list_song_dicts = pl["songs"]
                         for song_dict in list_song_dicts:
-                            artist_name = song_dict["artist"]
-                            if "'" in artist_name:
-                                artist_name = artist_name.replace("'", "")
-                            artist = Jukebox.encode_value(artist_name)
-                            album_name = song_dict["album"]
-                            if "'" in album_name:
-                                album_name = album_name.replace("'", "")
-                            album = Jukebox.encode_value(album_name)
-                            song_name = song_dict["song"]
-                            if "'" in song_name:
-                                song_name = song_name.replace("'", "")
-                            song = Jukebox.encode_value(song_name)
-                            base_object_name = "%s--%s--%s" % (artist, album, song)
-                            ext_list = [".flac", ".m4a", ".mp3"]
-                            for ext in ext_list:
-                                object_name = base_object_name + ext
-                                db_song = self.jukebox_db.retrieve_song(object_name)
-                                if db_song is not None:
-                                    song_list.append(db_song)
-                                    break
+                            if "artist" in song_dict and "album" in song_dict and "song" in song_dict:
+                                artist = song_dict["artist"]
+                                album = song_dict["album"]
+                                song = song_dict["song"]
+                                base_object_name = jb_utils.encode_artist_album_song(artist, album, song)
+                                ext_list = [".flac", ".m4a", ".mp3"]
+                                song_file_found = False
+                                for ext in ext_list:
+                                    object_name = base_object_name + ext
+                                    db_song = self.jukebox_db.retrieve_song(object_name)
+                                    if db_song is not None:
+                                        song_list.append(db_song)
+                                        song_file_found = True
+                                        break
+
+                                if not song_file_found:
+                                    logging.error("No song file for %s" % base_object_name)
                             else:
-                                logging.error("No song file for %s" % base_object_name)
+                                print("error: 'artist', 'album', or 'song' missing from playlist entry")
+
                         self.play_song_list(song_list, False)
+                    else:
+                        print("error: no 'songs' element in playlist json file")
+                else:
+                    print("error: unable to parse playlist json file")
         else:
             logging.error("unable to retrieve %s" % object_name)
 
     def get_album_songs(self, artist, album):
         album_songs = []
-        object_name = "%s--%s.json" % (Jukebox.encode_value(artist), Jukebox.encode_value(album))
+        object_name = jb_utils.encode_artist_album(artist, album)
         download_file = object_name
         if self.storage_system.get_object(self.album_container,
                                           object_name,
