@@ -118,7 +118,7 @@ def file_write_all_bytes(file_path: str, file_contents: list[bytes]) -> bool:
         with open(file_path, "wb") as f:
             f.write(file_contents)
             return True
-    except:
+    except IOError:
         return False
 
 
@@ -127,7 +127,7 @@ def file_write_all_text(file_path: str, file_contents: str) -> bool:
         with open(file_path, "w") as f:
             f.write(file_contents)
             return True
-    except:
+    except IOError:
         return False
 
 
@@ -135,7 +135,7 @@ def file_read_all_bytes(file_path: str) -> typing.Optional[list[bytes]]:
     try:
         with open(file_path, "r") as f:
             return f.read()
-    except:
+    except IOError:
         return None
 
 
@@ -143,5 +143,5 @@ def file_read_all_text(file_path: str) -> typing.Optional[str]:
     try:
         with open(file_path, "r") as f:
             return f.read()
-    except:
+    except IOError:
         return None
