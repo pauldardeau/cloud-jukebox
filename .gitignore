@@ -8,6 +8,8 @@ song-import/
 uniq404.txt
 *.pyc
 *.mp3
+*.flac
+*.m4a
 jukebox_db.sqlite3
 .idea/
 s3_creds.txt
