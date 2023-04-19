@@ -278,7 +278,17 @@ class Jukebox:
 
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
+            if not utils.directory_exists(self.song_import_dir):
+                print("error: subdirectory '%s' doesn't exist" % self.song_import_dir)
+                print("please create subdirectory '%s' and copy your audio files into it" % self.song_import_dir)
+                return
+
             dir_listing = utils.list_files_in_directory(self.song_import_dir)
+            if len(dir_listing) == 0:
+                print("no songs present in subdirectory '%s'" % self.song_import_dir)
+                print("please copy your audio files into it and re-run")
+                return
+
             num_entries = float(len(dir_listing))
             progressbar_chars = 0.0
             progressbar_width = 40
@@ -688,10 +698,15 @@ class Jukebox:
 
     def import_playlists(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
+            if not utils.directory_exists(self.playlist_import_dir):
+                print("error: subdirectory '%s' doesn't exist" % self.playlist_import_dir)
+                print("please create subdirectory '%s' and copy your playlist files into it" % self.playlist_import_dir)
+                return
+
             file_import_count = 0
             dir_listing = utils.list_files_in_directory(self.playlist_import_dir)
             if len(dir_listing) == 0:
-                print("no playlists found")
+                print("no playlists found. please copy your playlist files into subdirectory '%s'" % self.playlist_import_dir)
                 return
 
             if not self.storage_system.has_container(self.playlist_container):
@@ -943,10 +958,15 @@ class Jukebox:
 
     def import_album_art(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
+            if not utils.directory_exists(self.album_art_import_dir):
+                print("error: subdirectory '%s' doesn't exist" % self.album_art_import_dir)
+                print("please create subdirectory '%s' and copy your album art files into it" % self.album_art_import_dir)
+                return
+
             file_import_count = 0
             dir_listing = utils.list_files_in_directory(self.album_art_import_dir)
             if len(dir_listing) == 0:
-                logging.info("no album art found")
+                logging.info("no album art found. please copy your album art files into subdirectory '%s'" % self.album_art_import_dir)
                 return
 
             if not self.storage_system.has_container(self.album_art_container):
