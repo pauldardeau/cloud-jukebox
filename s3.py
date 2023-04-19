@@ -142,7 +142,7 @@ class S3StorageSystem(StorageSystem):
 
         if self.conn is not None and container_name is not None and object_name is not None:
             # try:
-                bucket = self.conn.head_object(Bucket=container_name, Key=object_name)
+                # bucket = self.conn.head_object(Bucket=container_name, Key=object_name)
                 # object_key = bucket.get_key(object_name)
                 # if object_key is not None:
                 #    pass
