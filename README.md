@@ -111,7 +111,7 @@ Options:
     --integrity-checks
     --playlist <playlist_name>
     --song <song_name>
-    --storage [swift|s3]
+    --storage [swift|s3|fs]
 
 For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
