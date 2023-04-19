@@ -49,7 +49,7 @@ Importing Songs
 ---------------
 1. Create a subdirectory named **'song-import'**
 2. Copy your audio files into the song-import directory
-3. Run the command `python jukebox_main.py --storage $storage_system import-songs`
+3. Run the command `python jukebox_main.py --storage $STORAGE_SYSTEM import-songs`
 
 ### Song File Naming Convention
 
@@ -104,7 +104,7 @@ song files are downloaded as a batch in the background. The number of files that
 at once is configurable. By default, 3 files are downloaded together. To change this value, use
 the **--file-cache-count** command-line argument with the desired value.
 
-Example: `python jukebox_main.py --file-cache-count 10 play`
+Example: `python jukebox_main.py --storage $STORAGE_SYSTEM --file-cache-count 10 play`
 
 Integrity Checks
 ----------------
@@ -128,23 +128,23 @@ Examples:
 
 Displaying Available Songs
 ----------------------
-Run `python jukebox_main.py list-songs`
+Run `python jukebox_main.py --storage $STORAGE_SYSTEM list-songs`
 
 Displaying Available Albums
 ----------------------
-Run `python jukebox_main.py list-albums`
+Run `python jukebox_main.py --storage $STORAGE_SYSTEM list-albums`
 
 Displaying Available Artists
 ----------------------
-Run `python jukebox_main.py list-artists`
+Run `python jukebox_main.py --storage $STORAGE_SYSTEM list-artists`
 
 Displaying Available Playlists
 ----------------------
-Run `python jukebox_main.py list-playlists`
+Run `python jukebox_main.py --storage $STORAGE_SYSTEM list-playlists`
 
 Displaying List of Storage Containers
 -------------------------------------
-Run `python jukebox_main.py list-containers`
+Run `python jukebox_main.py --storage $STORAGE_SYSTEM list-containers`
 
 Debugging
 ---------
