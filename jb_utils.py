@@ -10,16 +10,11 @@ def encode_value(value: str) -> str:
 
 
 def encode_artist_album(artist: str, album: str) -> str:
-    clean_artist = remove_punctuation(artist)
-    clean_album = remove_punctuation(album)
-    return encode_value(clean_artist) + DOUBLE_DASHES + encode_value(clean_album)
+    return encode_value(artist) + DOUBLE_DASHES + encode_value(album)
 
 
 def encode_artist_album_song(artist: str, album: str, song: str) -> str:
-    clean_artist = remove_punctuation(artist)
-    clean_album = remove_punctuation(album)
-    clean_song = remove_punctuation(song)
-    return encode_artist_album(clean_artist, clean_album) + DOUBLE_DASHES + encode_value(clean_song)
+    return encode_artist_album(artist, album) + DOUBLE_DASHES + encode_value(song)
 
 
 def remove_punctuation(s: str) -> str:
