@@ -42,6 +42,7 @@ CMD_LIST_PLAYLISTS = "list-playlists"
 CMD_LIST_SONGS = "list-songs"
 CMD_PLAY = "play"
 CMD_PLAY_ALBUM = "play-album"
+CMD_SHOW_ALBUM = "show-album"
 CMD_PLAY_PLAYLIST = "play-playlist"
 CMD_RETRIEVE_CATALOG = "retrieve-catalog"
 CMD_SHOW_ALBUM = "show-album"
@@ -204,6 +205,7 @@ def show_usage():
     print('\t%s       - play songs randomly' % CMD_SHUFFLE_PLAY)
     print('\t%s      - play specified playlist' % CMD_PLAY_PLAYLIST)
     print('\t%s         - play specified album' % CMD_PLAY_ALBUM)
+    print('\t%s         - show specified album' % CMD_SHOW_ALBUM)
     print('\t%s   - retrieve copy of music catalog' % CMD_RETRIEVE_CATALOG)
     print('\t%s - upload SQLite metadata' % CMD_UPLOAD_METADATA_DB)
     print('\t%s       - initialize storage system' % CMD_INIT_STORAGE)
@@ -331,7 +333,7 @@ def main():
                          CMD_LIST_PLAYLISTS, CMD_SHOW_PLAYLIST, CMD_PLAY_PLAYLIST,
                          CMD_DELETE_SONG, CMD_DELETE_ALBUM, CMD_DELETE_PLAYLIST,
                          CMD_DELETE_ARTIST, CMD_UPLOAD_METADATA_DB,
-                         CMD_IMPORT_ALBUM_ART, CMD_PLAY_ALBUM]
+                         CMD_IMPORT_ALBUM_ART, CMD_PLAY_ALBUM, CMD_SHOW_ALBUM]
         update_cmds = [CMD_IMPORT_SONGS, CMD_IMPORT_PLAYLISTS, CMD_DELETE_SONG,
                        CMD_DELETE_ALBUM, CMD_DELETE_PLAYLIST, CMD_DELETE_ARTIST,
                        CMD_UPLOAD_METADATA_DB, CMD_IMPORT_ALBUM_ART, CMD_INIT_STORAGE]
@@ -406,6 +408,12 @@ def main():
                             elif command == CMD_PLAY_ALBUM:
                                 if album is not None and artist is not None:
                                     jukebox.play_album(artist, album)
+                                else:
+                                    print(
+                                        "error: artist and album must be specified using %s%s and %s%s options" % (ARG_PREFIX, ARG_ARTIST, ARG_PREFIX, ARG_ALBUM))
+                            elif command == CMD_SHOW_ALBUM:
+                                if album is not None and artist is not None:
+                                    jukebox.show_album(artist, album)
                                 else:
                                     print(
                                         "error: artist and album must be specified using %s%s and %s%s options" % (ARG_PREFIX, ARG_ARTIST, ARG_PREFIX, ARG_ALBUM))

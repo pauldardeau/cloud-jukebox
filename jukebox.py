@@ -97,6 +97,8 @@ class Jukebox:
     def __init__(self, jb_options, storage_sys, debug_print: bool = False):
         global g_jukebox_instance
         g_jukebox_instance = self
+        # TODO: pick up container prefix from configuration or as argument
+        self.container_prefix = ""
         self.jukebox_options = jb_options
         self.storage_system = storage_sys
         self.debug_print = debug_print
@@ -108,9 +110,10 @@ class Jukebox:
         self.album_art_import_dir = utils.path_join(self.current_dir, ALBUM_ART_IMPORT_DIR)
         self.download_extension = DOWNLOAD_EXTENSION
         self.metadata_db_file = DEFAULT_DB_FILE_NAME
-        self.metadata_container = METADATA_CONTAINER
-        self.playlist_container = PLAYLIST_CONTAINER
-        self.album_art_container = ALBUM_ART_CONTAINER
+        self.metadata_container = self.container_prefix + METADATA_CONTAINER
+        self.playlist_container = self.container_prefix + PLAYLIST_CONTAINER
+        self.album_container = self.container_prefix + ALBUM_CONTAINER
+        self.album_art_container = self.container_prefix + ALBUM_ART_CONTAINER
         self.song_list: List[song_metadata.SongMetadata] = []
         self.number_songs = 0
         self.song_index = -1
@@ -255,16 +258,13 @@ class Jukebox:
         else:
             return False
 
-    def container_suffix(self) -> str:
-        return ""
-
     def object_file_suffix(self) -> str:
         return ""
 
     def container_for_song(self, song_uid: str) -> typing.Optional[str]:
         if song_uid is None or len(song_uid) == 0:
             return None
-        container_suffix = "-artist-songs" + self.container_suffix()
+        container_suffix = "-artist-songs"
 
         artist = self.artist_from_file_name(song_uid)
         if artist.startswith('A '):
@@ -274,7 +274,7 @@ class Jukebox:
         else:
             artist_letter = artist[0:1]
 
-        return artist_letter.lower() + container_suffix
+        return self.container_prefix + artist_letter.lower() + container_suffix
 
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
@@ -747,19 +747,18 @@ class Jukebox:
             self.jukebox_db.show_playlists()
 
     def show_playlist(self, playlist):
-        bucket_name = "cj-playlists"
         object_name = "%s.json" % Jukebox.encode_value(playlist)
         download_file = object_name
-        if self.storage_system.get_object(bucket_name,
+        if self.storage_system.get_object(self.playlist_container,
                                           object_name,
                                           download_file) > 0:
-            try:
-                with open(download_file, 'rb') as content_file:
-                    file_contents = content_file.read()
+            file_contents = utils.file_read_all_text(download_file)
+            if file_contents is not None:
                 file_read = True
-            except IOError:
+            else:
                 logging.error("unable to read file %s" % download_file)
                 file_read = False
+
             if file_read:
                 pl = json.loads(file_contents)
                 if pl is not None:
@@ -784,19 +783,18 @@ class Jukebox:
             logging.error("unable to retrieve %s" % object_name)
 
     def play_playlist(self, playlist):
-        bucket_name = "cj-playlists"
         object_name = "%s.json" % Jukebox.encode_value(playlist)
         download_file = object_name
-        if self.storage_system.get_object(bucket_name,
+        if self.storage_system.get_object(self.playlist_container,
                                           object_name,
                                           download_file) > 0:
-            try:
-                with open(download_file, 'rb') as content_file:
-                    file_contents = content_file.read()
+            file_contents = utils.file_read_all_text(download_file)
+            if file_contents is not None:
                 file_read = True
-            except IOError:
+            else:
                 logging.error("unable to read file %s" % download_file)
                 file_read = False
+
             if file_read:
                 pl = json.loads(file_contents)
                 if pl is not None:
@@ -830,11 +828,11 @@ class Jukebox:
         else:
             logging.error("unable to retrieve %s" % object_name)
 
-    def play_album(self, artist, album):
-        bucket_name = "cj-albums"
+    def get_album_songs(self, artist, album):
+        album_songs = []
         object_name = "%s--%s.json" % (Jukebox.encode_value(artist), Jukebox.encode_value(album))
         download_file = object_name
-        if self.storage_system.get_object(bucket_name,
+        if self.storage_system.get_object(self.album_container,
                                           object_name,
                                           download_file) > 0:
             try:
@@ -844,6 +842,7 @@ class Jukebox:
             except IOError:
                 logging.error("unable to read file %s" % download_file)
                 file_read = False
+
             if file_read:
                 pl = json.loads(file_contents)
                 if pl is not None:
@@ -858,18 +857,34 @@ class Jukebox:
                             pos_dot = base_object_name.find(".")
                             if pos_dot > 0:
                                 base_object_name = base_object_name[0:pos_dot]
-                            ext_list = [".flac", ".m4a", ".mp3"]
-                            for ext in ext_list:
-                                object_name = base_object_name + ext
-                                db_song = self.jukebox_db.retrieve_song(object_name)
-                                if db_song is not None:
-                                    song_list.append(db_song)
-                                    break
-                            else:
-                                logging.error("No song file for %s" % base_object_name)
-                        self.play_song_list(song_list, False)
+                            album_songs.append(base_object_name)
+        return album_songs
+
+    def play_album(self, artist, album):
+        album_songs = self.get_album_songs(artist, album)
+        if album_songs is not None and len(album_songs) > 0:
+            song_list = []
+            for base_object_name in album_songs:
+                ext_list = [".flac", ".m4a", ".mp3"]
+                for ext in ext_list:
+                    object_name = base_object_name + ext
+                    db_song = self.jukebox_db.retrieve_song(object_name)
+                    if db_song is not None:
+                        song_list.append(db_song)
+                        break
+                else:
+                    logging.error("No song file for %s" % base_object_name)
+            self.play_song_list(song_list, False)
         else:
-            logging.error("unable to retrieve %s" % object_name)
+            logging.error("unable to retrieve album %s/%s" % (artist, album))
+
+    def show_album(self, artist, album):
+        album_songs = self.get_album_songs(artist, album)
+        if album_songs is not None and len(album_songs) > 0:
+            for base_object_name in album_songs:
+                print(base_object_name)
+        else:
+            logging.error("unable to retrieve album %s/%s" % (artist, album))
 
     def delete_song(self, song_uid: str, upload_metadata: bool = True) -> bool:
         is_deleted = False
@@ -995,11 +1010,14 @@ class Jukebox:
 
 
 def initialize_storage_system(storage_sys: storage_system.StorageSystem):
+    # TODO: pick up container prefix
+    container_prefix = ""
+
     # create the containers that will hold songs
     artist_song_chars = "0123456789abcdefghijklmnopqrstuvwxyz"
 
     for ch in artist_song_chars:
-        container_name = "%c%s" % (ch, SONG_CONTAINER_SUFFIX)
+        container_name = container_prefix + "%c%s" % (ch, SONG_CONTAINER_SUFFIX)
         if not storage_sys.create_container(container_name):
             print("error: unable to create container '%s'" % container_name)
             return False
@@ -1008,8 +1026,9 @@ def initialize_storage_system(storage_sys: storage_system.StorageSystem):
     container_names = [METADATA_CONTAINER, ALBUM_ART_CONTAINER, ALBUM_CONTAINER, PLAYLIST_CONTAINER]
 
     for container_name in container_names:
-        if not storage_sys.create_container(container_name):
-            print("error: unable to create container '%s'" % container_name)
+        cnr_name = container_prefix + container_name
+        if not storage_sys.create_container(cnr_name):
+            print("error: unable to create container '%s'" % cnr_name)
             return False
 
     # delete metadata DB file if present
