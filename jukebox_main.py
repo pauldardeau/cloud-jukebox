@@ -1,6 +1,6 @@
 import argparse
-import os
 import fs_storage_system
+import jukebox
 import s3
 import swift
 import sys
@@ -9,6 +9,8 @@ import jukebox as jb
 import jukebox_options
 import utils
 
+
+ARG_PREFIX = "--"
 ARG_DEBUG = "debug"
 ARG_FILE_CACHE_COUNT = "file-cache-count"
 ARG_INTEGRITY_CHECKS = "integrity-checks"
@@ -51,6 +53,8 @@ CMD_USAGE = "usage"
 SS_FS = "fs"
 SS_S3 = "s3"
 SS_SWIFT = "swift"
+
+CREDS_FILE_SUFFIX = "_creds.txt"
 
 SWIFT_AUTH_HOST = "swift_auth_host"
 SWIFT_ACCOUNT = "swift_account"
@@ -104,8 +108,7 @@ def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_upda
             print("%s='%s'" % (UPDATE_SWIFT_PASSWORD, update_swift_password))
 
     if len(swift_account) == 0 or len(swift_user) == 0 or len(swift_password) == 0:
-        print("""error: no swift credentials given. please specify swift_account,
-              swift_user, and swift_password in credentials""")
+        print("error: no swift credentials given. please specify %s, %s, and %s in credentials" % (SWIFT_ACCOUNT, SWIFT_USER, SWIFT_PASSWORD))
         sys.exit(1)
 
     if for_update:
@@ -149,8 +152,7 @@ def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update:
             print("%s='%s'" % (UPDATE_AWS_SECRET_KEY, update_aws_secret_key))
 
     if len(aws_access_key) == 0 or len(aws_secret_key) == 0:
-        print("""error: no s3 credentials given. please specify aws_access_key
-              and aws_secret_key in credentials file""")
+        print("error: no s3 credentials given. please specify %s and %s in credentials file" % (AWS_ACCESS_KEY, AWS_SECRET_KEY))
         sys.exit(1)
     else:
         if for_update:
@@ -183,29 +185,29 @@ def connect_storage_system(system_type: str, credentials, prefix: str,
 
 def show_usage():
     print('Supported Commands:')
-    print('\tdelete-artist      - delete specified artist')
-    print('\tdelete-album       - delete specified album')
-    print('\tdelete-playlist    - delete specified playlist')
-    print('\tdelete-song        - delete specified song')
-    print('\thelp               - show this help message')
-    print('\timport-songs       - import all new songs from song-import subdirectory')
-    print('\timport-playlists   - import all new playlists from playlist-import subdirectory')
-    print('\timport-album-art   - import all album art from album-art-import subdirectory')
-    print('\tlist-songs         - show listing of all available songs')
-    print('\tlist-artists       - show listing of all available artists')
-    print('\tlist-containers    - show listing of all available storage containers')
-    print('\tlist-albums        - show listing of all available albums')
-    print('\tlist-genres        - show listing of all available genres')
-    print('\tlist-playlists     - show listing of all available playlists')
-    print('\tshow-playlist      - show songs in specified playlist')
-    print('\tplay               - start playing songs')
-    print('\tshuffle-play       - play songs randomly')
-    print('\tplay-playlist      - play specified playlist')
-    print('\tplay-album         - play specified album')
-    print('\tretrieve-catalog   - retrieve copy of music catalog')
-    print('\tupload-metadata-db - upload SQLite metadata')
-    print('\tinit-storage       - initialize storage system')
-    print('\tusage              - show this help message')
+    print('\t%s      - delete specified artist' % CMD_DELETE_ARTIST)
+    print('\t%s       - delete specified album' % CMD_DELETE_ALBUM)
+    print('\t%s    - delete specified playlist' % CMD_DELETE_PLAYLIST)
+    print('\t%s        - delete specified song' % CMD_DELETE_SONG)
+    print('\t%s               - show this help message' % CMD_HELP)
+    print('\t%s       - import all new songs from %s subdirectory' % (CMD_IMPORT_SONGS, jukebox.SONG_IMPORT_DIR))
+    print('\t%s   - import all new playlists from %s subdirectory' % (CMD_IMPORT_PLAYLISTS, jukebox.PLAYLIST_IMPORT_DIR))
+    print('\t%s   - import all album art from %s subdirectory' % (CMD_IMPORT_ALBUM_ART, jukebox.ALBUM_ART_IMPORT_DIR))
+    print('\t%s         - show listing of all available songs' % CMD_LIST_SONGS)
+    print('\t%s       - show listing of all available artists' % CMD_LIST_ARTISTS)
+    print('\t%s    - show listing of all available storage containers' % CMD_LIST_CONTAINERS)
+    print('\t%s        - show listing of all available albums' % CMD_LIST_ALBUMS)
+    print('\t%s        - show listing of all available genres' % CMD_LIST_GENRES)
+    print('\t%s     - show listing of all available playlists' % CMD_LIST_PLAYLISTS)
+    print('\t%s      - show songs in specified playlist' % CMD_SHOW_PLAYLIST)
+    print('\t%s               - start playing songs' % CMD_PLAY)
+    print('\t%s       - play songs randomly' % CMD_SHUFFLE_PLAY)
+    print('\t%s      - play specified playlist' % CMD_PLAY_PLAYLIST)
+    print('\t%s         - play specified album' % CMD_PLAY_ALBUM)
+    print('\t%s   - retrieve copy of music catalog' % CMD_RETRIEVE_CATALOG)
+    print('\t%s - upload SQLite metadata' % CMD_UPLOAD_METADATA_DB)
+    print('\t%s       - initialize storage system' % CMD_INIT_STORAGE)
+    print('\t%s              - show this help message' % CMD_USAGE)
     print('')
 
 
@@ -229,16 +231,16 @@ def main():
     file_format = ""
 
     opt_parser = argparse.ArgumentParser()
-    opt_parser.add_argument("--" + ARG_DEBUG, action="store_true", help="run in debug mode")
-    opt_parser.add_argument("--" + ARG_FILE_CACHE_COUNT, type=int, help="number of songs to buffer in cache")
-    opt_parser.add_argument("--" + ARG_INTEGRITY_CHECKS, action="store_true",
+    opt_parser.add_argument(ARG_PREFIX + ARG_DEBUG, action="store_true", help="run in debug mode")
+    opt_parser.add_argument(ARG_PREFIX + ARG_FILE_CACHE_COUNT, type=int, help="number of songs to buffer in cache")
+    opt_parser.add_argument(ARG_PREFIX + ARG_INTEGRITY_CHECKS, action="store_true",
                             help="check file integrity after download")
-    opt_parser.add_argument("--" + ARG_STORAGE, help="storage system type (%s, %s, %s)" % (SS_S3, SS_SWIFT, SS_FS))
-    opt_parser.add_argument("--" + ARG_ARTIST, type=str, help="limit operations to specified artist")
-    opt_parser.add_argument("--" + ARG_PLAYLIST, type=str, help="limit operations to specified playlist")
-    opt_parser.add_argument("--" + ARG_SONG, type=str, help="limit operations to specified song")
-    opt_parser.add_argument("--" + ARG_ALBUM, type=str, help="limit operations to specified album")
-    opt_parser.add_argument("--" + ARG_FORMAT, type=str, help="restrict play to specified audio file format")
+    opt_parser.add_argument(ARG_PREFIX + ARG_STORAGE, help="storage system type (%s, %s, %s)" % (SS_S3, SS_SWIFT, SS_FS))
+    opt_parser.add_argument(ARG_PREFIX + ARG_ARTIST, type=str, help="limit operations to specified artist")
+    opt_parser.add_argument(ARG_PREFIX + ARG_PLAYLIST, type=str, help="limit operations to specified playlist")
+    opt_parser.add_argument(ARG_PREFIX + ARG_SONG, type=str, help="limit operations to specified song")
+    opt_parser.add_argument(ARG_PREFIX + ARG_ALBUM, type=str, help="limit operations to specified album")
+    opt_parser.add_argument(ARG_PREFIX + ARG_FORMAT, type=str, help="restrict play to specified audio file format")
     opt_parser.add_argument("command", help="command for jukebox")
     args = opt_parser.parse_args()
     if args is None:
@@ -298,11 +300,11 @@ def main():
             print("using storage system type '%s'" % storage_type)
 
         container_prefix = ""
-        creds_file = storage_type + "_creds.txt"
+        creds_file = storage_type + CREDS_FILE_SUFFIX
         creds = {}
-        creds_file_path = utils.path_join(os.getcwd(), creds_file)
+        creds_file_path = utils.path_join(utils.get_current_directory(), creds_file)
 
-        if os.path.exists(creds_file_path):
+        if utils.file_exists(creds_file_path):
             if debug_mode:
                 print("reading creds file '%s'" % creds_file_path)
             file_contents = utils.file_read_all_text(creds_file)
@@ -393,20 +395,20 @@ def main():
                                 if playlist is not None:
                                     jukebox.show_playlist(playlist)
                                 else:
-                                    print("error: playlist must be specified using --%s option" % ARG_PLAYLIST)
+                                    print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_PLAY_PLAYLIST:
                                 if playlist is not None:
                                     jukebox.play_playlist(playlist)
                                 else:
-                                    print("error: playlist must be specified using --%s option" % ARG_PLAYLIST)
+                                    print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_PLAY_ALBUM:
                                 if album is not None and artist is not None:
                                     jukebox.play_album(artist, album)
                                 else:
                                     print(
-                                        "error: artist and album must be specified using --%s and --%s options" % (ARG_ARTIST, ARG_ALBUM))
+                                        "error: artist and album must be specified using %s%s and %s%s options" % (ARG_PREFIX, ARG_ARTIST, ARG_PREFIX, ARG_ALBUM))
                             elif command == CMD_RETRIEVE_CATALOG:
                                 pass
                             elif command == CMD_DELETE_SONG:
@@ -417,7 +419,7 @@ def main():
                                         print("error: unable to delete song")
                                         sys.exit(1)
                                 else:
-                                    print("error: song must be specified using --%s option" % ARG_SONG)
+                                    print("error: song must be specified using %s%s option" % (ARG_PREFIX, ARG_SONG))
                                     sys.exit(1)
                             elif command == CMD_DELETE_ARTIST:
                                 if artist is not None:
@@ -427,7 +429,7 @@ def main():
                                         print("error: unable to delete artist")
                                         sys.exit(1)
                                 else:
-                                    print("error: artist must be specified using --%s option" % ARG_ARTIST)
+                                    print("error: artist must be specified using %s%s option" % (ARG_PREFIX, ARG_ARTIST))
                                     sys.exit(1)
                             elif command == CMD_DELETE_ALBUM:
                                 if album is not None:
@@ -437,7 +439,7 @@ def main():
                                         print("error: unable to delete album")
                                         sys.exit(1)
                                 else:
-                                    print("error: album must be specified using --%s option" % ARG_ALBUM)
+                                    print("error: album must be specified using %s%s option" % (ARG_PREFIX, ARG_ALBUM))
                                     sys.exit(1)
                             elif command == CMD_DELETE_PLAYLIST:
                                 if playlist is not None:
@@ -447,7 +449,7 @@ def main():
                                         print("error: unable to delete playlist")
                                         sys.exit(1)
                                 else:
-                                    print("error: playlist must be specified using --%s option" % ARG_PLAYLIST)
+                                    print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_UPLOAD_METADATA_DB:
                                 if jukebox.upload_metadata_db():
