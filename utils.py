@@ -133,7 +133,7 @@ def file_write_all_text(file_path: str, file_contents: str) -> bool:
 
 def file_read_all_bytes(file_path: str) -> typing.Optional[list[bytes]]:
     try:
-        with open(file_path, "r") as f:
+        with open(file_path, "rb") as f:
             return f.read()
     except IOError:
         return None
