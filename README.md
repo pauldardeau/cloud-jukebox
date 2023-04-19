@@ -48,7 +48,7 @@ automatically be downloaded from cloud storage.
 Importing Songs
 ---------------
 1. Create a subdirectory named **'song-import'**
-2. Copy your MP3 files into the song-import directory
+2. Copy your audio files into the song-import directory
 3. Run the command `python jukebox_main.py import-songs`
 
 ### Song File Naming Convention
