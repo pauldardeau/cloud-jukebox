@@ -65,7 +65,8 @@ class PropertySet(object):
 
     def to_string(self) -> str:
         prop_string: str = ""
-        for key, pv in self.map_props:
+        for key in self.map_props:
+            pv = self.map_props[key]
             if pv.is_bool():
                 if pv.get_bool_value():
                     value = PS_VALUE_TRUE
