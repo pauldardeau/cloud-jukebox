@@ -7,6 +7,11 @@ License
 -------
 BSD
 
+Disambiguation
+--------------
+Any mention of 'swift' in this project refers to **OpenStack Swift** and not the
+programming language (nor any other kind of Swift).
+
 Overview
 --------
 This repo is python code that implements a music player where the songs are stored
@@ -19,7 +24,9 @@ Dependencies/Prerequisites
 --------------------------
 ### Storage
 The cloud jukebox must have a storage system for data storage. Either **OpenStack Swift**
-or **AWS S3** can be used.
+or **AWS S3** can be used. For those who might want to experiment without having an
+account in a real cloud-based object storage system, there's also a filesystem storage
+system ('fs').
 
 #### Swift Dependencies
 * swiftclient  `pip install python-swiftclient`
@@ -34,7 +41,8 @@ the values in **swift_creds.txt**.  If you're using S3, update the values in **s
 
 OpenStack Swift Server Configuration
 ------------------------------------
-If you are using Swift All-In-One (SAIO), be sure that 'bind_ip' (/etc/swift/proxy-server.conf) is using public network interface instead of localhost.
+If you are using Swift All-In-One (SAIO), be sure that 'bind_ip' (/etc/swift/proxy-server.conf)
+is using public network interface instead of localhost.
 
 Song Metadata
 -------------
@@ -44,6 +52,16 @@ complete, the cloud jukebox will also store this metadata database in cloud stor
 
 When starting the cloud jukebox for audio playback, the song metadata database will
 automatically be downloaded from cloud storage.
+
+Initializing Storage System
+---------------------------
+Before you can import songs, the containers (buckets) must first be created. To do this,
+run the command:
+
+`python jukebox_main.py --storage $STORAGE_SYSTEM init-storage`
+
+This is a one-time initialization that needs to be done with each first use of a particular
+storage system.
 
 Importing Songs
 ---------------
@@ -65,7 +83,8 @@ Importing Songs
           |
           |---- artist name (' ' replaced with '-')
 
-For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones' on the album 'Aftermath' should be named:
+For example, the MP3 version of the song 'Under My Thumb' from artist 'The Rolling Stones'
+on the album 'Aftermath' should be named:
 
 `The-Rolling-Stones--Aftermath--Under-My-Thumb.mp3`
 
