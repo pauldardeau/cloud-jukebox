@@ -258,13 +258,9 @@ class Jukebox:
         else:
             return False
 
-    def object_file_suffix(self) -> str:
-        return ""
-
     def container_for_song(self, song_uid: str) -> typing.Optional[str]:
         if song_uid is None or len(song_uid) == 0:
             return None
-        container_suffix = "-artist-songs"
 
         artist = self.artist_from_file_name(song_uid)
         if artist.startswith('A '):
@@ -274,7 +270,7 @@ class Jukebox:
         else:
             artist_letter = artist[0:1]
 
-        return self.container_prefix + artist_letter.lower() + container_suffix
+        return self.container_prefix + artist_letter.lower() + SONG_CONTAINER_SUFFIX
 
     def import_songs(self):
         if self.jukebox_db is not None and self.jukebox_db.is_open():
@@ -318,7 +314,7 @@ class Jukebox:
                         album = self.album_from_file_name(file_name)
                         song = self.song_from_file_name(file_name)
                         if file_size > 0 and artist is not None and album is not None and song is not None:
-                            object_name = file_name + self.object_file_suffix()
+                            object_name = file_name
                             fs_song = song_metadata.SongMetadata()
                             fs_song.fm = file_metadata.FileMetadata()
                             fs_song.fm.file_uid = object_name
@@ -1009,10 +1005,7 @@ class Jukebox:
                 print("no files imported")
 
 
-def initialize_storage_system(storage_sys: storage_system.StorageSystem):
-    # TODO: pick up container prefix
-    container_prefix = ""
-
+def initialize_storage_system(storage_sys: storage_system.StorageSystem, container_prefix: str):
     # create the containers that will hold songs
     artist_song_chars = "0123456789abcdefghijklmnopqrstuvwxyz"
 

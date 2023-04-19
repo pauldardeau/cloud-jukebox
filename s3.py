@@ -25,17 +25,13 @@ def is_available():
 class S3StorageSystem(StorageSystem):
 
     def __init__(self, aws_access_key: str, aws_secret_key: str,
-                 container_prefix: str, debug_mode: bool = False):
+                 debug_mode: bool = False):
         StorageSystem.__init__(self, "S3", debug_mode)
         self.debug_mode = debug_mode
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         if self.debug_mode:
             print("Using access_key='%s', secret_key='%s'" % (self.aws_access_key, self.aws_secret_key))
-        if container_prefix is not None and len(container_prefix) > 0:
-            if self.debug_mode:
-                print("using container_prefix='%s'" % container_prefix)
-            self.container_prefix = container_prefix
 
     def __enter__(self):
         if self.debug_mode:

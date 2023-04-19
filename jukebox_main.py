@@ -2,6 +2,7 @@ import argparse
 import fs_storage_system
 import jukebox
 import s3
+import storage_system
 import swift
 import sys
 import requests
@@ -45,7 +46,6 @@ CMD_PLAY_ALBUM = "play-album"
 CMD_SHOW_ALBUM = "show-album"
 CMD_PLAY_PLAYLIST = "play-playlist"
 CMD_RETRIEVE_CATALOG = "retrieve-catalog"
-CMD_SHOW_ALBUM = "show-album"
 CMD_SHOW_PLAYLIST = "show-playlist"
 CMD_SHUFFLE_PLAY = "shuffle-play"
 CMD_UPLOAD_METADATA_DB = "upload-metadata-db"
@@ -56,6 +56,7 @@ SS_S3 = "s3"
 SS_SWIFT = "swift"
 
 CREDS_FILE_SUFFIX = "_creds.txt"
+CREDS_CONTAINER_PREFIX = "container_prefix"
 
 SWIFT_AUTH_HOST = "swift_auth_host"
 SWIFT_ACCOUNT = "swift_account"
@@ -76,7 +77,7 @@ AUDIO_FILE_TYPE_M4A = "m4a"
 AUDIO_FILE_TYPE_FLAC = "flac"
 
 
-def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
+def connect_swift_system(credentials, in_debug_mode: bool, for_update: bool):
     if not swift.is_available():
         print("error: swift is not supported on this system. please install swiftclient first.")
         sys.exit(1)
@@ -126,7 +127,7 @@ def connect_swift_system(credentials, prefix: str, in_debug_mode: bool, for_upda
                                     in_debug_mode)
 
 
-def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update: bool):
+def connect_s3_system(credentials, in_debug_mode: bool, for_update: bool):
     if not s3.is_available():
         print("error: s3 is not supported on this system. please install boto3 (s3 client) first.")
         sys.exit(1)
@@ -165,16 +166,19 @@ def connect_s3_system(credentials, prefix: str, in_debug_mode: bool, for_update:
 
         return s3.S3StorageSystem(access_key,
                                   secret_key,
-                                  prefix,
                                   in_debug_mode)
 
 
-def connect_storage_system(system_type: str, credentials, prefix: str,
+def connect_storage_system(system_type: str, credentials, container_prefix: str,
                            in_debug_mode: bool, for_update: bool):
     if system_type == SS_SWIFT:
-        return connect_swift_system(credentials, prefix, in_debug_mode, for_update)
+        return connect_swift_system(credentials, in_debug_mode, for_update)
     elif system_type == SS_S3:
-        return connect_s3_system(credentials, prefix, in_debug_mode, for_update)
+        if container_prefix is not None and len(container_prefix) > 0:
+            return connect_s3_system(credentials, in_debug_mode, for_update)
+        else:
+            print("error: a container prefix MUST be specified for S3")
+            return None
     elif system_type == SS_FS:
         if FS_ROOT_DIR in credentials:
             root_dir = credentials[FS_ROOT_DIR]
@@ -213,8 +217,8 @@ def show_usage():
     print('')
 
 
-def init_storage_system(storage_sys):
-    if jb.initialize_storage_system(storage_sys):
+def init_storage_system(storage_sys: storage_system.StorageSystem, container_prefix: str) -> bool:
+    if jb.initialize_storage_system(storage_sys, container_prefix):
         print("storage system successfully initialized")
         success = True
     else:
@@ -316,7 +320,13 @@ def main():
                     line = line.strip()
                     if len(line) > 0:
                         key, value = line.split("=")
-                        creds[key.strip()] = value.strip()
+                        key = key.strip()
+                        value = value.strip()
+                        creds[key] = value
+                        if key == CREDS_CONTAINER_PREFIX:
+                            container_prefix = value
+                            if debug_mode:
+                                print("using container prefix: '%s'" % container_prefix)
             else:
                 print("error: unable to read file %s" % creds_file_path)
                 sys.exit(1)
@@ -364,56 +374,56 @@ def main():
                                                 creds,
                                                 container_prefix,
                                                 debug_mode,
-                                                for_update) as storage_system:
+                                                for_update) as storage_sys:
                         if command == CMD_INIT_STORAGE:
-                            if init_storage_system(storage_system):
+                            if init_storage_system(storage_sys, container_prefix):
                                 sys.exit(0)
                             else:
                                 sys.exit(1)
-                        with jb.Jukebox(options, storage_system) as jukebox:
+                        with jb.Jukebox(options, storage_sys) as the_jukebox:
                             if command == CMD_IMPORT_SONGS:
-                                jukebox.import_songs()
+                                the_jukebox.import_songs()
                             elif command == CMD_IMPORT_PLAYLISTS:
-                                jukebox.import_playlists()
+                                the_jukebox.import_playlists()
                             elif command == CMD_PLAY:
                                 shuffle = False
-                                jukebox.play_songs(shuffle, artist, album, file_format)
+                                the_jukebox.play_songs(shuffle, artist, album, file_format)
                             elif command == CMD_SHUFFLE_PLAY:
                                 shuffle = True
-                                jukebox.play_songs(shuffle, artist, album, file_format)
+                                the_jukebox.play_songs(shuffle, artist, album, file_format)
                             elif command == CMD_LIST_SONGS:
-                                jukebox.show_listings()
+                                the_jukebox.show_listings()
                             elif command == CMD_LIST_ARTISTS:
-                                jukebox.show_artists()
+                                the_jukebox.show_artists()
                             elif command == CMD_LIST_CONTAINERS:
-                                jukebox.show_list_containers()
+                                the_jukebox.show_list_containers()
                             elif command == CMD_LIST_GENRES:
-                                jukebox.show_genres()
+                                the_jukebox.show_genres()
                             elif command == CMD_LIST_ALBUMS:
-                                jukebox.show_albums()
+                                the_jukebox.show_albums()
                             elif command == CMD_LIST_PLAYLISTS:
-                                jukebox.show_playlists()
+                                the_jukebox.show_playlists()
                             elif command == CMD_SHOW_PLAYLIST:
                                 if playlist is not None:
-                                    jukebox.show_playlist(playlist)
+                                    the_jukebox.show_playlist(playlist)
                                 else:
                                     print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_PLAY_PLAYLIST:
                                 if playlist is not None:
-                                    jukebox.play_playlist(playlist)
+                                    the_jukebox.play_playlist(playlist)
                                 else:
                                     print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_PLAY_ALBUM:
                                 if album is not None and artist is not None:
-                                    jukebox.play_album(artist, album)
+                                    the_jukebox.play_album(artist, album)
                                 else:
                                     print(
                                         "error: artist and album must be specified using %s%s and %s%s options" % (ARG_PREFIX, ARG_ARTIST, ARG_PREFIX, ARG_ALBUM))
                             elif command == CMD_SHOW_ALBUM:
                                 if album is not None and artist is not None:
-                                    jukebox.show_album(artist, album)
+                                    the_jukebox.show_album(artist, album)
                                 else:
                                     print(
                                         "error: artist and album must be specified using %s%s and %s%s options" % (ARG_PREFIX, ARG_ARTIST, ARG_PREFIX, ARG_ALBUM))
@@ -421,7 +431,7 @@ def main():
                                 pass
                             elif command == CMD_DELETE_SONG:
                                 if song is not None:
-                                    if jukebox.delete_song(song):
+                                    if the_jukebox.delete_song(song):
                                         print("song deleted")
                                     else:
                                         print("error: unable to delete song")
@@ -431,7 +441,7 @@ def main():
                                     sys.exit(1)
                             elif command == CMD_DELETE_ARTIST:
                                 if artist is not None:
-                                    if jukebox.delete_artist(artist):
+                                    if the_jukebox.delete_artist(artist):
                                         print("artist deleted")
                                     else:
                                         print("error: unable to delete artist")
@@ -441,7 +451,7 @@ def main():
                                     sys.exit(1)
                             elif command == CMD_DELETE_ALBUM:
                                 if album is not None:
-                                    if jukebox.delete_album(album):
+                                    if the_jukebox.delete_album(album):
                                         print("album deleted")
                                     else:
                                         print("error: unable to delete album")
@@ -451,7 +461,7 @@ def main():
                                     sys.exit(1)
                             elif command == CMD_DELETE_PLAYLIST:
                                 if playlist is not None:
-                                    if jukebox.delete_playlist(playlist):
+                                    if the_jukebox.delete_playlist(playlist):
                                         print("playlist deleted")
                                     else:
                                         print("error: unable to delete playlist")
@@ -460,13 +470,13 @@ def main():
                                     print("error: playlist must be specified using %s%s option" % (ARG_PREFIX, ARG_PLAYLIST))
                                     sys.exit(1)
                             elif command == CMD_UPLOAD_METADATA_DB:
-                                if jukebox.upload_metadata_db():
+                                if the_jukebox.upload_metadata_db():
                                     print("metadata db uploaded")
                                 else:
                                     print("error: unable to upload metadata db")
                                     sys.exit(1)
                             elif command == CMD_IMPORT_ALBUM_ART:
-                                jukebox.import_album_art()
+                                the_jukebox.import_album_art()
                 except requests.exceptions.ConnectionError:
                     print("Error: unable to connect to storage system server")
                     sys.exit(1)
