@@ -49,7 +49,7 @@ Importing Songs
 ---------------
 1. Create a subdirectory named **'song-import'**
 2. Copy your audio files into the song-import directory
-3. Run the command `python jukebox_main.py import-songs`
+3. Run the command `python jukebox_main.py --storage $storage_system import-songs`
 
 ### Song File Naming Convention
 
