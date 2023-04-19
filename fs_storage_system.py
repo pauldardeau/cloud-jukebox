@@ -5,8 +5,8 @@ import property_set
 import typing
 import utils
 
-
 METADATA_FILE_SUFFIX = ".meta"
+
 
 class FSStorageSystem(StorageSystem):
 
@@ -54,9 +54,9 @@ class FSStorageSystem(StorageSystem):
 
     def get_object_metadata(self, container_name: str, object_name: str) -> typing.Optional[property_set.PropertySet]:
         if container_name is not None and \
-            object_name is not None and \
-            len(container_name) > 0 and \
-            len(object_name) > 0:
+                object_name is not None and \
+                len(container_name) > 0 and \
+                len(object_name) > 0:
 
             container_dir = self.get_container_dir(container_name)
             if utils.directory_exists(container_dir):
@@ -73,14 +73,15 @@ class FSStorageSystem(StorageSystem):
 
         return None
 
-    def put_object(self, container_name: str, object_name: str, file_contents: str, headers: property_set.PropertySet=None) -> bool:
+    def put_object(self, container_name: str, object_name: str, file_contents: str,
+                   headers: property_set.PropertySet = None) -> bool:
         object_added = False
         if container_name is not None and \
-            object_name is not None and \
-            file_contents is not None and \
-            len(container_name) > 0 and \
-            len(object_name) > 0 and \
-            len(file_contents) > 0:
+                object_name is not None and \
+                file_contents is not None and \
+                len(container_name) > 0 and \
+                len(object_name) > 0 and \
+                len(file_contents) > 0:
 
             container_dir = self.get_container_dir(container_name)
             if utils.directory_exists(container_dir):

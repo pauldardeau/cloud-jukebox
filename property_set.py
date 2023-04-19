@@ -2,12 +2,13 @@ import property_value
 import typing
 import utils
 
-PS_TYPE_BOOL   = "bool"
+PS_TYPE_BOOL = "bool"
 PS_TYPE_STRING = "string"
-PS_TYPE_INT    = "int"
+PS_TYPE_INT = "int"
 
-PS_VALUE_TRUE  = "true"
+PS_VALUE_TRUE = "true"
 PS_VALUE_FALSE = "false"
+
 
 class PropertySet(object):
     def __init__(self):
@@ -111,7 +112,8 @@ def read_from_file(file_path: str) -> typing.Optional[PropertySet]:
                                 int_value = int(prop_value)
                                 ps.add(prop_name, property_value.new_int_property_value(int_value))
                             except ValueError:
-                                print("error: unable to convert property %s value (%s) to integer" % (prop_name, prop_value))
+                                print("error: unable to convert property %s value (%s) to integer" % (
+                                prop_name, prop_value))
                                 return None
 
         if ps.count() > 0:

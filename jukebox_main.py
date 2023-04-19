@@ -8,48 +8,47 @@ import requests
 import jukebox as jb
 import jukebox_options
 
+ARG_DEBUG = "debug"
+ARG_FILE_CACHE_COUNT = "file-cache-count"
+ARG_INTEGRITY_CHECKS = "integrity-checks"
+ARG_STORAGE = "storage"
+ARG_ARTIST = "artist"
+ARG_PLAYLIST = "playlist"
+ARG_SONG = "song"
+ARG_ALBUM = "album"
+ARG_COMMAND = "command"
+ARG_FORMAT = "format"
 
-ARG_DEBUG             = "debug"
-ARG_FILE_CACHE_COUNT  = "file-cache-count"
-ARG_INTEGRITY_CHECKS  = "integrity-checks"
-ARG_STORAGE           = "storage"
-ARG_ARTIST            = "artist"
-ARG_PLAYLIST          = "playlist"
-ARG_SONG              = "song"
-ARG_ALBUM             = "album"
-ARG_COMMAND           = "command"
-ARG_FORMAT            = "format"
-
-CMD_DELETE_ALBUM       = "delete-album"
-CMD_DELETE_ARTIST      = "delete-artist"
-CMD_DELETE_PLAYLIST    = "delete-playlist"
-CMD_DELETE_SONG        = "delete-song"
-CMD_EXPORT_ALBUM       = "export-album"
-CMD_EXPORT_PLAYLIST    = "export-playlist"
-CMD_HELP               = "help"
-CMD_IMPORT_ALBUM       = "import-album"
-CMD_IMPORT_ALBUM_ART   = "import-album-art"
-CMD_IMPORT_PLAYLISTS   = "import-playlists"
-CMD_IMPORT_SONGS       = "import-songs"
-CMD_INIT_STORAGE       = "init-storage"
-CMD_LIST_ALBUMS        = "list-albums"
-CMD_LIST_ARTISTS       = "list-artists"
-CMD_LIST_CONTAINERS    = "list-containers"
-CMD_LIST_GENRES        = "list-genres"
-CMD_LIST_PLAYLISTS     = "list-playlists"
-CMD_LIST_SONGS         = "list-songs"
-CMD_PLAY               = "play"
-CMD_PLAY_ALBUM         = "play-album"
-CMD_PLAY_PLAYLIST      = "play-playlist"
-CMD_RETRIEVE_CATALOG   = "retrieve-catalog"
-CMD_SHOW_ALBUM         = "show-album"
-CMD_SHOW_PLAYLIST      = "show-playlist"
-CMD_SHUFFLE_PLAY       = "shuffle-play"
+CMD_DELETE_ALBUM = "delete-album"
+CMD_DELETE_ARTIST = "delete-artist"
+CMD_DELETE_PLAYLIST = "delete-playlist"
+CMD_DELETE_SONG = "delete-song"
+CMD_EXPORT_ALBUM = "export-album"
+CMD_EXPORT_PLAYLIST = "export-playlist"
+CMD_HELP = "help"
+CMD_IMPORT_ALBUM = "import-album"
+CMD_IMPORT_ALBUM_ART = "import-album-art"
+CMD_IMPORT_PLAYLISTS = "import-playlists"
+CMD_IMPORT_SONGS = "import-songs"
+CMD_INIT_STORAGE = "init-storage"
+CMD_LIST_ALBUMS = "list-albums"
+CMD_LIST_ARTISTS = "list-artists"
+CMD_LIST_CONTAINERS = "list-containers"
+CMD_LIST_GENRES = "list-genres"
+CMD_LIST_PLAYLISTS = "list-playlists"
+CMD_LIST_SONGS = "list-songs"
+CMD_PLAY = "play"
+CMD_PLAY_ALBUM = "play-album"
+CMD_PLAY_PLAYLIST = "play-playlist"
+CMD_RETRIEVE_CATALOG = "retrieve-catalog"
+CMD_SHOW_ALBUM = "show-album"
+CMD_SHOW_PLAYLIST = "show-playlist"
+CMD_SHUFFLE_PLAY = "shuffle-play"
 CMD_UPLOAD_METADATA_DB = "upload-metadata-db"
-CMD_USAGE              = "usage"
+CMD_USAGE = "usage"
 
-SS_FS    = "fs"
-SS_S3    = "s3"
+SS_FS = "fs"
+SS_S3 = "s3"
 SS_SWIFT = "swift"
 
 
@@ -190,6 +189,7 @@ def show_usage():
     print('\tusage              - show this help message')
     print('')
 
+
 def init_storage_system(storage_sys):
     if jb.initialize_storage_system(storage_sys):
         print("storage system successfully initialized")
@@ -198,6 +198,7 @@ def init_storage_system(storage_sys):
         print("error: unable to initialize storage system")
         success = False
     return success
+
 
 def main():
     debug_mode = False
@@ -211,7 +212,8 @@ def main():
     opt_parser = argparse.ArgumentParser()
     opt_parser.add_argument("--" + ARG_DEBUG, action="store_true", help="run in debug mode")
     opt_parser.add_argument("--" + ARG_FILE_CACHE_COUNT, type=int, help="number of songs to buffer in cache")
-    opt_parser.add_argument("--" + ARG_INTEGRITY_CHECKS, action="store_true", help="check file integrity after download")
+    opt_parser.add_argument("--" + ARG_INTEGRITY_CHECKS, action="store_true",
+                            help="check file integrity after download")
     opt_parser.add_argument("--" + ARG_STORAGE, help="storage system type (%s, %s, %s)" % (SS_S3, SS_SWIFT, SS_FS))
     opt_parser.add_argument("--" + ARG_ARTIST, type=str, help="limit operations to specified artist")
     opt_parser.add_argument("--" + ARG_PLAYLIST, type=str, help="limit operations to specified playlist")
@@ -368,13 +370,13 @@ def main():
                                 jukebox.show_playlists()
                             elif command == 'show-playlist':
                                 if playlist is not None:
-                                    jukebox.show_playlist(playlist) 
+                                    jukebox.show_playlist(playlist)
                                 else:
                                     print("error: playlist must be specified using --playlist option")
                                     sys.exit(1)
                             elif command == 'play-playlist':
                                 if playlist is not None:
-                                    jukebox.play_playlist(playlist) 
+                                    jukebox.play_playlist(playlist)
                                 else:
                                     print("error: playlist must be specified using --playlist option")
                                     sys.exit(1)
@@ -382,7 +384,8 @@ def main():
                                 if album is not None and artist is not None:
                                     jukebox.play_album(artist, album)
                                 else:
-                                    print("error: artist and album must be specified using --artist and --album options")
+                                    print(
+                                        "error: artist and album must be specified using --artist and --album options")
                             elif command == 'retrieve-catalog':
                                 pass
                             elif command == 'delete-song':

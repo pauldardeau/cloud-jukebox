@@ -62,7 +62,6 @@ import typing
 if utils.os_is_posix():
     import signal
 
-
 DOWNLOAD_EXTENSION = ".download"
 ALBUM_CONTAINER = "albums"
 ALBUM_ART_CONTAINER = "album-art"
@@ -77,6 +76,7 @@ DEFAULT_DB_FILE_NAME = "jukebox_db.sqlite3"
 JUKEBOX_PID_FILE_NAME = "jukebox.pid"
 
 g_jukebox_instance: typing.Optional['Jukebox'] = None
+
 
 def signal_handler(signum: int, frame):
     if signum == signal.SIGUSR1:
@@ -135,8 +135,8 @@ class Jukebox:
     def __enter__(self):
         # look for stored metadata in the storage system
         if self.storage_system is not None and \
-           self.storage_system.has_container(self.metadata_container) and \
-           not self.jukebox_options.suppress_metadata_download:
+                self.storage_system.has_container(self.metadata_container) and \
+                not self.jukebox_options.suppress_metadata_download:
 
             # metadata container exists, retrieve container listing
             container_contents = self.storage_system.list_container_contents(self.metadata_container)
@@ -357,15 +357,16 @@ class Jukebox:
                                         # the metadata in the local database. we need to delete the song
                                         # from the storage system since we won't have any way to access it
                                         # since we can't store the song metadata locally.
-                                        logging.error("unable to store metadata, deleting obj '%s'" % fs_song.fm.object_name)
-                                              
+                                        logging.error(
+                                            "unable to store metadata, deleting obj '%s'" % fs_song.fm.object_name)
+
                                         self.storage_system.delete_object(fs_song.fm.container_name,
                                                                           fs_song.fm.object_name)
                                     else:
                                         file_import_count += 1
                                 else:
                                     logging.error("unable to upload '%s' to '%s'" % (fs_song.fm.object_name,
-                                                                                    fs_song.fm.container_name))
+                                                                                     fs_song.fm.container_name))
 
                 if not self.debug_print:
                     progressbar_chars += progress_chars_per_iteration
@@ -894,7 +895,7 @@ class Jukebox:
         pos_double_dash = album.find("--")
         if pos_double_dash > -1:
             artist = album[0:pos_double_dash]
-            album_name = album[pos_double_dash+2:]
+            album_name = album[pos_double_dash + 2:]
             list_album_songs = self.jukebox_db.retrieve_songs(artist, album_name)
             if list_album_songs is not None and len(list_album_songs) > 0:
                 num_songs_deleted = 0
@@ -907,7 +908,7 @@ class Jukebox:
                         self.jukebox_db.delete_song(song.fm.object_name)
                     else:
                         logging.error("unable to delete song %s" % song.fm.object_name)
-                        #TODO: delete song metadata if we got 404
+                        # TODO: delete song metadata if we got 404
                 if num_songs_deleted > 0:
                     # upload metadata db
                     self.upload_metadata_db()
