@@ -69,6 +69,7 @@ AWS_ACCESS_KEY = "aws_access_key"
 AWS_SECRET_KEY = "aws_secret_key"
 UPDATE_AWS_ACCESS_KEY = "update_aws_access_key"
 UPDATE_AWS_SECRET_KEY = "update_aws_secret_key"
+ENDPOINT_URL = "endpoint_url"
 
 FS_ROOT_DIR = "root_dir"
 
@@ -136,6 +137,7 @@ def connect_s3_system(credentials, in_debug_mode: bool, for_update: bool):
     aws_secret_key = ""
     update_aws_access_key = ""
     update_aws_secret_key = ""
+    endpoint_url = ""
 
     if AWS_ACCESS_KEY in credentials:
         aws_access_key = credentials[AWS_ACCESS_KEY]
@@ -145,6 +147,12 @@ def connect_s3_system(credentials, in_debug_mode: bool, for_update: bool):
     if UPDATE_AWS_ACCESS_KEY in credentials and UPDATE_AWS_SECRET_KEY in credentials:
         update_aws_access_key = credentials[UPDATE_AWS_ACCESS_KEY]
         update_aws_secret_key = credentials[UPDATE_AWS_SECRET_KEY]
+
+    if ENDPOINT_URL in credentials:
+        endpoint_url = credentials[ENDPOINT_URL]
+    else:
+        print("error: s3 requires %s to be configured in creds file" % ENDPOINT_URL)
+        return None
 
     if in_debug_mode:
         print("%s='%s'" % (AWS_ACCESS_KEY, aws_access_key))
@@ -166,6 +174,7 @@ def connect_s3_system(credentials, in_debug_mode: bool, for_update: bool):
 
         return s3.S3StorageSystem(access_key,
                                   secret_key,
+                                  endpoint_url,
                                   in_debug_mode)
 
 
@@ -342,7 +351,7 @@ def main():
                          CMD_LIST_ALBUMS, CMD_RETRIEVE_CATALOG, CMD_IMPORT_PLAYLISTS,
                          CMD_LIST_PLAYLISTS, CMD_SHOW_PLAYLIST, CMD_PLAY_PLAYLIST,
                          CMD_DELETE_SONG, CMD_DELETE_ALBUM, CMD_DELETE_PLAYLIST,
-                         CMD_DELETE_ARTIST, CMD_UPLOAD_METADATA_DB,
+                         CMD_DELETE_ARTIST, CMD_UPLOAD_METADATA_DB, CMD_INIT_STORAGE,
                          CMD_IMPORT_ALBUM_ART, CMD_PLAY_ALBUM, CMD_SHOW_ALBUM]
         update_cmds = [CMD_IMPORT_SONGS, CMD_IMPORT_PLAYLISTS, CMD_DELETE_SONG,
                        CMD_DELETE_ALBUM, CMD_DELETE_PLAYLIST, CMD_DELETE_ARTIST,
@@ -380,7 +389,7 @@ def main():
                                 sys.exit(0)
                             else:
                                 sys.exit(1)
-                        with jb.Jukebox(options, storage_sys) as the_jukebox:
+                        with jb.Jukebox(options, storage_sys, container_prefix) as the_jukebox:
                             if command == CMD_IMPORT_SONGS:
                                 the_jukebox.import_songs()
                             elif command == CMD_IMPORT_PLAYLISTS:

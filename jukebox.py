@@ -95,11 +95,10 @@ def install_signal_handlers():
 
 
 class Jukebox:
-    def __init__(self, jb_options, storage_sys, debug_print: bool = False):
+    def __init__(self, jb_options, storage_sys, container_prefix: str, debug_print: bool = False):
         global g_jukebox_instance
         g_jukebox_instance = self
-        # TODO: pick up container prefix from configuration or as argument
-        self.container_prefix = ""
+        self.container_prefix = container_prefix
         self.jukebox_options = jb_options
         self.storage_system = storage_sys
         self.debug_print = debug_print

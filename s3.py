@@ -25,20 +25,22 @@ def is_available():
 class S3StorageSystem(StorageSystem):
 
     def __init__(self, aws_access_key: str, aws_secret_key: str,
-                 debug_mode: bool = False):
+                 endpoint_url: str, debug_mode: bool = False):
         StorageSystem.__init__(self, "S3", debug_mode)
         self.debug_mode = debug_mode
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
+        self.endpoint_url = endpoint_url
         if self.debug_mode:
-            print("Using access_key='%s', secret_key='%s'" % (self.aws_access_key, self.aws_secret_key))
+            print("Using access_key='%s', secret_key='%s', endpoint_url='%s'" % (self.aws_access_key, self.aws_secret_key, self.endpoint_url))
 
     def __enter__(self):
         if self.debug_mode:
             print("attempting to connect to S3")
+        quoted_endpoint_url = "'%s'" % self.endpoint_url
 
         self.conn = boto3.client('s3',
-                                 endpoint_url='https://s3.us-central-1.wasabisys.com',
+                                 endpoint_url=quoted_endpoint_url,
                                  aws_access_key_id=self.aws_access_key,
                                  aws_secret_access_key=self.aws_secret_key)
         self.authenticated = True
