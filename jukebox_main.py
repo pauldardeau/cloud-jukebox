@@ -1,6 +1,7 @@
 import argparse
 import fs_storage_system
 import jukebox
+import minio_storage_system
 import s3
 import storage_system
 import swift
@@ -54,6 +55,7 @@ CMD_USAGE = "usage"
 SS_FS = "fs"
 SS_S3 = "s3"
 SS_SWIFT = "swift"
+SS_MINIO = "minio"
 
 CREDS_FILE_SUFFIX = "_creds.txt"
 CREDS_CONTAINER_PREFIX = "container_prefix"
@@ -70,6 +72,11 @@ AWS_SECRET_KEY = "aws_secret_key"
 UPDATE_AWS_ACCESS_KEY = "update_aws_access_key"
 UPDATE_AWS_SECRET_KEY = "update_aws_secret_key"
 ENDPOINT_URL = "endpoint_url"
+
+ACCESS_KEY = "access_key"
+SECRET_KEY = "secret_key"
+UPDATE_ACCESS_KEY = "update_access_key"
+UPDATE_SECRET_KEY = "update_secret_key"
 
 FS_ROOT_DIR = "root_dir"
 
@@ -178,6 +185,57 @@ def connect_s3_system(credentials, in_debug_mode: bool, for_update: bool):
                                   in_debug_mode)
 
 
+def connect_minio_system(credentials, in_debug_mode: bool, for_update: bool):
+    if not minio_storage_system.is_available():
+        print("error: minio is not supported on this system. please install minio first.")
+        sys.exit(1)
+
+    access_key = ""
+    secret_key = ""
+    update_access_key = ""
+    update_secret_key = ""
+    endpoint_url = ""
+
+    if in_debug_mode:
+        print(repr(credentials))
+
+    if ACCESS_KEY in credentials:
+        access_key = credentials[ACCESS_KEY]
+    if SECRET_KEY in credentials:
+        secret_key = credentials[SECRET_KEY]
+
+    if UPDATE_ACCESS_KEY in credentials and UPDATE_SECRET_KEY in credentials:
+        update_access_key = credentials[UPDATE_ACCESS_KEY]
+        update_secret_key = credentials[UPDATE_SECRET_KEY]
+
+    if ENDPOINT_URL in credentials:
+        endpoint_url = credentials[ENDPOINT_URL]
+    else:
+        print("error: minio requires %s to be configured in creds file" % ENDPOINT_URL)
+        return None
+
+    if in_debug_mode:
+        print("%s='%s'" % (ACCESS_KEY, access_key))
+        print("%s='%s'" % (SECRET_KEY, secret_key))
+        if len(update_access_key) > 0 and len(update_secret_key) > 0:
+            print("%s='%s'" % (UPDATE_ACCESS_KEY, update_access_key))
+            print("%s='%s'" % (UPDATE_SECRET_KEY, update_secret_key))
+
+    if len(access_key) == 0 or len(secret_key) == 0:
+        print("error: no minio credentials given. please specify %s and %s in credentials file" % (ACCESS_KEY, SECRET_KEY))
+        sys.exit(1)
+    else:
+        if for_update:
+            if in_debug_mode:
+                print("update mode is true; using update access key and update secret key")
+            access_key = update_access_key
+            secret_key = update_secret_key
+
+        return minio_storage_system.MinioStorageSystem(access_key,
+                                                       secret_key,
+                                                       endpoint_url,
+                                                       in_debug_mode)
+
 def connect_storage_system(system_type: str, credentials, container_prefix: str,
                            in_debug_mode: bool, for_update: bool):
     if system_type == SS_SWIFT:
@@ -188,6 +246,8 @@ def connect_storage_system(system_type: str, credentials, container_prefix: str,
         else:
             print("error: a container prefix MUST be specified for S3")
             return None
+    elif system_type == SS_MINIO:
+        return connect_minio_system(credentials, in_debug_mode, for_update)
     elif system_type == SS_FS:
         if FS_ROOT_DIR in credentials:
             root_dir = credentials[FS_ROOT_DIR]
@@ -278,7 +338,7 @@ def main():
         options.check_data_integrity = True
 
     if args.storage is not None:
-        supported_systems = (SS_SWIFT, SS_S3, SS_FS)
+        supported_systems = (SS_SWIFT, SS_S3, SS_MINIO, SS_FS)
         if args.storage not in supported_systems:
             print("error: invalid storage type '%s'" % args.storage)
             print("supported systems are: %s" % str(supported_systems))

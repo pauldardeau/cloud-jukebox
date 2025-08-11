@@ -1,0 +1,7 @@
+access_key = <minio_access_key>
+secret_key = <minio_secret_key>
+update_access_key = <minio_access_key>
+update_secret_key = <minio_secret_key>
+endpoint_url = 127.0.0.1:3900
+region = garage
+
