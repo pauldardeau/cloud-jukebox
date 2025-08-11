@@ -70,8 +70,11 @@ def list_files_in_directory(dir_path: str) -> List[str]:
     if directory_exists(dir_path):
         list_entries = os.listdir(dir_path)
         for entry in list_entries:
-            if path_is_file(entry) and entry not in ['.', '..']:
+            file_path = os.path.join(dir_path, entry)
+            entry_is_file = path_is_file(file_path)
+            if entry_is_file and entry not in ['.', '..']:
                 file_list.append(entry)
+
     return file_list
 
 
@@ -89,7 +92,8 @@ def delete_files_in_directory(dir_path: str) -> bool:
     if directory_exists(dir_path):
         file_list = list_files_in_directory(dir_path)
         for file in file_list:
-            delete_file(file)
+            file_path = os.path.join(dir_path, file)
+            delete_file(file_path)
         return True
     else:
         return False
