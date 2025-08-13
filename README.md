@@ -16,18 +16,18 @@ Overview
 --------
 This repo is python code that implements a music player where the songs are stored
 in the cloud (in an object storage system). Currently, the songs may be stored in
-either **OpenStack Swift** (https://wiki.openstack.org/wiki/Swift) or **AWS S3**
-(or an S3-compliant system). Although the implementation is centered around audio
-files, most of the code and functionality could easily be used for storing any
-kind of file.
+**OpenStack Swift** (https://wiki.openstack.org/wiki/Swift), **AWS S3**
+(or an S3-compliant system), or **Minio**. Although the implementation is centered
+around audio files, most of the code and functionality could easily be used for
+storing any kind of file.
 
 Dependencies/Prerequisites
 --------------------------
 ### Storage
-The cloud jukebox must have a storage system for data storage. Either **OpenStack Swift**
-or **AWS S3** (or S3-compliant) can be used. For those who might want to experiment
-without having an account in a real cloud-based object storage system, there's also
-a filesystem storage system ('fs').
+The cloud jukebox must have a storage system for data storage. **OpenStack Swift**,
+**AWS S3** (or S3-compliant), or **Minio** can be used. For those who might want to
+experiment without having an account in a real cloud-based object storage system,
+there's also a filesystem storage system ('fs').
 
 #### Swift Dependencies
 * swiftclient  `pip install python-swiftclient`
@@ -35,10 +35,12 @@ a filesystem storage system ('fs').
 #### AWS S3 Dependencies
 * boto  `pip install boto3`
 
+#### Minio Dependencies
+* minio `pip install minio`
+
 Configuration
 -------------
-You must enter your credentials for the storage system. If you're using OpenStack Swift, update
-the values in **swift_creds.txt**.  If you're using S3, update the values in **s3_creds.txt**.
+You must enter your credentials for the storage system in <storage_system>_creds.txt.
 
 OpenStack Swift Server Configuration
 ------------------------------------
@@ -111,7 +113,7 @@ Options:
     --integrity-checks
     --playlist <playlist_name>
     --song <song_name>
-    --storage [swift|s3|fs]
+    --storage [swift|s3|minio|fs]
 
 For playback, the downloaded songs will be stored locally in the **song-play** subdirectory. This
 directory will be automatically created. Once playback of a song is complete, the song file is
@@ -136,15 +138,17 @@ calculated on import to verify file integrity.
 
 Storage Type
 ------------
-The cloud jukebox supports **OpenStack Swift** and **AWS S3** for storage of audio files.
+The cloud jukebox supports **OpenStack Swift**, **AWS S3**, and **Minio** for storage of audio files.
 Swift credentials are stored in **swift_creds.txt** and S3 credentials in **s3_creds.txt**. 
 By default, the cloud jukebox is set to use OpenStack Swift storage.  To explicitly specify
-the storage type, pass the **--storage** command-line option along with **'swift'** or **'s3'**.
+the storage type, pass the **--storage** command-line option along with **'swift'**, **'s3'**,
+or **'minio'**.
 
 Examples:
 
     python jukebox_main.py --storage s3 play
     python jukebox_main.py --storage swift play
+    python jukebox_main.py --storage minio play
 
 Displaying Available Songs
 ----------------------
