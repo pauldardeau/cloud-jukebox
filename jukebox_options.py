@@ -4,7 +4,7 @@ class JukeboxOptions:
     def __init__(self):
         self.debug_mode = False
         self.check_data_integrity = False
-        self.file_cache_count = 3
+        self.file_cache_count = 5
         self.number_songs = 0
         self.suppress_metadata_download = False
 

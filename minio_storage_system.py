@@ -158,20 +158,23 @@ class MinioStorageSystem(StorageSystem):
 
             try:
                 bucket = container_name
-                result = self.conn.put_object(bucket, object_name, io.BytesIO(file_contents), len(file_contents))
-                if "HTTPStatusCode" in result:
-                    status_code = result["HTTPStatusCode"]
-                    if status_code == 200:
-                        object_added = True
+                if isinstance(file_contents, str):
+                    file_bytes = file_contents.encode("utf-8")
                 else:
-                    if "ResponseMetadata" in result:
-                        resp_meta = result["ResponseMetadata"]
-                        if "HTTPStatusCode" in resp_meta:
-                            status_code = resp_meta["HTTPStatusCode"]
-                            if status_code == 200:
-                                object_added = True
-                    else:
-                        print(repr(result))
+                    file_bytes = file_contents
+
+                try:
+                    object_data = io.BytesIO(file_bytes)
+                except Exception as e:
+                    print(f"exception: {e}")
+                    return False
+
+                obj_stat = self.conn.put_object(bucket, object_name, object_data, len(file_contents))
+
+                if obj_stat is not None:
+                    object_added = True
+                else:
+                    object_added = False
             except AttributeError as ae:
                 print(repr(ae))
             except NameError as ne:
@@ -204,10 +207,8 @@ class MinioStorageSystem(StorageSystem):
     def get_object(self, container_name: str, object_name: str, local_file_path: str) -> int:
         if self.debug_mode:
             print("get_object: container='%s', object='%s', local_file_path='%s'" % (container_name,
-
-     object_name,
-
-     local_file_path))
+                                                                                     object_name,
+                                                                                     local_file_path))
 
         bytes_retrieved = 0
 
@@ -220,5 +221,3 @@ class MinioStorageSystem(StorageSystem):
                 bytes_retrieved = os.path.getsize(local_file_path)
 
         return bytes_retrieved
-
-
