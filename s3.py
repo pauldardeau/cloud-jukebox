@@ -68,7 +68,7 @@ class S3StorageSystem(StorageSystem):
                 list_container_names = []
 
                 list_buckets = rs['Buckets']
-                
+ 
                 for container in list_buckets:
                     container_name = container['Name']
                     list_container_names.append(self.un_prefixed_container(container_name))
